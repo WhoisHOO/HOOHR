@@ -1,118 +1,119 @@
-# 요구사항 정의서 — 직원 관리 툴 (작업명: hr-app)
+# Requirements Specification — Employee Management Tool (working name: hr-app)
 
-## 1. 프로젝트 개요
+## 1. Project Overview
 
-### 1.1. 배경
-- 규모 20명 내외의 스타트업/중소기업용 경량 직원 관리 툴
-- 원격(remote) 직원이 인터넷으로 접속해 근태 기록, 휴가 신청, 경비 청구를 처리
-- **오픈소스로 배포 예정** (후보 라이선스: MIT — 재판매·수정 자유)
-- 기존 오픈소스 HRMS(Frappe HRMS 등)는 규모 대비 과함 → "기본적이지만 필수인" 기능만 집중
+### 1.1. Background
+- Lightweight employee management tool for startups/SMBs of ~20 people
+- Remote employees access over the internet to record attendance, request leave, and file expense claims
+- **Planned open-source release** (License: Apache-2.0 — free to resell/modify, includes patent/trademark clauses)
+- Existing open-source HRMS (Frappe HRMS, etc.) are overkill for this scale → focus on "basic but essential" features only
 
-### 1.2. 운영 환경
-- 단일 서버 (개발 막노트북 시작 → 이후 VPS 이전 가능)
-- **Docker Compose**로 앱 + Postgres 원클릭 배포
-- 외부 접속: **Cloudflare Tunnel** (무료, 고정 IP 불필요)
-- 대상 OS: Windows 11 (개발) / Linux (운영 이전 대비. Docker 기반이라 무관)
-- 브라우저 접근 전제 (모바일 대응은 반응형 UI, 후순위로 PWA 계획)
+### 1.2. Operating Environment
+- Single server (starts as a dev laptop → can move to a VPS later)
+- **Docker Compose** one-command deployment of app + Postgres
+- External access: **Cloudflare Tunnel** (free, no static IP required)
+- Target OS: Windows 11 (development) / Linux (potential production; irrelevant thanks to Docker)
+- Browser-based access assumed (responsive UI; PWA planned as a later item)
 
-### 1.3. 기술 스택 (제안)
-| 계층 | 기술 | 이유 |
+### 1.3. Tech Stack (proposed)
+| Layer | Technology | Reason |
 |---|---|---|
-| 웹앱 | Next.js (App Router) + TypeScript | API+UI 단일 프로젝트, 참고 오픈소스(DutyDuke, open-expense)와 동일 계열 |
-| DB | PostgreSQL + Prisma ORM | 스키마 마이그레이션 관리 용이, 영수증 메타데이터 저장 |
-| 파일 저장 | 로컬 볼륨 (→ S3 대응 인터페이스로 추상화) | MVP는 20명 규모로 간단하게 |
-| 인증 | 이메일+비밀번호, JWT 세션 / 초대 링크 | 직원 초대 방식 |
-| 알림 | SMTP 이메일 (MVP) → 인앱 알림 추가 | |
-| 배포 | Docker Compose + Nginx(옵션) + Cloudflare Tunnel | |
+| Web app | Next.js (App Router) + TypeScript | API + UI in a single project; same family as reference OSS (DutyDuke, open-expense) |
+| DB | PostgreSQL + Prisma ORM | Easy schema migration management; stores receipt metadata |
+| File storage | Local volume (→ abstracted behind an S3-compatible interface) | MVP stays simple for 20 people |
+| Auth | Email + password, JWT session / invite links | Employee-invitation approach |
+| Notifications | SMTP email (MVP) → in-app notifications later | |
+| Data pipeline | **Apache Airflow + PySpark** (run on EKS) | Attendance-pattern analysis reports, etc. Confirmed (2026-09-24, option D all-in) |
+| Deployment | Docker Compose (dev) → **AWS EKS (K8s)** (prod) + Cloudflare Tunnel | Confirmed (2026-09-24) |
 
-## 2. 사용자 역할
+## 2. User Roles
 
-| 역할 | 설명 |
+| Role | Description |
 |---|---|
-| **EMPLOYEE (직원)** | 본인 근태·휴가·경비만 관리 |
-| **MANAGER (매니저)** | 소속 팀원 승인 처리, 팀 캘린더 조회 |
-| **ADMIN (관리자)** | 직원 초대, 정책 설정, 지급 확정, 전사 데이터 조회 |
+| **EMPLOYEE** | Manages only their own attendance, leave, and expenses |
+| **MANAGER** | Approves requests for their team members; views team calendar |
+| **ADMIN** | Invites employees, configures policies, confirms payments, views company-wide data |
 
-규모가 작으므로 역할은 3개로 단순화. 부서/팀 1단계 계층 보유.
+Roles are simplified to 3 given the small scale. Single-level department/team hierarchy exists.
 
-## 3. 기능 요구사항
+## 3. Functional Requirements
 
-### 3.1. 직원/조직 관리
-| ID | 요구사항 | 역할 | MVP |
+### 3.1. Employee / Organization Management
+| ID | Requirement | Role | MVP |
 |---|---|---|---|
-| EMP-1 | 직원 프로필: 이름, 이메일, 부서, 직급, 입사일, 연락처 | ADMIN | ✅ |
-| EMP-2 | 직원 초대 (이메일 링크 → 비밀번호 설정) | ADMIN | ✅ |
-| EMP-3 | 직원 비활성화/재활성화 (퇴사 처리) | ADMIN | ✅ |
-| EMP-4 | 부서/직급 마스터 관리 | ADMIN | ✅ |
+| EMP-1 | Employee profile: name, email, department, position, hire date, contact | ADMIN | ✅ |
+| EMP-2 | Invite employees (email link → set password) | ADMIN | ✅ |
+| EMP-3 | Deactivate/reactivate employees (termination handling) | ADMIN | ✅ |
+| EMP-4 | Manage department/position master data | ADMIN | ✅ |
 
-### 3.2. 근태 (Attendance)
-| ID | 요구사항 | 역할 | MVP |
+### 3.2. Attendance
+| ID | Requirement | Role | MVP |
 |---|---|---|---|
-| ATT-1 | 체크인/체크아웃 기록 (브라우저 버튼, 서버시간 기록) | EMPLOYEE | ✅ |
-| ATT-2 | 한 날짜에 다중 체크인·아웃 (외출/복귀, 점심 등) | EMPLOYEE | ✅ |
-| ATT-3 | 누락·오류 기록에 대한 **수정 요청** → 매니저 승인 | EMPLOYEE→Manager | ✅ |
-| ATT-4 | 일별/월별 내역 조회 (본인), 팀원은 매니저가 조회 | 모두 | ✅ |
-| ATT-5 | (후순위) GPS/지오펜싱 출퇴근 — 위치 기록만, 강제는 아님 | — | ❌ |
+| ATT-1 | Record check-in/check-out (browser button, server time) | EMPLOYEE | ✅ |
+| ATT-2 | Multiple check-ins/outs per day (away/return, lunch, etc.) | EMPLOYEE | ✅ |
+| ATT-3 | **Correction requests** for missing/erroneous records → manager approval | EMPLOYEE→Manager | ✅ |
+| ATT-4 | View daily/monthly history (own; manager for team) | All | ✅ |
+| ATT-5 | (Later) GPS/geofencing clock-in/out — location recorded only, not enforced | — | ❌ |
 
-### 3.3. 휴가/연차 (Leave)
-#### 3.3.1. 휴가 유형과 규칙
-| 유형 | 유급 | 발생 규칙 (예시) | 문서 요구 |
+### 3.3. Leave / PTO
+#### 3.3.1. Leave Types and Rules
+| Type | Paid | Accrual rule (example) | Documentation required |
 |---|---|---|---|
-| 연차 (PTO) | ✅ | 입사월 기준 년 *N일*, 미사용분 이월 정책 | 없음 |
-| 병가 (Sick leave) | ✅ | 년 *M일*, 증빙 시 사용 | 있을 수 있음 (후순위) |
-| 반차/시간 연차 | ✅ | 연차 잔여에서 차감 | 없음 |
-| 무급휴직 | ❌ | 정책 없음 | 승인 필요 |
+| Annual (PTO) | ✅ | *N* days/year from hire month, carry-over policy for unused | None |
+| Sick leave | ✅ | *M* days/year, used with proof | Maybe (later) |
+| Half-day / hourly leave | ✅ | Deducted from annual balance | None |
+| Unpaid leave | ❌ | No policy | Approval required |
 
-- 정책값(N, M, 이월일수)은 ADMIN이 설정 가능해야 함
-- 잔여일은 **발생 기준 자동 계산 + 수동 조정 가능** (스프레드시트 갈아타기 대비)
+- Policy values (N, M, carry-over days) must be configurable by ADMIN
+- Balance is **auto-calculated from accrual basis + manual adjustment** (for spreadsheet migration)
 
-#### 3.3.2. 신청/승인 워크플로
-| ID | 요구사항 | MVP |
+#### 3.3.2. Request/Approval Workflow
+| ID | Requirement | MVP |
 |---|---|---|
-| LV-1 | 휴가 신청: 유형, 기간, 사유, 반차 여부 | ✅ |
-| LV-2 | 신청 시 잔여일 실시간 표시, 초과 시 차단 | ✅ |
-| LV-3 | 승인/반려 (반려 시 사유 필수) → 직원에게 알림 | ✅ |
-| LV-4 | 승인 흐름: 직원 → 매니저 (20명 규모라 1단계. 확장 위해 다단계 지원 설계) | ✅ |
-| LV-5 | 팀 캘린더에서 누가 쉬는지 표시 | ✅ |
-| LV-6 | 본인 취소 가능 (승인 전에만) | ✅ |
-| LV-7 | 기존 잔여일을 파일(CSV)로 일괄 이관 | ✅ |
+| LV-1 | Leave request: type, period, reason, half-day flag | ✅ |
+| LV-2 | Show remaining balance in real time during request; block over-request | ✅ |
+| LV-3 | Approve/reject (reason required on reject) → notify employee | ✅ |
+| LV-4 | Approval chain: employee → manager (single step for 20-person scale; design for multi-step extension) | ✅ |
+| LV-5 | Team calendar showing who is off | ✅ |
+| LV-6 | Self-cancel allowed (only before approval) | ✅ |
+| LV-7 | Bulk import of existing balances from file (CSV) | ✅ |
 
-### 3.4. 경비 청구 (Expense / 영수증)
-| ID | 요구사항 | MVP |
+### 3.4. Expense Claims (Receipts)
+| ID | Requirement | MVP |
 |---|---|---|
-| EXP-1 | 경비 보고서 작성: 날짜, 항목, 금액, 카테고리, 설명 | ✅ |
-| EXP-2 | **영수증 이미지/PDF 첨부** (여러 장 가능) — 청구·병가 증빙 겸용 | ✅ |
-| EXP-3 | 카테고리: 교통, 식비, 숙박, 회의비, 기타 + 커스텀 | ✅ |
-| EXP-4 | 승인 흐름: 직원 제출 → 매니저 승인 → ADMIN 지급 확정(Paid) | ✅ |
-| EXP-5 | 상태 표시: Draft → Submitted → Approved → Paid / Rejected | ✅ |
-| EXP-6 | CSV/PDF 내보내기 (회계용 월별 정산) | ✅ |
-| EXP-7 | (후순위) 영수증 OCR 자동 추출 (AI) — 금액·날짜·거래처 | ❌ |
-| EXP-8 | (후순위) 복수 통화 지원 | ❌ |
+| EXP-1 | Expense report: date, item, amount, category, description | ✅ |
+| EXP-2 | **Attach receipt images/PDFs** (multiple) — shared use for claims and sick-leave proof | ✅ |
+| EXP-3 | Categories: transport, meals, lodging, meeting, other + custom | ✅ |
+| EXP-4 | Approval flow: employee submits → manager approves → ADMIN confirms payment (Paid) | ✅ |
+| EXP-5 | Status display: Draft → Submitted → Approved → Paid / Rejected | ✅ |
+| EXP-6 | CSV/PDF export (monthly reconciliation for accounting) | ✅ |
+| EXP-7 | (Later) OCR auto-extraction of receipts (AI) — amount/date/vendor | ❌ |
+| EXP-8 | (Later) Multi-currency support | ❌ |
 
-### 3.5. 알림
-| ID | 요구사항 | MVP |
+### 3.5. Notifications
+| ID | Requirement | MVP |
 |---|---|---|
-| NOT-1 | 휴가/경비 승인·반려 시 이메일 (SMTP) | ✅ |
-| NOT-2 | 매니저에게 "승인 대기 건" 일괄 알림 | ✅ |
-| NOT-3 | (후순위) 인앱 알림/푸시 | ❌ |
+| NOT-1 | Email on leave/expense approval & rejection (SMTP) | ✅ |
+| NOT-2 | Batched "pending approvals" email to manager | ✅ |
+| NOT-3 | (Later) In-app notifications/push | ❌ |
 
-### 3.6. 설정
-| ID | 요구사항 | MVP |
+### 3.6. Settings
+| ID | Requirement | MVP |
 |---|---|---|
-| SET-1 | 회사명, 도메인, 시간대 | ✅ |
-| SET-2 | 휴가 정책 (유형별 발생일수, 이월) | ✅ |
-| SET-3 | 공휴일 캘린더 등록 | ✅ |
-| SET-4 | 경비 카테고리 관리 | ✅ |
+| SET-1 | Company name, domain, timezone | ✅ |
+| SET-2 | Leave policy (accrual days by type, carry-over) | ✅ |
+| SET-3 | Holiday calendar registration | ✅ |
+| SET-4 | Expense category management | ✅ |
 
-## 4. 데이터 모델 초안
+## 4. Data Model Draft
 
 ```
 Company (1) ─┬─ (N) Department ── (N) Employee ── (1) Position
              ├─ Holiday(list)
-             └─ LeavePolicy (N) ── LeaveType ── (N) LeaveBalance (Employee마다)
+             └─ LeavePolicy (N) ── LeaveType ── (N) LeaveBalance (per Employee)
 
 Employee (1) ── (N) AttendanceRecord      -- check_in/check_out, source(intro/auto)
-Employee (1) ── (N) AttendanceCorrection  -- 수정요청, status
+Employee (1) ── (N) AttendanceCorrection  -- correction request, status
 Employee (1) ── (N) LeaveRequest          -- leave_type, dates, status
 LeaveRequest (1) ── (N) ApprovalStep      -- approver, status, comment, timestamp
 Employee (1) ── (N) ExpenseReport         -- period, total, status
@@ -121,55 +122,86 @@ ExpenseItem (1) ── (N) ReceiptFile        -- s3_key, filename, mime, size
 Employee (1) ── (N) Notification
 ```
 
-- 모든 변경 이력을 남기기 위한 `AuditLog` 테이블 (승인/지급 시점 기록, 운영·회계용)
-- 상태값은 코드 테이블 대신 enum 상수로 관리
+- `AuditLog` table to keep a history of all changes (approval/payment timestamps, for operations & accounting)
+- Statuses use enum constants rather than lookup tables
 
-## 5. 권한 매트릭스 (MVP)
+## 5. Permission Matrix (MVP)
 
-| 기능 | EMPLOYEE | MANAGER | ADMIN |
+| Feature | EMPLOYEE | MANAGER | ADMIN |
 |---|---|---|---|
-| 근태 기록/수정 요청 | 본인 | 본인 + 팀원 관리 | 전체 |
-| 휴가 신청/취소 | 본인 | 본인 + 팀원 승인 | 전체 + 정책 |
-| 잔여일 조회/조정 | 본인 | 팀원 조회 | 전체 + 조정 |
-| 경비 제출 | 본인 | 본인 + 팀원 승인 | 전체 + 지급 확정 |
-| 팀 캘린더 | 팀 조회 | 팀 전체 | 전체 |
-| 직원 초대/프로필 | — | — | ✅ |
-| 설정/공휴일 | — | — | ✅ |
-| 보고서 내보내기 | 본인 분 | 팀 분 | 전체 |
+| Attendance records / correction requests | Own | Own + manage team | All |
+| Leave request/cancel | Own | Own + approve team | All + policies |
+| Balance view/adjustment | Own | View team | All + adjust |
+| Expense submission | Own | Own + approve team | All + confirm payment |
+| Team calendar | Team view | Entire team | All |
+| Employee invite/profile | — | — | ✅ |
+| Settings/holidays | — | — | ✅ |
+| Report export | Own scope | Team scope | All |
 
-## 6. 운영 요구사항
+## 6. Operational Requirements
 
-| 항목 | 내용 |
+| Item | Details |
 |---|---|
-| 배포 | `docker compose up` 단일 명령 |
-| 데이터 백업 | 매일 자동: Postgres dump + 영수증 파일 → 외부 저장소 (rclone 등) |
-| 원격 접근 | Cloudflare Tunnel → HTTPS 도메인 |
-| 모니터링 | MVP: 간단한 상태페이지/헬스체크. 로그는 Docker 로그 |
-| 보안 | S3키 등 비밀은 환경변수, HTTPS 강제, 비밀번호 해시(bcrypt) |
-| 시간대 | 저장은 UTC, 표시는 회사 설정 시간대 |
+| Deployment | Single command `docker compose up` |
+| Data backup | Daily automatic: Postgres dump + receipt files → external storage (rclone, etc.) |
+| Remote access | Cloudflare Tunnel → HTTPS domain |
+| Monitoring | MVP: simple status page/health checks. Logs via Docker logs |
+| Security | Secrets (e.g., S3 keys) as env vars, HTTPS enforced, password hashing (bcrypt) |
+| Timezone | Store UTC, display in company-configured timezone |
 
-## 7. MVP 범위 vs 이후 단계
+## 7. MVP Scope vs. Later Phases
 
 **MVP (v0.1):**
-1. 인증 + 직원 초대
-2. 근태 체크인/아웃 + 수정 승인
-3. 휴가(연차/병가/반차) 신청·승인·잔여 계산
-4. 경비 청구 + 영수증 첨부 + 승인 + 지급확정
-5. 이메일 알림, 팀 캘린더, CSV 내보내기
-6. Docker Compose 배포 + Cloudflare Tunnel 연동 문서
+1. Auth + employee invites
+2. Attendance check-in/out + correction approvals
+3. Leave (annual/sick/half-day) request·approval·balance calculation
+4. Expense claims + receipt attachments + approval + payment confirmation
+5. Email notifications, team calendar, CSV export
+6. Docker Compose deployment + Cloudflare Tunnel integration docs
 
-**v0.2 이후:**
-- 영수증 OCR(AI) 자동 추출, PWA 모바일, GPS 출퇴근
-- 다단계 승인, 복수 통화, i18n(한/영), 교육/공지 모듈
+**v0.2 onwards:**
+- OCR (AI) receipt auto-extraction, PWA mobile, GPS clock-in/out
+- Multi-step approvals, multi-currency, i18n (EN/KO), training/notice module
 
-## 8. 오픈소스 배포 계획
-- 라이선스: **MIT** (회사 내부 활용 + 커뮤니티 배포 병행 가능)
-- README에 Docker 원클릭 데모, 스크린샷, 통합 설정 문서화
-- 모던 스택(Next.js+TS)과 "20명 스타트업에 맞춘 단순함"을 차별점으로 제시
-- 시장 포지션: 1인 개발자가 유지보수 가능한 범위 = 기능 축소·단순화가 강점
+## 8. Open-Source Release Plan
+- License: **Apache-2.0** (supports both internal company use and community distribution; explicit patent grant makes enterprise adoption safer)
+- README documents a Docker one-click demo, screenshots, and setup guide
+- Differentiators: modern stack (Next.js+TS) and "simplicity tuned for 20-person startups"
+- Market positioning: one-person-maintainable scope — feature reduction/simplification is the strength
 
-## 9. 오픈 이슈 / 확정 필요 사항
-- [ ] 휴가 발생 정책의 정확한 규칙 (입사일 기준 vs 회계년도, 캐리오버 상한)
-- [ ] 병가 증빙(영수증)의 강제 여부와 병가-경비청구 연동 시나리오
-- [ ] 프로젝트 최종 이름/브랜드
-- [ ] 사용 언어 기본값 (한국어 UI 우선 → 영어 i18n)
+## 9. Open Issues / Decisions Needed
+- [x] ~~Include Airflow/K8s/PySpark?~~ → **(D) all-in confirmed** (2026-09-24): EKS + Airflow + PySpark
+- [ ] Exact leave-accrual rule (hire-date vs fiscal year basis, carry-over cap)
+- [ ] Whether sick-leave proof (receipts) is mandatory and the sick-leave↔expense-claim linkage scenario
+- [ ] Final project name/brand
+- [ ] Default UI language (Korean-first → English i18n)
+
+## 10. Data Pipeline (Airflow + PySpark on EKS)
+
+### 10.1. Purpose
+- Periodically collect & process attendance/expense data to produce **pattern-analysis reports** (e.g., overtime trends, per-department attendance patterns, expense category trends)
+- Keep the pipeline schema future-compatible for Kafka/Hadoop (HDFS) adoption in later phases
+
+### 10.2. Architecture Principles
+| Item | Details |
+|---|---|
+| Source | Postgres (app DB) — read-only. Results written to separate summary tables (or report files) |
+| Scheduling/workflow | Apache Airflow DAG |
+| Processing engine | PySpark batch jobs (small data volume → validate in local mode for MVP, then move to cluster) |
+| Operations | Airflow & Spark both deployed on EKS (K8s). Local dev runs the same images via Docker Compose |
+| Trigger | DAG `schedule` (daily) + on-demand execution API from the web app (later) |
+
+### 10.3. MVP Reports (late v0.1)
+1. Weekly attendance summary (average check-in/out per person, absence detection)
+2. Leave-usage aggregates (monthly usage by type)
+3. Monthly expense statistics (totals by category)
+
+### 10.4. Folder Layout
+```
+pipelines/
+├── dags/            → Airflow DAG definitions
+├── spark/           → PySpark jobs
+├── Dockerfile       → Airflow image (with postgres provider)
+└── README.md
+```
+- EKS manifests/Helm configured in `deploy/` (applied after MVP, separate docs)

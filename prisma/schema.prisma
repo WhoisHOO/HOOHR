@@ -1,0 +1,373 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============ Enums ============
+
+enum Role {
+  ADMIN
+  MANAGER
+  EMPLOYEE
+}
+
+enum EmployeeStatus {
+  INVITED
+  ACTIVE
+  INACTIVE
+}
+
+enum LeaveTypeKind {
+  PTO
+  SICK
+  UNPAID
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELED
+}
+
+enum ApprovalTargetType {
+  LEAVE
+  EXPENSE
+  ATTENDANCE_CORRECTION
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ExpenseStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  PAID
+  REJECTED
+}
+
+enum CorrectionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  LEAVE_REQUEST
+  LEAVE_DECISION
+  EXPENSE_REQUEST
+  EXPENSE_DECISION
+  CORRECTION_REQUEST
+  CORRECTION_DECISION
+  SYSTEM
+}
+
+// ============ 기업/조직 ============
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  timezone  String   @default("America/New_York")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users             User[]
+  departments       Department[]
+  employees         Employee[]
+  leavePolicies     LeavePolicy[]
+  expenseCategories ExpenseCategory[]
+  holidays          Holiday[]
+  invitations       Invitation[]
+  notifications     Notification[]
+  leaveRequests     LeaveRequest[]
+  expenseReports    ExpenseReport[]
+  attendanceRecords AttendanceRecord[]
+  attendanceCorrections AttendanceCorrection[]
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  managerId String?
+
+  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  manager  Employee? @relation("DeptManager", fields: [managerId], references: [id])
+  employees Employee[]
+
+  @@unique([companyId, name])
+}
+
+model Employee {
+  id               String         @id @default(cuid())
+  companyId        String
+  userId           String?        @unique
+  departmentId     String?
+  name             String
+  email            String
+  position         String?
+  hireDate         DateTime?      @db.Date
+  status           EmployeeStatus @default(INVITED)
+  leaveApproverId  String?
+  createdAt        DateTime       @default(now())
+
+  company        Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user           User?        @relation(fields: [userId], references: [id])
+  department     Department?  @relation(fields: [departmentId], references: [id])
+  leaveApprover  Employee?    @relation("LeaveApprover", fields: [leaveApproverId], references: [id])
+  manages        Employee[]   @relation("LeaveApprover")
+  managesDept    Department[] @relation("DeptManager")
+
+  leaveBalances      LeaveBalance[]
+  leaveRequests      LeaveRequest[]
+  attendanceRecords  AttendanceRecord[]
+  corrections        AttendanceCorrection[]
+  expenseReports     ExpenseReport[]
+
+  @@unique([companyId, email])
+}
+
+model User {
+  id           String    @id @default(cuid())
+  companyId    String
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         Role      @default(EMPLOYEE)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  company        Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee       Employee?
+  notifications  Notification[]
+  approvals      Approval[]
+  decidedLeaves  LeaveRequest[]    @relation("LeaveDecider")
+  decidedExpense ExpenseReport[]   @relation("ExpenseDecider")
+  decidedCorrection AttendanceCorrection[] @relation("CorrectionDecider")
+}
+
+// ============ 휴가 ============
+
+model LeavePolicy {
+  id        String   @id @default(cuid())
+  companyId String
+  name      String
+  kind      LeaveTypeKind
+  annualDays Float   @default(0)
+  isPaid    Boolean  @default(true)
+  maxCarryOverDays Float @default(0)
+  requiresApproval Boolean @default(true)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  company  Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  balances LeaveBalance[]
+  requests LeaveRequest[]
+
+  @@unique([companyId, kind])
+}
+
+model LeaveBalance {
+  id         String   @id @default(cuid())
+  employeeId String
+  policyId   String
+  year       Int
+  grantedDays Float   @default(0)
+  usedDays    Float   @default(0)
+  adjustDays  Float   @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  employee Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  policy   LeavePolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, policyId, year])
+}
+
+model LeaveRequest {
+  id          String       @id @default(cuid())
+  companyId   String
+  employeeId  String
+  policyId    String
+  startDate   DateTime     @db.Date
+  endDate     DateTime     @db.Date
+  isHalfDay   Boolean      @default(false)
+  halfDayDate DateTime?    @db.Date
+  days        Float
+  reason      String?
+  status      LeaveStatus  @default(PENDING)
+  decidedById String?
+  decidedAt   DateTime?
+  decisionComment String?
+  createdAt   DateTime     @default(now())
+
+  company  Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  policy   LeavePolicy @relation(fields: [policyId], references: [id])
+  decidedBy User?      @relation("LeaveDecider", fields: [decidedById], references: [id])
+}
+
+// ============ 근태 ============
+
+model AttendanceRecord {
+  id         String    @id @default(cuid())
+  companyId  String
+  employeeId String
+  date       DateTime  @db.Date
+  checkInAt  DateTime?
+  checkOutAt DateTime?
+  note       String?
+  createdAt  DateTime  @default(now())
+
+  company  Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  corrections AttendanceCorrection[]
+
+  @@unique([employeeId, date])
+}
+
+model AttendanceCorrection {
+  id          String          @id @default(cuid())
+  companyId   String
+  employeeId  String
+  attendanceId String?
+  date        DateTime        @db.Date
+  requestType String          // "ADD" | "EDIT" | "FIX"
+  note        String?
+  status      CorrectionStatus @default(PENDING)
+  decidedById String?
+  decidedAt   DateTime?
+  comment     String?
+  createdAt   DateTime        @default(now())
+
+  company    Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee   Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  attendance AttendanceRecord? @relation(fields: [attendanceId], references: [id], onDelete: SetNull)
+  decidedBy  User?             @relation("CorrectionDecider", fields: [decidedById], references: [id])
+}
+
+// ============ 경비 ============
+
+model ExpenseCategory {
+  id       String   @id @default(cuid())
+  companyId String
+  name     String
+  active   Boolean  @default(true)
+
+  company Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  items   ExpenseItem[]
+
+  @@unique([companyId, name])
+}
+
+model ExpenseReport {
+  id          String        @id @default(cuid())
+  companyId   String
+  employeeId  String
+  title       String
+  periodStart DateTime      @db.Date
+  periodEnd   DateTime      @db.Date
+  status      ExpenseStatus @default(DRAFT)
+  totalAmountCents Int      @default(0)
+  currency    String        @default("USD")
+  decidedById String?
+  decidedAt   DateTime?
+  comment     String?
+  submittedAt DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  company  Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  decidedBy User?       @relation("ExpenseDecider", fields: [decidedById], references: [id])
+  items     ExpenseItem[]
+}
+
+model ExpenseItem {
+  id              String   @id @default(cuid())
+  reportId        String
+  categoryId      String
+  date            DateTime @db.Date
+  amountCents     Int
+  description     String?
+  receiptFileName String?
+
+  report   ExpenseReport   @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  category ExpenseCategory @relation(fields: [categoryId], references: [id])
+  receipts ReceiptFile[]
+}
+
+model ReceiptFile {
+  id         String @id @default(cuid())
+  itemId     String
+  filename   String
+  storedPath String
+  mimeType   String
+  size       Int
+
+  item ExpenseItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+// ============ 공통 ============
+
+model Approval {
+  id         String             @id @default(cuid())
+  companyId  String
+  targetType ApprovalTargetType
+  targetId   String
+  approverId String
+  status     ApprovalStatus     @default(PENDING)
+  comment    String?
+  createdAt  DateTime           @default(now())
+  decidedAt  DateTime?
+
+  approver User @relation(fields: [approverId], references: [id], onDelete: Cascade)
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  companyId String
+  userId    String
+  type      NotificationType
+  title     String
+  body      String?
+  link      String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Holiday {
+  id        String   @id @default(cuid())
+  companyId String
+  date      DateTime @db.Date
+  name      String
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, date])
+}
+
+model Invitation {
+  id        String    @id @default(cuid())
+  companyId String
+  email     String
+  role      Role      @default(EMPLOYEE)
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+}
