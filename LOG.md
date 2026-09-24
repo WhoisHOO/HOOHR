@@ -13,9 +13,9 @@
 
 ---
 
-## 📍 Current Status (as of 2026-09-24, end of Session 6)
+## 📍 Current Status (as of 2026-09-24, end of Session 7)
 
-**Progress: Auth implemented & verified. External access (Cloudflare quick tunnel) live. Attendance + Leave module MVP implemented (DB-verified). Expense module is next. Uncommitted Session 5–6 work pending a checkpoint commit.**
+**Progress: Auth + Attendance + Leave + Expense module MVP all implemented (DB & page verified). All 3 modules open in the sidebar. Checkpoint commits local; GitHub push still needs `gh auth login`.**
 
 > **Session 6 note**: Session 5 ended five minutes before the Leave module files were produced. The DB logic round-trip (`_test-leave.ts`), lint/tsc, and GET checks were done in Session 6. Server-action E2E (browser) of leave forms remains, same as attendance.
 
@@ -39,8 +39,8 @@
 | English docs/commits/GitHub | ✅ Done (Session 4) |
 | Attendance module (check-in/out, corrections, team view) | ✅ Done (Session 5) |
 | Leave module (request/approve/cancel, balances, CSV import) | ✅ Done (Session 6) |
-| Expense module | ⬜ **Next work** |
-| Checkpoint commit (Session 5–6) | ⬜ Pending (needs `gh auth login` for push) |
+| Expense module (reports/items/receipts, approve, pay) | ✅ Done (Session 7) |
+| Checkpoint commit (Session 5–7) | 🔄 `1809e0c` committed locally; push needs `gh auth login` |
 
 > **Key notes:**
 > - **500 "Connection closed." when POSTing server actions via curl/fetch is a known Next.js restriction** — not an app bug. Test real flows via browser.
@@ -258,6 +258,39 @@ C:\apps\projects\hr-app\
   - Reviewer inbox shows all company PENDING for MANAGER/ADMIN (per-team scoping deferred, same as attendance corrections)
   - Decision email notify (NOT-1) still pending SMTP configuration (as in prior sessions)
 - **Result/next**: Leave module MVP implemented & DB/GET-verified. Browser E2E of the leave forms is the remaining check (server-action POST still 500 via curl — known Next.js restriction). Next: **Expense module**. Session 5+6 work still uncommitted → checkpoint commit first (Session 7).
+
+### Session 7 (2026-09-24): Checkpoint Commit (Session 5–6) + Expense Module MVP start
+
+> **Note**: Record updated incrementally while working because sections keep getting cut off. This section covers: ① the Session 5–6 checkpoint commit, ② the Expense module (in progress).
+
+- **Checkpoint commit**: Session 5 (attendance) + Session 6 (leave) work committed together as `1809e0c feat(attendance,leave): ...` (attendance migration `20260924203008_attendance_events`, generated Prisma client, actions/actions/utils/UI, admin balance CSV import, `_test-leave.ts`, `.gitignore` + `dev-server.log`). Push deferred — `gh auth login` still pending. Working tree clean after commit.
+- **Expense module plan** (per `docs/REQUIREMENTS.md` §3.4, EXP-1..6, MVP on existing schema: `ExpenseReport` / `ExpenseItem` / `ExpenseCategory` / `ReceiptFile`):
+  - Create DRAFT expense report with multiple items (date, category, amount, description) + per-item receipt upload → `uploads/` local dir (S3 abstraction later)
+  - Submit → SUBMITTED (sets submittedAt); owner can delete only DRAFT
+  - MANAGER/ADMIN approve/reject; ADMIN confirms payment (PAID). Status flow DRAFT→SUBMITTED→APPROVED→PAID / REJECTED
+  - Protected file serving under `/app/files/[file]` (ownership-checked) + `uploads/` in `.gitignore`
+  - Verification: lint/tsc, `_test-expense.ts` DB round-trip, GET checks
+- **Progress so far**: checkpoint commit done. Expense implementation in progress.
+- **Expense module — done** (per §3.4 EXP-1..5, MVP on existing schema — no new migration): 
+  - `next.config.ts`: `experimental.serverActions.bodySizeLimit: "10mb"` + `allowedDevOrigins: ["*.trycloudflare.com"]` (tunnel dev actions); `/uploads/` added to `.gitignore`
+  - `src/lib/expense.ts` — `formatMoney()` (cents→currency), `parseAmountToCents()`, date input helper
+  - `src/lib/expense-validation.ts` — zod `ExpenseReportCreateSchema` / `ExpenseItemFormSchema` + state types, `MAX_EXPENSE_ITEMS = 20`
+  - `src/lib/storage.ts` — receipt save/remove to `uploads/` (5MB cap, JPEG/PNG/WEBP/PDF whitelist, `uuid.ext` naming; S3 abstraction later)
+  - `src/app/actions/expense.ts` — `createExpenseReport` (title/period meta + dynamic item rows with per-item optional receipt; file-save-then-create with rollback of saved files on DB failure), `submitExpenseReport` (own DRAFT→SUBMITTED, requires ≥1 item), `deleteExpenseReport` (own DRAFT, unlinks stored files), `decideExpense` (MANAGER/ADMIN approve/reject SUBMITTED [reject requires reason]; ADMIN-only PAY on APPROVED→PAID)
+  - `src/app/app/files/[file]/route.ts` — protected receipt streaming (session + company/owner/reviewer check, RFC 5987 `filename*=UTF-8''` on `Content-Disposition` because Korean filenames crash the fetch Headers latin1 check)
+  - `src/app/app/expenses/` — `page.tsx` (new-report form, my reports list w/ status badge + item rows + receipt links + submit/delete for DRAFT, reviewer SUBMITTED inbox, admin APPROVED pay queue) + client `expense-form.tsx` (dynamic item rows: date/category/amount/description/file), `submit-button.tsx`, `delete-button.tsx`, `decide-form.tsx` (approve/reject or pay modes)
+  - Layout: "경비" nav item enabled (`ready: true`); dashboard "다음 단계" copy updated to "all three modules open"
+- **Verification**:
+  - `npm run lint` clean (`argsIgnorePattern` already covers `_state/_formData`; fixed one unused `idx`), `npx tsc --noEmit` clean
+  - DB round-trip (`npx tsx _test-expense.ts`, test rows cleaned): DRAFT create w/ 2 items + nested receipt → totals correct (2050₵) → SUBMITTED → APPROVED → PAID; separate report SUBMITTED→REJECTED with comment; guard check on already-PAID report; cleanup
+  - GET checks (minted admin cookie): `/app/expenses` 200 with new-report form, my reports, receipt links, submit button; `/app/files/<stored>` 200 with `application/pdf` + encoded filename — found & fixed Korean-filename header crash along the way; unauthenticated `/app/files/*` → 307 /login (proxy guard)
+  - `_test-leave.ts` re-run still green (regression)
+- **Decisions/notes**:
+  - Receipt files land on the **local `uploads/` volume** (S3-compatible interface is a later abstraction, per requirements); receipt access is ownership-scoped (owner + MANAGER/ADMIN of the company)
+  - Currency stays `USD` per schema default; amount input in USD decimals stored as cents (multi-currency is v0.2)
+  - One-file-per-item UI for MVP (schema supports multiple `ReceiptFile` per item; sick-leave↔expense linkage and proof reuse deferred with the leave/expense decision backlog)
+  - Server-action POST still unreachable via curl (known Next.js restriction) → browser E2E of the expense forms remains, same as attendance/leave
+- **Result/next**: **All three MVP modules (attendance/leave/expense) implemented & DB/page-verified.** Next candidates: ① checkpoint commit for Session 7 ② browser E2E sweep ③ email notifications (NOT-1) ④ stable domain/tunnel, then GitHub release. Requires `gh auth login` for push.
 
 <!-- ====== Template for next sessions (copy & use) ======
 ### Session 5 (2026-09-24): <title>

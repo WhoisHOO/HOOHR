@@ -112,8 +112,8 @@ export default async function DashboardPage() {
       <div className="mt-8 rounded-xl border border-zinc-200 bg-white p-6">
         <h2 className="text-sm font-semibold text-zinc-900">다음 단계</h2>
         <p className="mt-2 text-sm text-zinc-600">
-          근태 · 휴가 모듈이 열렸습니다. 경비 모듈이 구현되면 사이드바의
-          &quot;준비중&quot; 표시가 제거됩니다.
+          근태 · 휴가 · 경비 모듈이 모두 열렸습니다. 이제 출근 체크, 휴가 신청,
+          경비 정산을 이용할 수 있습니다.
         </p>
       </div>
     </div>

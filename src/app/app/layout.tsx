@@ -6,7 +6,7 @@ const NAV_ITEMS = [
   { href: "/app", label: "대시보드", ready: true },
   { href: "/app/attendance", label: "근태", ready: true },
   { href: "/app/leave", label: "휴가", ready: true },
-  { href: "/app/expenses", label: "경비", ready: false },
+  { href: "/app/expenses", label: "경비", ready: true },
 ];
 
 export default async function AppLayout({ children }: LayoutProps<"/app">) {
