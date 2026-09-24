@@ -60,6 +60,11 @@ enum CorrectionStatus {
   REJECTED
 }
 
+enum AttendanceEventKind {
+  CHECK_IN
+  CHECK_OUT
+}
+
 enum NotificationType {
   LEAVE_REQUEST
   LEAVE_DECISION
@@ -91,6 +96,7 @@ model Company {
   expenseReports    ExpenseReport[]
   attendanceRecords AttendanceRecord[]
   attendanceCorrections AttendanceCorrection[]
+  attendanceEvents AttendanceEvent[]
 }
 
 model Department {
@@ -131,6 +137,7 @@ model Employee {
   attendanceRecords  AttendanceRecord[]
   corrections        AttendanceCorrection[]
   expenseReports     ExpenseReport[]
+  attendanceEvents   AttendanceEvent[]
 
   @@unique([companyId, email])
 }
@@ -231,6 +238,7 @@ model AttendanceRecord {
   company  Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
   employee Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   corrections AttendanceCorrection[]
+  events    AttendanceEvent[]
 
   @@unique([employeeId, date])
 }
@@ -253,6 +261,23 @@ model AttendanceCorrection {
   employee   Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   attendance AttendanceRecord? @relation(fields: [attendanceId], references: [id], onDelete: SetNull)
   decidedBy  User?             @relation("CorrectionDecider", fields: [decidedById], references: [id])
+}
+
+model AttendanceEvent {
+  id           String               @id @default(cuid())
+  companyId    String
+  employeeId   String
+  attendanceId String
+  kind         AttendanceEventKind
+  at           DateTime
+  createdAt    DateTime             @default(now())
+
+  company    Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee   Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  attendance AttendanceRecord @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+
+  @@index([attendanceId, at])
+  @@index([employeeId, at])
 }
 
 // ============ 경비 ============

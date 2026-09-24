@@ -406,6 +406,7 @@ export const ModelName = {
   LeaveRequest: 'LeaveRequest',
   AttendanceRecord: 'AttendanceRecord',
   AttendanceCorrection: 'AttendanceCorrection',
+  AttendanceEvent: 'AttendanceEvent',
   ExpenseCategory: 'ExpenseCategory',
   ExpenseReport: 'ExpenseReport',
   ExpenseItem: 'ExpenseItem',
@@ -429,7 +430,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "company" | "department" | "employee" | "user" | "leavePolicy" | "leaveBalance" | "leaveRequest" | "attendanceRecord" | "attendanceCorrection" | "expenseCategory" | "expenseReport" | "expenseItem" | "receiptFile" | "approval" | "notification" | "holiday" | "invitation"
+    modelProps: "company" | "department" | "employee" | "user" | "leavePolicy" | "leaveBalance" | "leaveRequest" | "attendanceRecord" | "attendanceCorrection" | "attendanceEvent" | "expenseCategory" | "expenseReport" | "expenseItem" | "receiptFile" | "approval" | "notification" | "holiday" | "invitation"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1096,6 +1097,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.AttendanceCorrectionCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.AttendanceCorrectionCountAggregateOutputType> | number
+        }
+      }
+    }
+    AttendanceEvent: {
+      payload: Prisma.$AttendanceEventPayload<ExtArgs>
+      fields: Prisma.AttendanceEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.AttendanceEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.AttendanceEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceEventPayload>
+        }
+        findFirst: {
+          args: Prisma.AttendanceEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.AttendanceEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceEventPayload>
+        }
+        findMany: {
+          args: Prisma.AttendanceEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceEventPayload>[]
+        }
+        create: {
+          args: Prisma.AttendanceEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceEventPayload>
+        }
+        createMany: {
+          args: Prisma.AttendanceEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.AttendanceEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceEventPayload>[]
+        }
+        delete: {
+          args: Prisma.AttendanceEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceEventPayload>
+        }
+        update: {
+          args: Prisma.AttendanceEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.AttendanceEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.AttendanceEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.AttendanceEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.AttendanceEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$AttendanceEventPayload>
+        }
+        aggregate: {
+          args: Prisma.AttendanceEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateAttendanceEvent>
+        }
+        groupBy: {
+          args: Prisma.AttendanceEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AttendanceEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.AttendanceEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AttendanceEventCountAggregateOutputType> | number
         }
       }
     }
@@ -1867,6 +1942,19 @@ export const AttendanceCorrectionScalarFieldEnum = {
 export type AttendanceCorrectionScalarFieldEnum = (typeof AttendanceCorrectionScalarFieldEnum)[keyof typeof AttendanceCorrectionScalarFieldEnum]
 
 
+export const AttendanceEventScalarFieldEnum = {
+  id: 'id',
+  companyId: 'companyId',
+  employeeId: 'employeeId',
+  attendanceId: 'attendanceId',
+  kind: 'kind',
+  at: 'at',
+  createdAt: 'createdAt'
+} as const
+
+export type AttendanceEventScalarFieldEnum = (typeof AttendanceEventScalarFieldEnum)[keyof typeof AttendanceEventScalarFieldEnum]
+
+
 export const ExpenseCategoryScalarFieldEnum = {
   id: 'id',
   companyId: 'companyId',
@@ -2141,6 +2229,20 @@ export type ListEnumCorrectionStatusFieldRefInput<$PrismaModel> = FieldRefInputT
 
 
 /**
+ * Reference to a field of type 'AttendanceEventKind'
+ */
+export type EnumAttendanceEventKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AttendanceEventKind'>
+    
+
+
+/**
+ * Reference to a field of type 'AttendanceEventKind[]'
+ */
+export type ListEnumAttendanceEventKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AttendanceEventKind[]'>
+    
+
+
+/**
  * Reference to a field of type 'ExpenseStatus'
  */
 export type EnumExpenseStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ExpenseStatus'>
@@ -2355,6 +2457,7 @@ export type GlobalOmitConfig = {
   leaveRequest?: Prisma.LeaveRequestOmit
   attendanceRecord?: Prisma.AttendanceRecordOmit
   attendanceCorrection?: Prisma.AttendanceCorrectionOmit
+  attendanceEvent?: Prisma.AttendanceEventOmit
   expenseCategory?: Prisma.ExpenseCategoryOmit
   expenseReport?: Prisma.ExpenseReportOmit
   expenseItem?: Prisma.ExpenseItemOmit

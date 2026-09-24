@@ -14,17 +14,7 @@ import {
 } from "@/lib/auth-validation";
 import { createSession, deleteSession } from "@/lib/session";
 import { requireAdmin } from "@/lib/dal";
-
-function fieldErrors(
-  issues: { path: PropertyKey[]; message: string }[],
-): Record<string, string[]> {
-  const out: Record<string, string[]> = {};
-  for (const issue of issues) {
-    const key = String(issue.path[0] ?? "form");
-    (out[key] ??= []).push(issue.message);
-  }
-  return out;
-}
+import { fieldErrors } from "@/lib/form-utils";
 
 // ============ 로그인 / 로그아웃 ============
 

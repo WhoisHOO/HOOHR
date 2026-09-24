@@ -194,6 +194,7 @@ export type CompanyWhereInput = {
   expenseReports?: Prisma.ExpenseReportListRelationFilter
   attendanceRecords?: Prisma.AttendanceRecordListRelationFilter
   attendanceCorrections?: Prisma.AttendanceCorrectionListRelationFilter
+  attendanceEvents?: Prisma.AttendanceEventListRelationFilter
 }
 
 export type CompanyOrderByWithRelationInput = {
@@ -214,6 +215,7 @@ export type CompanyOrderByWithRelationInput = {
   expenseReports?: Prisma.ExpenseReportOrderByRelationAggregateInput
   attendanceRecords?: Prisma.AttendanceRecordOrderByRelationAggregateInput
   attendanceCorrections?: Prisma.AttendanceCorrectionOrderByRelationAggregateInput
+  attendanceEvents?: Prisma.AttendanceEventOrderByRelationAggregateInput
 }
 
 export type CompanyWhereUniqueInput = Prisma.AtLeast<{
@@ -237,6 +239,7 @@ export type CompanyWhereUniqueInput = Prisma.AtLeast<{
   expenseReports?: Prisma.ExpenseReportListRelationFilter
   attendanceRecords?: Prisma.AttendanceRecordListRelationFilter
   attendanceCorrections?: Prisma.AttendanceCorrectionListRelationFilter
+  attendanceEvents?: Prisma.AttendanceEventListRelationFilter
 }, "id">
 
 export type CompanyOrderByWithAggregationInput = {
@@ -279,6 +282,7 @@ export type CompanyCreateInput = {
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateInput = {
@@ -299,6 +303,7 @@ export type CompanyUncheckedCreateInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUpdateInput = {
@@ -319,6 +324,7 @@ export type CompanyUpdateInput = {
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateInput = {
@@ -339,6 +345,7 @@ export type CompanyUncheckedUpdateInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateManyInput = {
@@ -500,6 +507,20 @@ export type CompanyUpdateOneRequiredWithoutAttendanceCorrectionsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutAttendanceCorrectionsInput, Prisma.CompanyUpdateWithoutAttendanceCorrectionsInput>, Prisma.CompanyUncheckedUpdateWithoutAttendanceCorrectionsInput>
 }
 
+export type CompanyCreateNestedOneWithoutAttendanceEventsInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutAttendanceEventsInput, Prisma.CompanyUncheckedCreateWithoutAttendanceEventsInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutAttendanceEventsInput
+  connect?: Prisma.CompanyWhereUniqueInput
+}
+
+export type CompanyUpdateOneRequiredWithoutAttendanceEventsNestedInput = {
+  create?: Prisma.XOR<Prisma.CompanyCreateWithoutAttendanceEventsInput, Prisma.CompanyUncheckedCreateWithoutAttendanceEventsInput>
+  connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutAttendanceEventsInput
+  upsert?: Prisma.CompanyUpsertWithoutAttendanceEventsInput
+  connect?: Prisma.CompanyWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.CompanyUpdateToOneWithWhereWithoutAttendanceEventsInput, Prisma.CompanyUpdateWithoutAttendanceEventsInput>, Prisma.CompanyUncheckedUpdateWithoutAttendanceEventsInput>
+}
+
 export type CompanyCreateNestedOneWithoutExpenseCategoriesInput = {
   create?: Prisma.XOR<Prisma.CompanyCreateWithoutExpenseCategoriesInput, Prisma.CompanyUncheckedCreateWithoutExpenseCategoriesInput>
   connectOrCreate?: Prisma.CompanyCreateOrConnectWithoutExpenseCategoriesInput
@@ -587,6 +608,7 @@ export type CompanyCreateWithoutDepartmentsInput = {
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutDepartmentsInput = {
@@ -606,6 +628,7 @@ export type CompanyUncheckedCreateWithoutDepartmentsInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutDepartmentsInput = {
@@ -641,6 +664,7 @@ export type CompanyUpdateWithoutDepartmentsInput = {
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutDepartmentsInput = {
@@ -660,6 +684,7 @@ export type CompanyUncheckedUpdateWithoutDepartmentsInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutEmployeesInput = {
@@ -679,6 +704,7 @@ export type CompanyCreateWithoutEmployeesInput = {
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutEmployeesInput = {
@@ -698,6 +724,7 @@ export type CompanyUncheckedCreateWithoutEmployeesInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutEmployeesInput = {
@@ -733,6 +760,7 @@ export type CompanyUpdateWithoutEmployeesInput = {
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutEmployeesInput = {
@@ -752,6 +780,7 @@ export type CompanyUncheckedUpdateWithoutEmployeesInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutUsersInput = {
@@ -771,6 +800,7 @@ export type CompanyCreateWithoutUsersInput = {
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutUsersInput = {
@@ -790,6 +820,7 @@ export type CompanyUncheckedCreateWithoutUsersInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutUsersInput = {
@@ -825,6 +856,7 @@ export type CompanyUpdateWithoutUsersInput = {
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutUsersInput = {
@@ -844,6 +876,7 @@ export type CompanyUncheckedUpdateWithoutUsersInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutLeavePoliciesInput = {
@@ -863,6 +896,7 @@ export type CompanyCreateWithoutLeavePoliciesInput = {
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutLeavePoliciesInput = {
@@ -882,6 +916,7 @@ export type CompanyUncheckedCreateWithoutLeavePoliciesInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutLeavePoliciesInput = {
@@ -917,6 +952,7 @@ export type CompanyUpdateWithoutLeavePoliciesInput = {
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutLeavePoliciesInput = {
@@ -936,6 +972,7 @@ export type CompanyUncheckedUpdateWithoutLeavePoliciesInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutLeaveRequestsInput = {
@@ -955,6 +992,7 @@ export type CompanyCreateWithoutLeaveRequestsInput = {
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutLeaveRequestsInput = {
@@ -974,6 +1012,7 @@ export type CompanyUncheckedCreateWithoutLeaveRequestsInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutLeaveRequestsInput = {
@@ -1009,6 +1048,7 @@ export type CompanyUpdateWithoutLeaveRequestsInput = {
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutLeaveRequestsInput = {
@@ -1028,6 +1068,7 @@ export type CompanyUncheckedUpdateWithoutLeaveRequestsInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutAttendanceRecordsInput = {
@@ -1047,6 +1088,7 @@ export type CompanyCreateWithoutAttendanceRecordsInput = {
   leaveRequests?: Prisma.LeaveRequestCreateNestedManyWithoutCompanyInput
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutAttendanceRecordsInput = {
@@ -1066,6 +1108,7 @@ export type CompanyUncheckedCreateWithoutAttendanceRecordsInput = {
   leaveRequests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutCompanyInput
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutAttendanceRecordsInput = {
@@ -1101,6 +1144,7 @@ export type CompanyUpdateWithoutAttendanceRecordsInput = {
   leaveRequests?: Prisma.LeaveRequestUpdateManyWithoutCompanyNestedInput
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutAttendanceRecordsInput = {
@@ -1120,6 +1164,7 @@ export type CompanyUncheckedUpdateWithoutAttendanceRecordsInput = {
   leaveRequests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutCompanyNestedInput
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutAttendanceCorrectionsInput = {
@@ -1139,6 +1184,7 @@ export type CompanyCreateWithoutAttendanceCorrectionsInput = {
   leaveRequests?: Prisma.LeaveRequestCreateNestedManyWithoutCompanyInput
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutAttendanceCorrectionsInput = {
@@ -1158,6 +1204,7 @@ export type CompanyUncheckedCreateWithoutAttendanceCorrectionsInput = {
   leaveRequests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutCompanyInput
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutAttendanceCorrectionsInput = {
@@ -1193,6 +1240,7 @@ export type CompanyUpdateWithoutAttendanceCorrectionsInput = {
   leaveRequests?: Prisma.LeaveRequestUpdateManyWithoutCompanyNestedInput
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutAttendanceCorrectionsInput = {
@@ -1212,6 +1260,103 @@ export type CompanyUncheckedUpdateWithoutAttendanceCorrectionsInput = {
   leaveRequests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutCompanyNestedInput
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyCreateWithoutAttendanceEventsInput = {
+  id?: string
+  name: string
+  timezone?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.UserCreateNestedManyWithoutCompanyInput
+  departments?: Prisma.DepartmentCreateNestedManyWithoutCompanyInput
+  employees?: Prisma.EmployeeCreateNestedManyWithoutCompanyInput
+  leavePolicies?: Prisma.LeavePolicyCreateNestedManyWithoutCompanyInput
+  expenseCategories?: Prisma.ExpenseCategoryCreateNestedManyWithoutCompanyInput
+  holidays?: Prisma.HolidayCreateNestedManyWithoutCompanyInput
+  invitations?: Prisma.InvitationCreateNestedManyWithoutCompanyInput
+  notifications?: Prisma.NotificationCreateNestedManyWithoutCompanyInput
+  leaveRequests?: Prisma.LeaveRequestCreateNestedManyWithoutCompanyInput
+  expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutCompanyInput
+  attendanceRecords?: Prisma.AttendanceRecordCreateNestedManyWithoutCompanyInput
+  attendanceCorrections?: Prisma.AttendanceCorrectionCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyUncheckedCreateWithoutAttendanceEventsInput = {
+  id?: string
+  name: string
+  timezone?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
+  departments?: Prisma.DepartmentUncheckedCreateNestedManyWithoutCompanyInput
+  employees?: Prisma.EmployeeUncheckedCreateNestedManyWithoutCompanyInput
+  leavePolicies?: Prisma.LeavePolicyUncheckedCreateNestedManyWithoutCompanyInput
+  expenseCategories?: Prisma.ExpenseCategoryUncheckedCreateNestedManyWithoutCompanyInput
+  holidays?: Prisma.HolidayUncheckedCreateNestedManyWithoutCompanyInput
+  invitations?: Prisma.InvitationUncheckedCreateNestedManyWithoutCompanyInput
+  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutCompanyInput
+  leaveRequests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutCompanyInput
+  expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceRecords?: Prisma.AttendanceRecordUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutCompanyInput
+}
+
+export type CompanyCreateOrConnectWithoutAttendanceEventsInput = {
+  where: Prisma.CompanyWhereUniqueInput
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutAttendanceEventsInput, Prisma.CompanyUncheckedCreateWithoutAttendanceEventsInput>
+}
+
+export type CompanyUpsertWithoutAttendanceEventsInput = {
+  update: Prisma.XOR<Prisma.CompanyUpdateWithoutAttendanceEventsInput, Prisma.CompanyUncheckedUpdateWithoutAttendanceEventsInput>
+  create: Prisma.XOR<Prisma.CompanyCreateWithoutAttendanceEventsInput, Prisma.CompanyUncheckedCreateWithoutAttendanceEventsInput>
+  where?: Prisma.CompanyWhereInput
+}
+
+export type CompanyUpdateToOneWithWhereWithoutAttendanceEventsInput = {
+  where?: Prisma.CompanyWhereInput
+  data: Prisma.XOR<Prisma.CompanyUpdateWithoutAttendanceEventsInput, Prisma.CompanyUncheckedUpdateWithoutAttendanceEventsInput>
+}
+
+export type CompanyUpdateWithoutAttendanceEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
+  departments?: Prisma.DepartmentUpdateManyWithoutCompanyNestedInput
+  employees?: Prisma.EmployeeUpdateManyWithoutCompanyNestedInput
+  leavePolicies?: Prisma.LeavePolicyUpdateManyWithoutCompanyNestedInput
+  expenseCategories?: Prisma.ExpenseCategoryUpdateManyWithoutCompanyNestedInput
+  holidays?: Prisma.HolidayUpdateManyWithoutCompanyNestedInput
+  invitations?: Prisma.InvitationUpdateManyWithoutCompanyNestedInput
+  notifications?: Prisma.NotificationUpdateManyWithoutCompanyNestedInput
+  leaveRequests?: Prisma.LeaveRequestUpdateManyWithoutCompanyNestedInput
+  expenseReports?: Prisma.ExpenseReportUpdateManyWithoutCompanyNestedInput
+  attendanceRecords?: Prisma.AttendanceRecordUpdateManyWithoutCompanyNestedInput
+  attendanceCorrections?: Prisma.AttendanceCorrectionUpdateManyWithoutCompanyNestedInput
+}
+
+export type CompanyUncheckedUpdateWithoutAttendanceEventsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  timezone?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
+  departments?: Prisma.DepartmentUncheckedUpdateManyWithoutCompanyNestedInput
+  employees?: Prisma.EmployeeUncheckedUpdateManyWithoutCompanyNestedInput
+  leavePolicies?: Prisma.LeavePolicyUncheckedUpdateManyWithoutCompanyNestedInput
+  expenseCategories?: Prisma.ExpenseCategoryUncheckedUpdateManyWithoutCompanyNestedInput
+  holidays?: Prisma.HolidayUncheckedUpdateManyWithoutCompanyNestedInput
+  invitations?: Prisma.InvitationUncheckedUpdateManyWithoutCompanyNestedInput
+  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutCompanyNestedInput
+  leaveRequests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutCompanyNestedInput
+  expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceRecords?: Prisma.AttendanceRecordUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutExpenseCategoriesInput = {
@@ -1231,6 +1376,7 @@ export type CompanyCreateWithoutExpenseCategoriesInput = {
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutExpenseCategoriesInput = {
@@ -1250,6 +1396,7 @@ export type CompanyUncheckedCreateWithoutExpenseCategoriesInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutExpenseCategoriesInput = {
@@ -1285,6 +1432,7 @@ export type CompanyUpdateWithoutExpenseCategoriesInput = {
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutExpenseCategoriesInput = {
@@ -1304,6 +1452,7 @@ export type CompanyUncheckedUpdateWithoutExpenseCategoriesInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutExpenseReportsInput = {
@@ -1323,6 +1472,7 @@ export type CompanyCreateWithoutExpenseReportsInput = {
   leaveRequests?: Prisma.LeaveRequestCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutExpenseReportsInput = {
@@ -1342,6 +1492,7 @@ export type CompanyUncheckedCreateWithoutExpenseReportsInput = {
   leaveRequests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutExpenseReportsInput = {
@@ -1377,6 +1528,7 @@ export type CompanyUpdateWithoutExpenseReportsInput = {
   leaveRequests?: Prisma.LeaveRequestUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutExpenseReportsInput = {
@@ -1396,6 +1548,7 @@ export type CompanyUncheckedUpdateWithoutExpenseReportsInput = {
   leaveRequests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutNotificationsInput = {
@@ -1415,6 +1568,7 @@ export type CompanyCreateWithoutNotificationsInput = {
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutNotificationsInput = {
@@ -1434,6 +1588,7 @@ export type CompanyUncheckedCreateWithoutNotificationsInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutNotificationsInput = {
@@ -1469,6 +1624,7 @@ export type CompanyUpdateWithoutNotificationsInput = {
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutNotificationsInput = {
@@ -1488,6 +1644,7 @@ export type CompanyUncheckedUpdateWithoutNotificationsInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutHolidaysInput = {
@@ -1507,6 +1664,7 @@ export type CompanyCreateWithoutHolidaysInput = {
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutHolidaysInput = {
@@ -1526,6 +1684,7 @@ export type CompanyUncheckedCreateWithoutHolidaysInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutHolidaysInput = {
@@ -1561,6 +1720,7 @@ export type CompanyUpdateWithoutHolidaysInput = {
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutHolidaysInput = {
@@ -1580,6 +1740,7 @@ export type CompanyUncheckedUpdateWithoutHolidaysInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyCreateWithoutInvitationsInput = {
@@ -1599,6 +1760,7 @@ export type CompanyCreateWithoutInvitationsInput = {
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyUncheckedCreateWithoutInvitationsInput = {
@@ -1618,6 +1780,7 @@ export type CompanyUncheckedCreateWithoutInvitationsInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutCompanyInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedCreateNestedManyWithoutCompanyInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutCompanyInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedCreateNestedManyWithoutCompanyInput
 }
 
 export type CompanyCreateOrConnectWithoutInvitationsInput = {
@@ -1653,6 +1816,7 @@ export type CompanyUpdateWithoutInvitationsInput = {
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUpdateManyWithoutCompanyNestedInput
 }
 
 export type CompanyUncheckedUpdateWithoutInvitationsInput = {
@@ -1672,6 +1836,7 @@ export type CompanyUncheckedUpdateWithoutInvitationsInput = {
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceRecords?: Prisma.AttendanceRecordUncheckedUpdateManyWithoutCompanyNestedInput
   attendanceCorrections?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutCompanyNestedInput
+  attendanceEvents?: Prisma.AttendanceEventUncheckedUpdateManyWithoutCompanyNestedInput
 }
 
 
@@ -1692,6 +1857,7 @@ export type CompanyCountOutputType = {
   expenseReports: number
   attendanceRecords: number
   attendanceCorrections: number
+  attendanceEvents: number
 }
 
 export type CompanyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1707,6 +1873,7 @@ export type CompanyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extension
   expenseReports?: boolean | CompanyCountOutputTypeCountExpenseReportsArgs
   attendanceRecords?: boolean | CompanyCountOutputTypeCountAttendanceRecordsArgs
   attendanceCorrections?: boolean | CompanyCountOutputTypeCountAttendanceCorrectionsArgs
+  attendanceEvents?: boolean | CompanyCountOutputTypeCountAttendanceEventsArgs
 }
 
 /**
@@ -1803,6 +1970,13 @@ export type CompanyCountOutputTypeCountAttendanceCorrectionsArgs<ExtArgs extends
   where?: Prisma.AttendanceCorrectionWhereInput
 }
 
+/**
+ * CompanyCountOutputType without action
+ */
+export type CompanyCountOutputTypeCountAttendanceEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.AttendanceEventWhereInput
+}
+
 
 export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1822,6 +1996,7 @@ export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   expenseReports?: boolean | Prisma.Company$expenseReportsArgs<ExtArgs>
   attendanceRecords?: boolean | Prisma.Company$attendanceRecordsArgs<ExtArgs>
   attendanceCorrections?: boolean | Prisma.Company$attendanceCorrectionsArgs<ExtArgs>
+  attendanceEvents?: boolean | Prisma.Company$attendanceEventsArgs<ExtArgs>
   _count?: boolean | Prisma.CompanyCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["company"]>
 
@@ -1863,6 +2038,7 @@ export type CompanyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs
   expenseReports?: boolean | Prisma.Company$expenseReportsArgs<ExtArgs>
   attendanceRecords?: boolean | Prisma.Company$attendanceRecordsArgs<ExtArgs>
   attendanceCorrections?: boolean | Prisma.Company$attendanceCorrectionsArgs<ExtArgs>
+  attendanceEvents?: boolean | Prisma.Company$attendanceEventsArgs<ExtArgs>
   _count?: boolean | Prisma.CompanyCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type CompanyIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -1883,6 +2059,7 @@ export type $CompanyPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     expenseReports: Prisma.$ExpenseReportPayload<ExtArgs>[]
     attendanceRecords: Prisma.$AttendanceRecordPayload<ExtArgs>[]
     attendanceCorrections: Prisma.$AttendanceCorrectionPayload<ExtArgs>[]
+    attendanceEvents: Prisma.$AttendanceEventPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -2296,6 +2473,7 @@ export interface Prisma__CompanyClient<T, Null = never, ExtArgs extends runtime.
   expenseReports<T extends Prisma.Company$expenseReportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$expenseReportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExpenseReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   attendanceRecords<T extends Prisma.Company$attendanceRecordsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$attendanceRecordsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttendanceRecordPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   attendanceCorrections<T extends Prisma.Company$attendanceCorrectionsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$attendanceCorrectionsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttendanceCorrectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  attendanceEvents<T extends Prisma.Company$attendanceEventsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Company$attendanceEventsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttendanceEventPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3008,6 +3186,30 @@ export type Company$attendanceCorrectionsArgs<ExtArgs extends runtime.Types.Exte
   take?: number
   skip?: number
   distinct?: Prisma.AttendanceCorrectionScalarFieldEnum | Prisma.AttendanceCorrectionScalarFieldEnum[]
+}
+
+/**
+ * Company.attendanceEvents
+ */
+export type Company$attendanceEventsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the AttendanceEvent
+   */
+  select?: Prisma.AttendanceEventSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the AttendanceEvent
+   */
+  omit?: Prisma.AttendanceEventOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.AttendanceEventInclude<ExtArgs> | null
+  where?: Prisma.AttendanceEventWhereInput
+  orderBy?: Prisma.AttendanceEventOrderByWithRelationInput | Prisma.AttendanceEventOrderByWithRelationInput[]
+  cursor?: Prisma.AttendanceEventWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.AttendanceEventScalarFieldEnum | Prisma.AttendanceEventScalarFieldEnum[]
 }
 
 /**

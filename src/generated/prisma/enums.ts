@@ -84,6 +84,14 @@ export const CorrectionStatus = {
 export type CorrectionStatus = (typeof CorrectionStatus)[keyof typeof CorrectionStatus]
 
 
+export const AttendanceEventKind = {
+  CHECK_IN: 'CHECK_IN',
+  CHECK_OUT: 'CHECK_OUT'
+} as const
+
+export type AttendanceEventKind = (typeof AttendanceEventKind)[keyof typeof AttendanceEventKind]
+
+
 export const NotificationType = {
   LEAVE_REQUEST: 'LEAVE_REQUEST',
   LEAVE_DECISION: 'LEAVE_DECISION',

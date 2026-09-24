@@ -63,6 +63,11 @@ export type AttendanceRecord = Prisma.AttendanceRecordModel
  */
 export type AttendanceCorrection = Prisma.AttendanceCorrectionModel
 /**
+ * Model AttendanceEvent
+ * 
+ */
+export type AttendanceEvent = Prisma.AttendanceEventModel
+/**
  * Model ExpenseCategory
  * 
  */

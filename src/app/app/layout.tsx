@@ -4,8 +4,8 @@ import { logout } from "@/app/actions/auth";
 
 const NAV_ITEMS = [
   { href: "/app", label: "대시보드", ready: true },
-  { href: "/app/attendance", label: "근태", ready: false },
-  { href: "/app/leave", label: "휴가", ready: false },
+  { href: "/app/attendance", label: "근태", ready: true },
+  { href: "/app/leave", label: "휴가", ready: true },
   { href: "/app/expenses", label: "경비", ready: false },
 ];
 
@@ -56,6 +56,12 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
                 className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
               >
                 직원 초대
+              </Link>
+              <Link
+                href="/app/admin/balances"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+              >
+                연차 잔여 가져오기
               </Link>
             </>
           )}
