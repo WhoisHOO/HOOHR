@@ -52,6 +52,12 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
                 관리자
               </p>
               <Link
+                href="/app/admin/employees"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+              >
+                직원·조직
+              </Link>
+              <Link
                 href="/app/admin/invite"
                 className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
               >

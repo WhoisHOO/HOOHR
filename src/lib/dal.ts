@@ -4,14 +4,21 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { decrypt } from "@/lib/session";
+import {
+  approvalReviewerFromUser,
+  approvalReviewerSelect,
+} from "@/lib/team";
 
 export type SessionUser = {
   id: string;
   companyId: string;
   role: string;
+  isActive: boolean;
   name: string;
   email: string;
   employeeId: string | null;
+  employeeCompanyId: string | null;
+  employeeStatus: string | null;
 };
 
 /** 쿠키 세션 검증 (무효 시 null). 모든 데이터 요청의 단일 진입점. */
@@ -38,25 +45,26 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
     select: {
-      id: true,
-      companyId: true,
-      role: true,
+      ...approvalReviewerSelect,
       name: true,
       email: true,
       isActive: true,
-      employee: { select: { id: true, departmentId: true, position: true } },
     },
   });
 
   if (!user || !user.isActive) return null;
 
+  const reviewer = approvalReviewerFromUser(user);
   return {
     id: user.id,
-    companyId: user.companyId,
-    role: user.role,
+    companyId: reviewer.companyId,
+    role: reviewer.role,
+    isActive: reviewer.isActive,
     name: user.name,
     email: user.email,
-    employeeId: user.employee?.id ?? null,
+    employeeId: reviewer.employeeId,
+    employeeCompanyId: reviewer.employeeCompanyId,
+    employeeStatus: reviewer.employeeStatus,
   };
 });
 

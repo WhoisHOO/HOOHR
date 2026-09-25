@@ -13,9 +13,9 @@
 
 ---
 
-## 📍 Current Status (as of 2026-09-24, end of Session 7)
+## 📍 Current Status (as of 2026-09-25, end of Session 9)
 
-**Progress: Auth + Attendance + Leave + Expense module MVP all implemented (DB & page verified). All 3 modules open in the sidebar. Checkpoint commits local; GitHub push still needs `gh auth login`.**
+**Progress: Auth + Attendance + Leave + Expense MVP done (incl. expense CSV export), plus employee/org admin (EMP-1/3/4) and team-scoped approvals. Remaining MVP: email notifications (NOT-1/2), settings module (SET-1..4), stable domain & GitHub push (`gh auth login`).**
 
 > **Session 6 note**: Session 5 ended five minutes before the Leave module files were produced. The DB logic round-trip (`_test-leave.ts`), lint/tsc, and GET checks were done in Session 6. Server-action E2E (browser) of leave forms remains, same as attendance.
 
@@ -40,12 +40,18 @@
 | Attendance module (check-in/out, corrections, team view) | ✅ Done (Session 5) |
 | Leave module (request/approve/cancel, balances, CSV import) | ✅ Done (Session 6) |
 | Expense module (reports/items/receipts, approve, pay) | ✅ Done (Session 7) |
-| Checkpoint commit (Session 5–7) | 🔄 `1809e0c` committed locally; push needs `gh auth login` |
+| Expense CSV export (EXP-6) | ✅ Done (Session 8) |
+| Employee & org admin (departments, profile, status, re-invite) | ✅ Done (Session 9) |
+| Team-scoped approval inboxes (attendance/leave/expense) | ✅ Done (Session 9) |
+| Email notifications (NOT-1/2) | ⬜ Pending — needs SMTP config |
+| Settings module (company profile, holidays, policy mgmt) | ⬜ Pending (SET-1..4) |
+| Checkpoint commit (Session 5–8) | ✅ Commits local; push needs `gh auth login` |
 
 > **Key notes:**
 > - **500 "Connection closed." when POSTing server actions via curl/fetch is a known Next.js restriction** — not an app bug. Test real flows via browser.
 > - Quick-tunnel URL persists only while the same `cloudflared` process is alive; restart/reboot generates a **new random URL**. Unrelated to dev-server restarts.
 > - This PC's router DNS (192.168.1.254) fails to resolve some trycloudflare hostnames → verify via `--resolve` or 8.8.8.8. Other devices are fine.
+> - **GET checks with a session cookie: use `curl.exe`, not `Invoke-WebRequest`** — PowerShell silently drops a manual `Cookie` header, which looks like a redirect loop to /login. Mint a cookie with `npx tsx _mint-cookie.ts [email]`.
 
 > **Common commands (use at start of each session):**
 > ```bash
@@ -93,9 +99,9 @@
 - Kafka/Hadoop will be introduced only when data volume justifies it (v0.2+); keep schema/DAG compatible
 - See `docs/REQUIREMENTS.md` sections 1.3/6, and new section 10
 
-### 2. Leave policy rules — undecided
-- Annual leave accrual: hire-date-based vs calendar-year? Carry-over cap? (baseline: N days/year by hire month, M-day carry-over cap)
-- Sick leave: N paid days + mandatory proof?
+### 2. Leave policy rules — partial
+- **PTO 10 days/yr, Sick 5 days/yr** — ✅ decided by user (2026-09-24, Session 9), applied to seed + live DB (`leavePolicy.annualDays`, current-year `leaveBalance.grantedDays` → PTO 10 / SICK 5; PTO carry-over cap 5)
+- **Still open**: accrual basis (hire-date vs calendar-year), carry-over mechanics beyond the cap value, sick-leave proof policy
 
 ### 3. Sick-leave vs expense linkage scenario
 - "Claim expenses with receipts when on sick leave" — attach proof to leave request, or a separate expense claim? Needs separation
@@ -291,6 +297,58 @@ C:\apps\projects\hr-app\
   - One-file-per-item UI for MVP (schema supports multiple `ReceiptFile` per item; sick-leave↔expense linkage and proof reuse deferred with the leave/expense decision backlog)
   - Server-action POST still unreachable via curl (known Next.js restriction) → browser E2E of the expense forms remains, same as attendance/leave
 - **Result/next**: **All three MVP modules (attendance/leave/expense) implemented & DB/page-verified.** Next candidates: ① checkpoint commit for Session 7 ② browser E2E sweep ③ email notifications (NOT-1) ④ stable domain/tunnel, then GitHub release. Requires `gh auth login` for push.
+
+### Session 8 (2026-09-24): Session 7 checkpoint commit + Expense CSV export (EXP-6)
+
+> **Note**: Record updated incrementally while working (sections keep getting cut). Covers: ① Session 7 expense module checkpoint commit ② EXP-6 CSV export.
+
+- **Checkpoint commit**: Session 7 work (expense module + protected file serving + config) committed as `expense` commit (see `git log`). Local only — push still needs `gh auth login`.
+- **CSV export plan** (MVP §7 item 5, EXP-6): server route exporting a month of expense items for accounting reconciliation.
+  - Route: `/app/expenses/export?month=YYYY-MM` (defaults to current month), proxy-protected
+  - Scope: EMPLOYEE own reports; MANAGER/ADMIN company-wide (adds employee column)
+  - Columns: date, category, title, amount (decimal .2), currency, status, description, receipt filenames
+  - UTF-8 **BOM** (Excel-safe for Korean), RFC 5987 ASCII-safe download filename
+  - Excludes DRAFT (not yet submitted); all other statuses included
+- **Progress so far**: commit done. CSV export in progress.
+- **CSV export — done**:
+  - `src/app/app/expenses/export/route.ts` — GET handler with `?month=YYYY-MM` (default current month); EMPLOYEE scope = own reports, MANAGER/ADMIN = company-wide (adds `employee` column); excludes DRAFT; columns date/category(employee)/title/status/amount/currency/description/receipts; proper CSV quoting (embedded commas, quotes, newlines); **UTF-8 BOM** for Excel-safe Korean; RFC 5987 `filename*=UTF-8''expenses-YYYY-MM.csv`
+  - Expenses page header now shows "이번 달 CSV 내보내기" link (company-tz current month)
+  - No schema change; no new dependency
+- **Verification**: `npm run lint` + `npx tsc --noEmit` clean; GET `/app/expenses/export?month=2026-09` with admin cookie → 200 `text/csv; charset=utf-8`, header row with BOM, Korean values + escaped `"comma, quote ""test"""` description + receipt filename `식대.pdf` all correct; expenses page 200 with export link; `_test-expense.ts` regression green; unauthenticated export → proxy 307 /login
+- **Ops note**: Docker Desktop (and `next dev`) were down at session start — restarted, `hr_app_db` healthy again, dev server relaunched (`dev-server.log`). This is a recurring environment check at each session start.
+- **Result/next**: CSV export complete → MVP feature item "CSV export" ✅. Next: ① checkpoint commit for Session 8 ② email notifications (NOT-1) once SMTP is available ③ employee/settings admin (EMP-3/4, SET-1..4) ④ stable domain + `gh auth login` + GitHub push.
+
+### Session 9 (2026-09-24): Leave policy decision (PTO 10/SICK 5) + Employee & Org Management (EMP-1/3/4) + Team-scoped approvals
+
+> **Note**: Record updated incrementally while working (sections keep getting cut). Covers: ① leave-policy decision + live-DB apply ② Employee/Org admin module (departments, employee profile/status) ③ team-scoped approval inboxes/guards (the 100-person readiness piece).
+
+- **Leave policy decision**: user confirmed **PTO 10 days/yr, Sick 5 days/yr**. `prisma/seed.ts` updated (annualDays 10/5, carry-over 5/0) and applied to the **live DB** via `_apply-policy.ts` (leavePolicy + current-year leaveBalance grantedDays). Balance cards/UI read from DB so no other code touched. See "Open Decisions #2" above.
+- **Employee/org plan** (EMP-1/3/4 + enable team approvals):
+  - Departments: create/rename/delete + assign department manager (`Department.managerId` already in schema)
+  - Employees: list (name/email/dept/position/hire date/status/approver), edit profile (dept, position, hire date, leave approver), activate/deactivate (EMP-3), re-invite for INVITED (reuses invite flow)
+  - Team approver resolution: `Employee.leaveApproverId` (explicit) else `department.managerId` — per request, applying during decide
+  - Scope MANAGER inboxes (leave/expense/correction) to their team; ADMIN keeps company-wide. Add guards to decide actions
+  - Shared helper `src/lib/team.ts` + admin pages under `app/admin/` + sidebar links. Position master-data model deferred (position stays free-text, see notes)
+- **Progress so far**: policy decision + seed/live-DB apply done. Module implementation in progress.
+
+- **Employee/org module — done** (no schema/migration needed; all fields already existed):
+  - `src/lib/team.ts` — shared approval-authorization layer: `effectiveApproverId()` (explicit `Employee.leaveApproverId` → else `Department.managerId`), `canReviewEmployee()` (company match, no self-review, approver must be an ACTIVE employee with an active MANAGER/ADMIN user), `managedEmployeeWhere()` / `approvalInboxEmployeeWhere()` / `teamEmployeeWhere()` (Prisma `where` fragments for inbox/team queries), shared `approvalReviewerSelect` / `approvalTargetInclude` so every action projects the same reviewer fields
+  - `src/lib/employee-validation.ts` — zod schemas for department create/update/delete, employee profile, status
+  - `src/app/actions/employees.ts` — `createDepartment` / `updateDepartment` (name + manager, manager must be an eligible reviewer) / `deleteDepartment` (refused while employees are attached) / `updateEmployeeProfile` (dept, position, hire date, leave approver; self-approval refused) / `deactivateEmployee` / `reactivateEmployee` (flips `Employee.status` **and** `User.isActive` in one transaction; self-deactivation refused; INVITED cannot be activated)
+  - `src/app/actions/auth.ts` — `inviteEmployee` and new `reinviteEmployee` now run in a transaction that expires prior unused invitations, so re-inviting an INVITED employee can no longer double-create
+  - `src/app/app/admin/employees/` — `page.tsx` (server) + `employee-admin.tsx` (client): department section (create form + per-department rename/manager/delete) and employee cards (profile form, status badge, deactivate/reactivate, re-invite link generator for INVITED). Sidebar admin link added
+  - Reviewer scoping wired through: `dal.ts` (`SessionUser` now carries `isActive` + employee company/status), `decideLeave` / `decideExpense` / `decideCorrection` re-check the reviewer **and** the target inside the transaction (status-only `updateMany` so a lost race cannot double-deduct), leave/expense/attendance pages scope inboxes + team views, expense CSV export scoped to the team
+- **Bug found & fixed by the new tests**: the reviewer projection did not carry `User.isActive`, so a deactivated manager still passed `isApprovalReviewer`/`canReviewEmployee` at the page/action layer (they were only blocked by the session lookup and the `isActive: true` filter in the decide re-check). `approvalReviewerSelect` + `ApprovalReviewer` now include `isActive` and `canActAsAdmin`/`canManageEmployees` enforce it — a single gate for ADMIN, MANAGER, and approver checks.
+- **Verification**:
+  - `npm run lint` + `npx tsc --noEmit` clean
+  - `_test-team.ts` (new, self-cleaning): 27/27 — approver resolution precedence, role gate, self-review refusal, company-mismatch refusal, non-reviewer "department manager" refusal, inbox self-exclusion, ADMIN company-wide scope, `teamEmployeeWhere` include-self, deactivated user + INACTIVE employee record refusal, and DB-executed `where` fragments
+  - Live page checks with a minted MANAGER cookie and seeded pending requests: `/app/leave` shows the manager's own team member and **not** the other team's member, while the ADMIN cookie sees both; `/app/attendance` team view shows the team member; all pages 200 (`/app`, `/app/admin/employees`, `/app/admin/invite`, `/app/admin/balances`, `/app/attendance`, `/app/leave`, `/app/expenses`, `/app/expenses/export`) and the employees page renders 부서/직원 sections, approver selects, status controls. Fixtures removed afterwards
+  - Regressions green: `_test-leave.ts`, `_test-expense.ts`, `_test-team.ts` re-run after cleanup with 0 leftover rows
+- **Notes/ops**:
+  - New dev helpers committed: `_test-team.ts` (durable authorization regression test), `_mint-cookie.ts` (mints a session cookie for GET checks — **use `curl.exe`**, PowerShell's `Invoke-WebRequest` drops a manual `Cookie` header and fakes a /login redirect). `_apply-policy.ts` and the throwaway inbox-E2E seeder were deleted after use
+  - Docker Desktop was down at session start again (3rd occurrence) — relaunched, `hr_app_db` healthy; `next dev` restarted (`dev-server.log`)
+  - Position stays free text (no master-data model); a department without a manager simply has no approver, so such requests are only decidable by an ADMIN
+- **Result/next**: Session 9 complete — employee/org admin + team-scoped approvals implemented and verified. Next: ① checkpoint commit for Session 8–9 ② settings module (SET-1..4: company profile, holidays for holiday-aware day counts, policy management) ③ email notifications (NOT-1/2) once SMTP is configured ④ stable domain + `gh auth login` + GitHub push.
 
 <!-- ====== Template for next sessions (copy & use) ======
 ### Session 5 (2026-09-24): <title>

@@ -22,8 +22,8 @@ export default async function BalancesAdminPage() {
         <h2 className="text-sm font-semibold text-zinc-900">CSV 형식</h2>
         <pre className="mt-3 overflow-x-auto rounded-lg bg-zinc-100 p-4 text-xs leading-relaxed text-zinc-700">
 {`email,kind,year,grantedDays,usedDays,adjustDays
-mike@example.com,PTO,2026,15,2,0
-soo@example.com,SICK,2026,11,0,0`}
+mike@example.com,PTO,2026,10,2,0
+soo@example.com,SICK,2026,5,0,0`}
         </pre>
         <ul className="mt-3 space-y-1 text-xs text-zinc-500">
           <li>· kind: PTO / SICK / UNPAID (회사에 등록된 정책만)</li>

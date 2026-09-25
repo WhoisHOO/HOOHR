@@ -59,14 +59,14 @@ async function main() {
     },
   });
 
-  // 4. Leave policies (연차/병가/무급)
+  // 4. Leave policies (연차 10일/병가 5일 — 사용자 결정 2026-09-24)
   const pto = await prisma.leavePolicy.create({
     data: {
       companyId: company.id,
       name: "연차",
       kind: LeaveTypeKind.PTO,
-      annualDays: 15,
-      maxCarryOverDays: 10,
+      annualDays: 10,
+      maxCarryOverDays: 5,
     },
   });
   const sick = await prisma.leavePolicy.create({
@@ -74,7 +74,7 @@ async function main() {
       companyId: company.id,
       name: "병가",
       kind: LeaveTypeKind.SICK,
-      annualDays: 11,
+      annualDays: 5,
       maxCarryOverDays: 0,
     },
   });

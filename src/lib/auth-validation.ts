@@ -26,6 +26,13 @@ export const InviteFormSchema = z.object({
   }),
 });
 
+export const ReinviteEmployeeFormSchema = z.object({
+  employeeId: z.string().trim().min(1, { error: "직원을 선택하세요" }),
+  role: z.enum(["EMPLOYEE", "MANAGER"], {
+    error: "역할을 선택하세요",
+  }),
+});
+
 export const AcceptInviteFormSchema = z.object({
   name: z
     .string()

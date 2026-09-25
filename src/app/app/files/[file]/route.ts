@@ -3,6 +3,10 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/dal";
 import { receiptPath } from "@/lib/storage";
+import {
+  approvalTargetEmployeeInclude,
+  canReviewEmployee,
+} from "@/lib/team";
 
 export async function GET(
   _request: Request,
@@ -14,16 +18,28 @@ export async function GET(
   }
 
   const storedPath = (await params).file;
-  const isReviewer = user.role === "MANAGER" || user.role === "ADMIN";
-
   const receipt = await prisma.receiptFile.findFirst({
-    where: { storedPath },
-    include: { item: { include: { report: { select: { employeeId: true } } } } },
+    where: {
+      storedPath,
+      item: { report: { companyId: user.companyId } },
+    },
+    include: {
+      item: {
+        include: {
+          report: {
+            include: { employee: approvalTargetEmployeeInclude },
+          },
+        },
+      },
+    },
   });
-  if (
-    !receipt ||
-    (receipt.item.report.employeeId !== user.employeeId && !isReviewer)
-  ) {
+  if (!receipt) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+
+  const report = receipt.item.report;
+  const isOwner = report.employeeId === user.employeeId;
+  if (!isOwner && !canReviewEmployee(user, report)) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 

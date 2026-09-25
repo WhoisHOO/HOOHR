@@ -9,6 +9,12 @@ import { getCompanyTimezone } from "@/lib/company";
 import { parseIsoDate, zonedToday } from "@/lib/attendance";
 import { computeLeaveDays, remainingDays } from "@/lib/leave";
 import {
+  approvalReviewerFromUser,
+  approvalReviewerSelect,
+  approvalTargetInclude,
+  canReviewEmployee,
+} from "@/lib/team";
+import {
   LeaveRequestFormSchema,
   type BalanceImportState,
   type LeaveCancelState,
@@ -117,6 +123,7 @@ export async function decideLeave(
   const id = String(formData.get("id") ?? "");
   const decision = String(formData.get("decision") ?? "");
   const comment = String(formData.get("comment") ?? "").trim();
+  const unavailableMessage = "요청을 처리할 수 없습니다. 최신 목록을 확인해주세요.";
 
   if (!id) return { message: "요청 정보가 올바르지 않습니다." };
   if (decision !== "APPROVE" && decision !== "REJECT") {
@@ -126,45 +133,77 @@ export async function decideLeave(
     return { message: "반려 시 사유를 입력해주세요." };
   }
 
-  const leave = await prisma.leaveRequest.findUnique({
-    where: { id },
-    include: { policy: true, employee: true },
+  const leave = await prisma.leaveRequest.findFirst({
+    where: { id, companyId: user.companyId, status: "PENDING" },
+    include: { policy: true, ...approvalTargetInclude },
   });
-  if (!leave || leave.status !== "PENDING") {
-    return { message: "이미 처리된 요청입니다." };
+  if (
+    !leave ||
+    leave.policy.companyId !== user.companyId ||
+    !canReviewEmployee(user, leave)
+  ) {
+    return { message: unavailableMessage };
   }
 
   const status = decision === "APPROVE" ? "APPROVED" : "REJECTED";
+  let updated = false;
 
-  await prisma.$transaction(async (tx) => {
-    // 상태 재확인 후 승인/반려 (동시 처리 방지)
-    const fresh = await tx.leaveRequest.findUnique({ where: { id } });
-    if (!fresh || fresh.status !== "PENDING") return;
-
-    if (status === "APPROVED" && leave.policy.kind !== "UNPAID") {
-      const year = fresh.startDate.getUTCFullYear();
-      await tx.leaveBalance.update({
-        where: {
-          employeeId_policyId_year: {
-            employeeId: fresh.employeeId,
-            policyId: fresh.policyId,
-            year,
-          },
-        },
-        data: { usedDays: { increment: fresh.days } },
+  try {
+    updated = await prisma.$transaction(async (tx) => {
+      const reviewer = await tx.user.findFirst({
+        where: { id: user.id, companyId: user.companyId, isActive: true },
+        select: approvalReviewerSelect,
       });
-    }
+      if (!reviewer) return false;
 
-    await tx.leaveRequest.update({
-      where: { id },
-      data: {
-        status,
-        decidedById: user.id,
-        decidedAt: new Date(),
-        decisionComment: comment || null,
-      },
+      const fresh = await tx.leaveRequest.findFirst({
+        where: { id, companyId: user.companyId, status: "PENDING" },
+        include: { policy: true, ...approvalTargetInclude },
+      });
+      if (
+        !fresh ||
+        fresh.policy.companyId !== user.companyId ||
+        !canReviewEmployee(approvalReviewerFromUser(reviewer), fresh)
+      ) {
+        return false;
+      }
+
+      const result = await tx.leaveRequest.updateMany({
+        where: {
+          id,
+          companyId: user.companyId,
+          status: "PENDING",
+          employee: { companyId: user.companyId },
+        },
+        data: {
+          status,
+          decidedById: reviewer.id,
+          decidedAt: new Date(),
+          decisionComment: comment || null,
+        },
+      });
+      if (result.count !== 1) return false;
+
+      if (status === "APPROVED" && fresh.policy.kind !== "UNPAID") {
+        await tx.leaveBalance.update({
+          where: {
+            employeeId_policyId_year: {
+              employeeId: fresh.employeeId,
+              policyId: fresh.policyId,
+              year: fresh.startDate.getUTCFullYear(),
+            },
+          },
+          data: { usedDays: { increment: fresh.days } },
+        });
+      }
+
+      return true;
     });
-  });
+  } catch {
+    return { message: unavailableMessage };
+  }
+
+  if (!updated) return { message: unavailableMessage };
 
   revalidatePath("/app/leave");
   revalidatePath("/app");

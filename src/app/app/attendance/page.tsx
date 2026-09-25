@@ -3,6 +3,11 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/dal";
 import {
+  approvalInboxEmployeeWhere,
+  isApprovalReviewer,
+  teamEmployeeWhere,
+} from "@/lib/team";
+import {
   addMonths,
   formatDate,
   formatDayWithWeekday,
@@ -82,18 +87,10 @@ export default async function AttendancePage({
   const prevHref = `/app/attendance?month=${monthLabel(addMonths(monthDate, -1))}`;
   const nextHref = `/app/attendance?month=${monthLabel(addMonths(monthDate, 1))}`;
 
-  if (!user.employeeId) {
-    return (
-      <div className="mx-auto max-w-4xl">
-        <h1 className="text-2xl font-semibold text-zinc-900">근태</h1>
-        <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-600">
-          계정에 직원 정보가 연결되어 있지 않습니다. 관리자에게 문의하세요.
-        </div>
-      </div>
-    );
-  }
-
-  const isReviewer = user.role === "MANAGER" || user.role === "ADMIN";
+  const isReviewer = isApprovalReviewer(user);
+  const teamScope = isReviewer
+    ? teamEmployeeWhere(user, true)
+    : { id: { in: [] } };
 
   const [
     myEmployee,
@@ -104,34 +101,54 @@ export default async function AttendancePage({
     teamEmployees,
     teamToday,
   ] = await Promise.all([
-    prisma.employee.findUnique({
-      where: { id: user.employeeId },
-      include: { department: true },
-    }),
-    prisma.attendanceRecord.findUnique({
-      where: { employeeId_date: { employeeId: user.employeeId, date: today } },
-      include: { events: { orderBy: { at: "asc" } } },
-    }),
-    prisma.attendanceRecord.findMany({
-      where: {
-        employeeId: user.employeeId,
-        date: { gte: start, lt: end },
-      },
-      include: {
-        events: { orderBy: { at: "asc" } },
-        corrections: { select: { id: true, status: true, requestType: true } },
-      },
-      orderBy: { date: "asc" },
-    }),
-    prisma.attendanceCorrection.findMany({
-      where: { employeeId: user.employeeId },
-      include: { decidedBy: { select: { name: true } } },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    }),
+    user.employeeId
+      ? prisma.employee.findUnique({
+          where: { id: user.employeeId },
+          include: { department: true },
+        })
+      : Promise.resolve(null),
+    user.employeeId
+      ? prisma.attendanceRecord.findUnique({
+          where: {
+            employeeId_date: { employeeId: user.employeeId, date: today },
+          },
+          include: { events: { orderBy: { at: "asc" } } },
+        })
+      : Promise.resolve(null),
+    user.employeeId
+      ? prisma.attendanceRecord.findMany({
+          where: {
+            companyId: user.companyId,
+            employeeId: user.employeeId,
+            date: { gte: start, lt: end },
+          },
+          include: {
+            events: { orderBy: { at: "asc" } },
+            corrections: {
+              select: { id: true, status: true, requestType: true },
+            },
+          },
+          orderBy: { date: "asc" },
+        })
+      : Promise.resolve([]),
+    user.employeeId
+      ? prisma.attendanceCorrection.findMany({
+          where: {
+            companyId: user.companyId,
+            employeeId: user.employeeId,
+          },
+          include: { decidedBy: { select: { name: true } } },
+          orderBy: { createdAt: "desc" },
+          take: 50,
+        })
+      : Promise.resolve([]),
     isReviewer
       ? prisma.attendanceCorrection.findMany({
-          where: { companyId: user.companyId, status: "PENDING" },
+          where: {
+            companyId: user.companyId,
+            status: "PENDING",
+            employee: approvalInboxEmployeeWhere(user),
+          },
           include: {
             employee: {
               select: {
@@ -146,7 +163,7 @@ export default async function AttendancePage({
       : Promise.resolve([]),
     isReviewer
       ? prisma.employee.findMany({
-          where: { companyId: user.companyId, status: "ACTIVE" },
+          where: { ...teamScope, status: "ACTIVE" },
           include: { department: { select: { name: true } } },
           orderBy: { name: "asc" },
         })
@@ -156,7 +173,7 @@ export default async function AttendancePage({
           where: {
             companyId: user.companyId,
             date: today,
-            employee: { status: "ACTIVE" },
+            employee: { ...teamScope, status: "ACTIVE" },
           },
           include: {
             employee: { select: { id: true, name: true } },
@@ -205,60 +222,64 @@ export default async function AttendancePage({
         </nav>
       </div>
 
-      <TodayPanel
-        todayLabel={todayLabel}
-        open={myOpen}
-        checkInAt={formatTime(myToday?.checkInAt ?? null, tz)}
-        checkOutAt={formatTime(myToday?.checkOutAt ?? null, tz)}
-        worked={formatDuration(myWorked)}
-        events={myEvents}
-      />
+      {user.employeeId && (
+        <TodayPanel
+          todayLabel={todayLabel}
+          open={myOpen}
+          checkInAt={formatTime(myToday?.checkInAt ?? null, tz)}
+          checkOutAt={formatTime(myToday?.checkOutAt ?? null, tz)}
+          worked={formatDuration(myWorked)}
+          events={myEvents}
+        />
+      )}
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-sm font-semibold text-zinc-900">
-          {monthLabel(monthDate)} 출근 기록
-        </h2>
-        {monthRecords.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500">
-            이번 달 기록이 없습니다.
-          </p>
-        ) : (
-          <table className="mt-4 w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
-                <th className="pb-2 font-medium">날짜</th>
-                <th className="pb-2 font-medium">출근</th>
-                <th className="pb-2 font-medium">퇴근</th>
-                <th className="pb-2 font-medium">근무</th>
-                <th className="pb-2 font-medium">정정</th>
-              </tr>
-            </thead>
-            <tbody>
-              {monthRecords.map((r) => (
-                <tr key={r.id} className="border-b border-zinc-100">
-                  <td className="py-2.5 text-zinc-700">
-                    {formatDayWithWeekday(r.date)}
-                  </td>
-                  <td className="py-2.5 tabular-nums text-zinc-700">
-                    {formatTime(r.checkInAt, tz)}
-                  </td>
-                  <td className="py-2.5 tabular-nums text-zinc-700">
-                    {formatTime(r.checkOutAt, tz)}
-                  </td>
-                  <td className="py-2.5 text-zinc-700">
-                    {formatDuration(workedMs(r.events))}
-                  </td>
-                  <td className="py-2.5">
-                    {r.corrections[0]
-                      ? statusBadge(r.corrections[0].status)
-                      : "-"}
-                  </td>
+      {user.employeeId && (
+        <section className="rounded-xl border border-zinc-200 bg-white p-6">
+          <h2 className="text-sm font-semibold text-zinc-900">
+            {monthLabel(monthDate)} 출근 기록
+          </h2>
+          {monthRecords.length === 0 ? (
+            <p className="mt-4 text-sm text-zinc-500">
+              이번 달 기록이 없습니다.
+            </p>
+          ) : (
+            <table className="mt-4 w-full text-sm">
+              <thead>
+                <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
+                  <th className="pb-2 font-medium">날짜</th>
+                  <th className="pb-2 font-medium">출근</th>
+                  <th className="pb-2 font-medium">퇴근</th>
+                  <th className="pb-2 font-medium">근무</th>
+                  <th className="pb-2 font-medium">정정</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </section>
+              </thead>
+              <tbody>
+                {monthRecords.map((r) => (
+                  <tr key={r.id} className="border-b border-zinc-100">
+                    <td className="py-2.5 text-zinc-700">
+                      {formatDayWithWeekday(r.date)}
+                    </td>
+                    <td className="py-2.5 tabular-nums text-zinc-700">
+                      {formatTime(r.checkInAt, tz)}
+                    </td>
+                    <td className="py-2.5 tabular-nums text-zinc-700">
+                      {formatTime(r.checkOutAt, tz)}
+                    </td>
+                    <td className="py-2.5 text-zinc-700">
+                      {formatDuration(workedMs(r.events))}
+                    </td>
+                    <td className="py-2.5">
+                      {r.corrections[0]
+                        ? statusBadge(r.corrections[0].status)
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
+      )}
 
       {isReviewer && (
         <section className="rounded-xl border border-zinc-200 bg-white p-6">
@@ -314,50 +335,52 @@ export default async function AttendancePage({
         </section>
       )}
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2 className="text-sm font-semibold text-zinc-900">근태 정정 신청</h2>
-            <p className="mt-1 text-xs text-zinc-500">
-              기록 누락/오류 시 신청하고 관리자 승인을 받습니다.
-            </p>
+      {user.employeeId && (
+        <section className="rounded-xl border border-zinc-200 bg-white p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-semibold text-zinc-900">근태 정정 신청</h2>
+              <p className="mt-1 text-xs text-zinc-500">
+                기록 누락/오류 시 신청하고 관리자 승인을 받습니다.
+              </p>
+            </div>
           </div>
-        </div>
-        <div className="mt-4">
-          <CorrectionForm today={todayStr} />
-        </div>
+          <div className="mt-4">
+            <CorrectionForm today={todayStr} />
+          </div>
 
-        <div className="mt-6 border-t border-zinc-100 pt-4">
-          <p className="mb-3 text-sm font-semibold text-zinc-700">내 정정 요청</p>
-          {myCorrections.length === 0 ? (
-            <p className="text-sm text-zinc-500">정정 요청 내역이 없습니다.</p>
-          ) : (
-            <ul className="space-y-2">
-              {myCorrections.map((c) => (
-                <li
-                  key={c.id}
-                  className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-100 px-4 py-3 text-sm"
-                >
-                  <span className="font-medium text-zinc-800">
-                    {formatDate(c.date)}
-                  </span>
-                  <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-600">
-                    {CORRECTION_TYPE_LABELS[c.requestType] ?? c.requestType}
-                  </span>
-                  {statusBadge(c.status)}
-                  <span className="flex-1 text-zinc-500">{c.note}</span>
-                  {c.comment && (
-                    <span className="w-full text-xs text-zinc-400">
-                      의견: {c.comment}
-                      {c.decidedBy ? ` (${c.decidedBy.name})` : ""}
+          <div className="mt-6 border-t border-zinc-100 pt-4">
+            <p className="mb-3 text-sm font-semibold text-zinc-700">내 정정 요청</p>
+            {myCorrections.length === 0 ? (
+              <p className="text-sm text-zinc-500">정정 요청 내역이 없습니다.</p>
+            ) : (
+              <ul className="space-y-2">
+                {myCorrections.map((c) => (
+                  <li
+                    key={c.id}
+                    className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-100 px-4 py-3 text-sm"
+                  >
+                    <span className="font-medium text-zinc-800">
+                      {formatDate(c.date)}
                     </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </section>
+                    <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-600">
+                      {CORRECTION_TYPE_LABELS[c.requestType] ?? c.requestType}
+                    </span>
+                    {statusBadge(c.status)}
+                    <span className="flex-1 text-zinc-500">{c.note}</span>
+                    {c.comment && (
+                      <span className="w-full text-xs text-zinc-400">
+                        의견: {c.comment}
+                        {c.decidedBy ? ` (${c.decidedBy.name})` : ""}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      )}
 
       {isReviewer && inbox.length > 0 && (
         <section className="rounded-xl border border-zinc-200 bg-white p-6">

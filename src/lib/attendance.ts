@@ -111,5 +111,5 @@ export function formatDateTime(d: Date | null | undefined, tz: string): string {
 
 /** YYYY-MM-DD 문자열(회사 tz '오늘') 주어졌을 때 날짜 유형 변경 없이 그대로 표시 */
 export function monthLabel(date: Date): string {
-  return `${date.getUTCFullYear()}.${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
 }

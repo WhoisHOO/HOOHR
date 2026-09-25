@@ -8,6 +8,13 @@ import { parseIsoDate } from "@/lib/attendance";
 import { parseAmountToCents } from "@/lib/expense";
 import { removeReceipt, saveReceipt } from "@/lib/storage";
 import {
+  approvalReviewerFromUser,
+  approvalReviewerSelect,
+  approvalTargetInclude,
+  canActAsAdmin,
+  canReviewEmployee,
+} from "@/lib/team";
+import {
   ExpenseItemFormSchema,
   ExpenseReportCreateSchema,
   MAX_EXPENSE_ITEMS,
@@ -233,6 +240,7 @@ export async function decideExpense(
   const id = String(formData.get("id") ?? "");
   const decision = String(formData.get("decision") ?? "");
   const comment = String(formData.get("comment") ?? "").trim();
+  const unavailableMessage = "요청을 처리할 수 없습니다. 최신 목록을 확인해주세요.";
 
   if (!id) return { message: "보고서 정보가 올바르지 않습니다." };
   if (!["APPROVE", "REJECT", "PAY"].includes(decision)) {
@@ -246,23 +254,61 @@ export async function decideExpense(
   }
 
   const expected = decision === "PAY" ? "APPROVED" : "SUBMITTED";
-  const report = await prisma.expenseReport.findUnique({ where: { id } });
-  if (!report || report.status !== expected) {
-    return { message: "이미 처리된 보고서입니다." };
+  const report = await prisma.expenseReport.findFirst({
+    where: { id, companyId: user.companyId, status: expected },
+    include: approvalTargetInclude,
+  });
+  if (
+    !report ||
+    report.employee.companyId !== user.companyId ||
+    (decision === "PAY"
+      ? !canActAsAdmin(user)
+      : !canReviewEmployee(user, report))
+  ) {
+    return { message: unavailableMessage };
   }
 
   const status =
     decision === "APPROVE" ? "APPROVED" : decision === "PAY" ? "PAID" : "REJECTED";
+  const updated = await prisma.$transaction(async (tx) => {
+    const reviewer = await tx.user.findFirst({
+      where: { id: user.id, companyId: user.companyId, isActive: true },
+      select: approvalReviewerSelect,
+    });
+    if (!reviewer) return false;
 
-  await prisma.expenseReport.update({
-    where: { id },
-    data: {
-      status,
-      decidedById: user.id,
-      decidedAt: new Date(),
-      comment: comment || null,
-    },
+    const fresh = await tx.expenseReport.findFirst({
+      where: { id, companyId: user.companyId, status: expected },
+      include: approvalTargetInclude,
+    });
+    if (
+      !fresh ||
+      fresh.employee.companyId !== user.companyId ||
+      (decision === "PAY"
+        ? !canActAsAdmin(approvalReviewerFromUser(reviewer))
+        : !canReviewEmployee(approvalReviewerFromUser(reviewer), fresh))
+    ) {
+      return false;
+    }
+
+    const result = await tx.expenseReport.updateMany({
+      where: {
+        id,
+        companyId: user.companyId,
+        status: expected,
+        employee: { companyId: user.companyId },
+      },
+      data: {
+        status,
+        decidedById: reviewer.id,
+        decidedAt: new Date(),
+        comment: comment || null,
+      },
+    });
+    return result.count === 1;
   });
+
+  if (!updated) return { message: unavailableMessage };
 
   revalidatePath("/app/expenses");
   const label =

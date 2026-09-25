@@ -7,6 +7,12 @@ import { fieldErrors } from "@/lib/form-utils";
 import { getCompanyTimezone } from "@/lib/company";
 import { zonedToday, parseIsoDate } from "@/lib/attendance";
 import {
+  approvalReviewerFromUser,
+  approvalReviewerSelect,
+  approvalTargetInclude,
+  canReviewEmployee,
+} from "@/lib/team";
+import {
   AttendanceCorrectionFormSchema,
   type AttendanceCorrectionState,
   type CheckInOutState,
@@ -193,6 +199,7 @@ export async function decideCorrection(
   const id = String(formData.get("id") ?? "");
   const decision = String(formData.get("decision") ?? "");
   const comment = String(formData.get("comment") ?? "").trim();
+  const unavailableMessage = "요청을 처리할 수 없습니다. 최신 목록을 확인해주세요.";
 
   if (!id) return { message: "요청 정보가 올바르지 않습니다." };
   if (decision !== "APPROVE" && decision !== "REJECT") {
@@ -202,22 +209,47 @@ export async function decideCorrection(
     return { message: "반려 시 사유를 입력해주세요." };
   }
 
-  const correction = await prisma.attendanceCorrection.findUnique({
-    where: { id },
+  const correction = await prisma.attendanceCorrection.findFirst({
+    where: { id, companyId: user.companyId, status: "PENDING" },
+    include: approvalTargetInclude,
   });
-  if (!correction || correction.status !== "PENDING") {
-    return { message: "이미 처리된 요청입니다." };
+  if (!correction || !canReviewEmployee(user, correction)) {
+    return { message: unavailableMessage };
   }
 
-  await prisma.attendanceCorrection.update({
-    where: { id },
-    data: {
-      status: decision === "APPROVE" ? "APPROVED" : "REJECTED",
-      decidedById: user.id,
-      decidedAt: new Date(),
-      comment: comment || null,
-    },
+  const updated = await prisma.$transaction(async (tx) => {
+    const reviewer = await tx.user.findFirst({
+      where: { id: user.id, companyId: user.companyId, isActive: true },
+      select: approvalReviewerSelect,
+    });
+    if (!reviewer) return false;
+
+    const fresh = await tx.attendanceCorrection.findFirst({
+      where: { id, companyId: user.companyId, status: "PENDING" },
+      include: approvalTargetInclude,
+    });
+    if (!fresh || !canReviewEmployee(approvalReviewerFromUser(reviewer), fresh)) {
+      return false;
+    }
+
+    const result = await tx.attendanceCorrection.updateMany({
+      where: {
+        id,
+        companyId: user.companyId,
+        status: "PENDING",
+        employee: { companyId: user.companyId },
+      },
+      data: {
+        status: decision === "APPROVE" ? "APPROVED" : "REJECTED",
+        decidedById: reviewer.id,
+        decidedAt: new Date(),
+        comment: comment || null,
+      },
+    });
+    return result.count === 1;
   });
+
+  if (!updated) return { message: unavailableMessage };
 
   revalidatePath("/app/attendance");
   return {

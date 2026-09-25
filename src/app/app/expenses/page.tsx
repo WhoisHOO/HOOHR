@@ -1,8 +1,16 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/dal";
+import { getCompanyTimezone } from "@/lib/company";
+import { zonedToday, monthLabel } from "@/lib/attendance";
 import { formatMoney } from "@/lib/expense";
 import { formatLeaveRange } from "@/lib/leave";
+import {
+  approvalInboxEmployeeWhere,
+  canActAsAdmin,
+  isApprovalReviewer,
+} from "@/lib/team";
 import { NewExpenseForm, type ExpenseCategoryOption } from "./expense-form";
 import { SubmitExpenseButton } from "./submit-button";
 import { DeleteExpenseButton } from "./delete-button";
@@ -93,7 +101,10 @@ function ItemRows({
 
 export default async function ExpensesPage() {
   const user = await requireUser();
-  const isReviewer = user.role === "MANAGER" || user.role === "ADMIN";
+  const isReviewer = isApprovalReviewer(user);
+  const canPay = canActAsAdmin(user);
+  const tz = await getCompanyTimezone(user.companyId);
+  const currentMonth = monthLabel(zonedToday(tz));
 
   const [categories, myReports, inbox, payQueue] = await Promise.all([
     prisma.expenseCategory.findMany({
@@ -102,7 +113,7 @@ export default async function ExpensesPage() {
     }),
     user.employeeId
       ? prisma.expenseReport.findMany({
-          where: { employeeId: user.employeeId },
+          where: { companyId: user.companyId, employeeId: user.employeeId },
           include: {
             items: { include: { category: true, receipts: true } },
           },
@@ -112,7 +123,11 @@ export default async function ExpensesPage() {
       : Promise.resolve([]),
     isReviewer
       ? prisma.expenseReport.findMany({
-          where: { companyId: user.companyId, status: "SUBMITTED" },
+          where: {
+            companyId: user.companyId,
+            status: "SUBMITTED",
+            employee: approvalInboxEmployeeWhere(user),
+          },
           include: {
             employee: true,
             items: { include: { category: true, receipts: true } },
@@ -120,9 +135,13 @@ export default async function ExpensesPage() {
           orderBy: { submittedAt: "asc" },
         })
       : Promise.resolve([]),
-    user.role === "ADMIN"
+    canPay
       ? prisma.expenseReport.findMany({
-          where: { companyId: user.companyId, status: "APPROVED" },
+          where: {
+            companyId: user.companyId,
+            status: "APPROVED",
+            employee: { companyId: user.companyId },
+          },
           include: {
             employee: true,
             items: { include: { category: true, receipts: true } },
@@ -144,6 +163,12 @@ export default async function ExpensesPage() {
         <p className="mt-1 text-sm text-zinc-500">
           비용 신청서 작성 · 승인 · 지급 확인
         </p>
+        <Link
+          href={`/app/expenses/export?month=${currentMonth}`}
+          className="mt-3 inline-block rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+        >
+          이번 달 CSV 내보내기
+        </Link>
       </div>
 
       <section className="rounded-xl border border-zinc-200 bg-white p-6">
@@ -239,7 +264,7 @@ export default async function ExpensesPage() {
         </section>
       )}
 
-      {user.role === "ADMIN" && payQueue.length > 0 && (
+      {canPay && payQueue.length > 0 && (
         <section className="rounded-xl border border-zinc-200 bg-white p-6">
           <h2 className="text-sm font-semibold text-zinc-900">
             지급 대기 (승인됨) ({payQueue.length})

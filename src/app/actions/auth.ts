@@ -2,12 +2,14 @@
 
 import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import {
   AcceptInviteFormSchema,
   InviteFormSchema,
   LoginFormSchema,
+  ReinviteEmployeeFormSchema,
   type AcceptInviteState,
   type InviteState,
   type LoginState,
@@ -71,41 +73,131 @@ export async function inviteEmployee(
 
   const { email, name, role } = parsed.data;
 
-  const existingUser = await prisma.user.findUnique({ where: { email } });
+  const token = randomBytes(32).toString("base64url");
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  const result = await prisma.$transaction(async (tx) => {
+    const existingUser = await tx.user.findUnique({ where: { email } });
+    if (existingUser) return { kind: "existing_user" as const };
+
+    await tx.invitation.updateMany({
+      where: { companyId: admin.companyId, email, usedAt: null },
+      data: { expiresAt: new Date() },
+    });
+
+    const employee = await tx.employee.upsert({
+      where: { companyId_email: { companyId: admin.companyId, email } },
+      update: { name, status: "INVITED" },
+      create: {
+        companyId: admin.companyId,
+        name,
+        email,
+        status: "INVITED",
+      },
+    });
+
+    await tx.invitation.create({
+      data: {
+        companyId: admin.companyId,
+        email,
+        role,
+        token,
+        expiresAt,
+      },
+    });
+
+    return { kind: "created" as const, employee };
+  });
+
+  if (result.kind === "existing_user") {
+    return { message: "이미 등록된 이메일입니다" };
+  }
+
+  const baseUrl = process.env.APP_URL || "http://localhost:3000";
+  const inviteUrl = `${baseUrl}/invite/${token}`;
+  revalidatePath("/app/admin/employees");
+  revalidatePath("/app/admin/invite");
+  return {
+    inviteUrl,
+    message: `${result.employee.name}(${email}) 초대 링크 생성됨 (7일 유효)`,
+  };
+}
+
+export async function reinviteEmployee(
+  _state: InviteState,
+  formData: FormData,
+): Promise<InviteState> {
+  const admin = await requireAdmin();
+  const parsed = ReinviteEmployeeFormSchema.safeParse({
+    employeeId: formData.get("employeeId"),
+    role: formData.get("role"),
+  });
+  if (!parsed.success) {
+    return { fieldErrors: fieldErrors(parsed.error.issues) };
+  }
+
+  const { employeeId, role } = parsed.data;
+  const employee = await prisma.employee.findFirst({
+    where: { id: employeeId, companyId: admin.companyId, status: "INVITED" },
+    select: { id: true, name: true, email: true, userId: true },
+  });
+  if (!employee || employee.userId) {
+    return { message: "초대 대기 중인 직원만 다시 초대할 수 있습니다." };
+  }
+
+  const existingUser = await prisma.user.findUnique({ where: { email: employee.email } });
   if (existingUser) {
     return { message: "이미 등록된 이메일입니다" };
   }
 
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const result = await prisma.$transaction(async (tx) => {
+    const fresh = await tx.employee.findFirst({
+      where: {
+        id: employeeId,
+        companyId: admin.companyId,
+        status: "INVITED",
+        userId: null,
+      },
+      select: { id: true, name: true, email: true, userId: true },
+    });
+    if (!fresh) return { kind: "unavailable" as const };
 
-  // Employee 레코드 (INVITED 상태) 준비 — 없으면 생성, 있으면 갱신
-  const employee = await prisma.employee.upsert({
-    where: { companyId_email: { companyId: admin.companyId, email } },
-    update: { name, status: "INVITED" },
-    create: {
-      companyId: admin.companyId,
-      name,
-      email,
-      status: "INVITED",
-    },
+    const linkedUser = await tx.user.findUnique({ where: { email: fresh.email } });
+    if (linkedUser) return { kind: "existing_user" as const };
+
+    await tx.invitation.updateMany({
+      where: { companyId: admin.companyId, email: fresh.email, usedAt: null },
+      data: { expiresAt: new Date() },
+    });
+    await tx.invitation.create({
+      data: {
+        companyId: admin.companyId,
+        email: fresh.email,
+        role,
+        token,
+        expiresAt,
+      },
+    });
+    return { kind: "created" as const, employee: fresh };
   });
 
-  await prisma.invitation.create({
-    data: {
-      companyId: admin.companyId,
-      email,
-      role,
-      token,
-      expiresAt,
-    },
-  });
+  if (result.kind === "unavailable") {
+    return { message: "더 이상 초대 대기 상태가 아닌 직원입니다." };
+  }
+  if (result.kind === "existing_user") {
+    return { message: "이미 등록된 이메일입니다" };
+  }
 
   const baseUrl = process.env.APP_URL || "http://localhost:3000";
   const inviteUrl = `${baseUrl}/invite/${token}`;
-
-  // SMTP 미설정: 관리자에게 링크를 즉시 표시 (메일 발송은 v0.2)
-  return { inviteUrl, message: `${employee.name}(${email}) 초대 링크 생성됨 (7일 유효)` };
+  revalidatePath("/app/admin/employees");
+  revalidatePath("/app/admin/invite");
+  return {
+    inviteUrl,
+    message: `${result.employee.name}(${result.employee.email}) 초대 링크 생성됨 (7일 유효)`,
+  };
 }
 
 // ============ 초대 수락 ============
