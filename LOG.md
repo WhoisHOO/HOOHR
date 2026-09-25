@@ -348,7 +348,8 @@ C:\apps\projects\hr-app\
   - New dev helpers committed: `_test-team.ts` (durable authorization regression test), `_mint-cookie.ts` (mints a session cookie for GET checks — **use `curl.exe`**, PowerShell's `Invoke-WebRequest` drops a manual `Cookie` header and fakes a /login redirect). `_apply-policy.ts` and the throwaway inbox-E2E seeder were deleted after use
   - Docker Desktop was down at session start again (3rd occurrence) — relaunched, `hr_app_db` healthy; `next dev` restarted (`dev-server.log`)
   - Position stays free text (no master-data model); a department without a manager simply has no approver, so such requests are only decidable by an ADMIN
-- **Result/next**: Session 9 complete — employee/org admin + team-scoped approvals implemented and verified. Next: ① checkpoint commit for Session 8–9 ② settings module (SET-1..4: company profile, holidays for holiday-aware day counts, policy management) ③ email notifications (NOT-1/2) once SMTP is configured ④ stable domain + `gh auth login` + GitHub push.
+- **Checkpoint commit**: `98f7ab8 feat(admin,approvals): employee & org management, team-scoped approvals, expense CSV export` — covers Session 8 (CSV export) + Session 9. Local only; push still needs `gh auth login`. Working tree clean.
+- **Result/next**: Session 9 complete — employee/org admin + team-scoped approvals implemented and verified. Next: ① settings module (SET-1..4: company profile, holidays for holiday-aware day counts, policy management) ② email notifications (NOT-1/2) once SMTP is configured ③ stable domain + `gh auth login` + GitHub push ④ pipelines/deploy runtime validation.
 
 <!-- ====== Template for next sessions (copy & use) ======
 ### Session 5 (2026-09-24): <title>
