@@ -46,10 +46,11 @@
 | Settings module (company profile, policies, holidays, categories) | ✅ Done (Session 10) |
 | Holiday-aware leave day counting | ✅ Done (Session 10) |
 | Email notifications (NOT-1/2) | ⬜ Pending — needs SMTP config |
-| Checkpoint commit (Session 5–9) | ✅ Commits local; **no git remote configured yet** |
+| Checkpoint commit (Session 5–9) | ✅ `98f7ab8` + `e1cc5b3` |
+| **GitHub public repo (Session 10)** | ✅ **Done — https://github.com/WhoisHOO/hr-app** (`main`, 9 commits pushed) |
 
 > **Key notes:**
-> - **No `git remote` is configured and `gh` is not logged in** — this is why `github.com/WhoisHOO` shows no hr-app repo. Everything is local commits only. Session 10 decided the repo name is **`hr-app`** and set up the public-repo push (see that section).
+> - **The repo is live: https://github.com/WhoisHOO/hr-app** (public, `main`, 9 commits pushed in Session 10). `gh` is authenticated as `WhoisHOO`, so `git push` works without any further setup.
 > - **500 "Connection closed." when POSTing server actions via curl/fetch is a known Next.js restriction** — not an app bug. Test real flows via browser.
 > - Quick-tunnel URL persists only while the same `cloudflared` process is alive; restart/reboot generates a **new random URL**. Unrelated to dev-server restarts.
 > - This PC's router DNS (192.168.1.254) fails to resolve some trycloudflare hostnames → verify via `--resolve` or 8.8.8.8. Other devices are fine.
@@ -109,7 +110,7 @@
 - "Claim expenses with receipts when on sick leave" — attach proof to leave request, or a separate expense claim? Needs separation
 
 ### 4. Project name/brand
-- Working name: `hr-app` (folder + **GitHub repo name decided in Session 10**). Display/brand name still open — keep in mind that `README.md`/`package.json`/`LICENSE` use `hr-app`
+- **Repo name settled: `hr-app`** (GitHub public repo created in Session 10). The user-facing display/brand name is still open — `README.md`/`package.json`/`LICENSE` all use `hr-app`
 
 ### 5. OCR (receipt auto-extraction) in MVP?
 - UX research ranks OCR as an "Expensify-class core" feature but MVP-later → deferred to v0.2
@@ -391,9 +392,14 @@ C:\apps\projects\hr-app\
   - Dead code removed while refactoring: `holidayNameOn()` (never called); the leave page now shares the store's `isoDateKey` instead of repeating the `toISOString().slice(0,10)` conversion
   - `applyPolicyToCurrentYear` deliberately does **not** create balance rows, so employees who never got a CSV import or a grant stay absent rather than silently appearing with a fresh 0 used-days balance. Grant-on-hire/carry-over remains open in "Open Decisions #2"
 - **GitHub push setup**: confirmed the repo was absent from GitHub because **no remote was ever configured and `gh` was not logged in** (local commits only). Decided the repo name is **`hr-app`** (public, Apache-2.0), and the user runs `gh auth login` themselves so no token is shared.
-- **Checkpoint commit**: `0b4a4db feat(settings): company profile, leave policy management, holiday calendar, expense categories + holiday-aware leave day counting` — covers all Session 10 work. Local only; the push needs `gh auth login` first.
-- **Pre-push secret audit** (done before the repo goes public): 122 tracked files; `.env*`, `/uploads/`, `/dev-server.log` are all ignored and untracked; the only credential-shaped strings in tracked files are the `hr:hr_dev_password` **docker-compose dev defaults** in `docker-compose.yml`, `pipelines/README.md`, `pipelines/dags/`, `pipelines/spark/` — local dev DB bound to localhost, no real secret. `src/generated/prisma` (26 files) is intentionally tracked per Session 4.
-- **Result/next**: Session 10 complete — **every MVP module is now implemented and verified**, including the settings module and holiday-aware leave counting. Remaining: ① push to the public `hr-app` repo (after `gh auth login`) ② email notifications (NOT-1/2) once SMTP is configured ③ browser E2E sweep of every form (still impossible via curl — known Next.js restriction) ④ stable domain via a free subdomain ⑤ pipelines/deploy runtime validation.
+- **GitHub push — done**: the repo was missing from GitHub because **no remote had ever been configured and `gh` was not logged in**; everything was local commits only. Fixed via the `gh` device flow (the user approved in the browser, so no token was ever shared in conversation).
+  - Repo: **https://github.com/WhoisHOO/hr-app** — **public**, Apache-2.0 detected, description set
+  - Local branch renamed `master` → **`main`** before the first push (GitHub's 2026 default), `origin` added, `main` tracks `origin/main`
+  - All **9 commits** pushed; local `HEAD` and `origin/main` both at `c6e51bd`, working tree clean
+  - From here on: `git push` works directly. `gh auth login` is no longer a blocker for any future work.
+- **Checkpoint commit**: `0b4a4db feat(settings): company profile, leave policy management, holiday calendar, expense categories + holiday-aware leave day counting` — covers all Session 10 work.
+- **Pre-push secret audit** (done before the repo went public): 122 tracked files; `.env*`, `/uploads/`, `/dev-server.log` are all ignored and untracked; the only credential-shaped strings in tracked files are the `hr:hr_dev_password` **docker-compose dev defaults** in `docker-compose.yml`, `pipelines/README.md`, `pipelines/dags/`, `pipelines/spark/` — local dev DB bound to localhost, no real secret. `src/generated/prisma` (26 files) is intentionally tracked per Session 4.
+- **Result/next**: Session 10 complete — **every MVP module is implemented and verified** (settings module + holiday-aware leave counting), and the project is **finally on GitHub**. Remaining: ① email notifications (NOT-1/2) once SMTP is configured ② browser E2E sweep of every form (still impossible via curl — known Next.js restriction) ③ stable domain via a free subdomain ④ pipelines/deploy runtime validation ⑤ a README refresh now that the repo is public.
 
 <!-- ====== Template for next sessions (copy & use) ======
 ### Session 5 (2026-09-24): <title>
