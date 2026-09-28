@@ -9,8 +9,9 @@ one returns `500 Connection closed.`, which is a framework restriction, not an a
 That blocked every form's real interaction test from Session 5 until this harness
 existed.
 
-It has already paid for itself. `forms.mjs` found a bug that **every other layer
-missed**: the leave request form could not be submitted at all.
+It has already paid for itself twice. `forms.mjs` found a bug that **every other
+layer missed**: the leave request form could not be submitted at all. `expenses.mjs`
+covers the module whose status transitions no test had ever invoked.
 
 ## How it works, with no new dependencies
 
@@ -38,17 +39,20 @@ npm run test:e2e:all     # terminal 2
 |---|---|
 | `npm run test:e2e` | Login + the locale switcher (20 checks) |
 | `npm run test:e2e:forms` | Attendance check-in/out + leave request/cancel (21 checks) |
-| `npm run test:e2e:all` | Both, in order |
+| `npm run test:e2e:expenses` | Expense create/submit/approve/reject/pay/delete (33 checks) |
+| `npm run test:e2e:all` | All three, in order |
 
-Both exit non-zero on failure and exit early with a clear message if the dev
+Each exits non-zero on failure and exits early with a clear message if the dev
 server is not up, so they are usable in CI later.
 
 | Variable | Default | Meaning |
 |---|---|---|
 | `E2E_BASE` | `http://localhost:3000` | App under test |
-| `E2E_EMAIL` | `admin@example.com` | Login, defaults to the public seed admin |
-| `E2E_PASSWORD` | `Admin1234!` | Login |
-| `E2E_PORT` | `9222` / `9223` | DevTools port, per suite |
+| `E2E_EMAIL` | `admin@example.com` | Reviewer login, defaults to the public seed admin |
+| `E2E_PASSWORD` | `Admin1234!` | Reviewer login |
+| `E2E_MANAGER_EMAIL` | `e2e-manager@example.com` | Report owner, created by the fixture |
+| `E2E_MANAGER_PASSWORD` | `E2eManager1234!` | Report owner login |
+| `E2E_PORT` | `9222` / `9223` / `9224` | DevTools port, per suite |
 | `E2E_HEADFUL` | *(unset)* | Set to `1` to watch the browser |
 
 ```bash
@@ -89,22 +93,86 @@ non-default locale. It covers:
    *Awaiting approval*, and shows under *My leave requests*.
 6. Cancel it through the UI, and confirm it reads *Canceled*.
 
+`expenses.mjs` walks the whole expense lifecycle, and it exists because
+`_test-expense.ts` cannot. That script writes every status transition straight
+to the database with Prisma, so `createExpenseReport`, `submitExpenseReport`,
+`decideExpense` and `deleteExpenseReport` have never been called by anything.
+Its step 7 is the clearest tell: it logs that a report is `PAID` and calls that a
+guard check, without ever invoking the action that would refuse the transition.
+
+The flow needs two accounts, and only one is seeded, for two reasons that are
+policy rather than accident:
+
+- `inviteEmployee()` only accepts `["EMPLOYEE", "MANAGER"]`, so the UI cannot
+  create a second admin, and paying requires `canActAsAdmin()`.
+- `canReviewEmployee()` returns false when `target.employeeId === reviewer.employeeId`,
+  and `approvalInboxEmployeeWhere()` drops the reviewer's own employee from the
+  inbox. **Self-review is forbidden.**
+
+So the report is owned by a `MANAGER` and reviewed by the seeded admin. That
+combination needs no mutation of the admin's own employee record, and it still
+reaches every transition. The suite covers:
+
+1. The category dropdown is populated, and a manager is *not* offered the payment
+   queue.
+2. Create a report with two items; the client-side total sums them, the report
+   lists as *In progress* with both items, and a draft offers *Submit for
+   approval* and *Delete*.
+3. Submit it: it reads *Awaiting approval* and the edit controls disappear.
+4. Delete a second draft through the UI and confirm it is gone.
+5. As the admin, both reports are in the approval inbox. **Rejecting without a
+   reason is refused** and the report stays pending — `decideExpense()` requires a
+   comment of at least 2 characters, and nothing had ever exercised that.
+6. Reject with a reason, approve the other report, then confirm payment.
+7. Back as the owner: the rejected report shows *Rejected* with the reason, and
+   the other reads *Paid*.
+8. The CSV export responds and its headers follow the English locale.
+
 ## Cleanup
 
 `forms.mjs` creates real records, so it removes them. `cleanup.ts` deletes leave
 requests tagged with the harness reason and today's attendance record for the
 login user (`AttendanceEvent` and `AttendanceCorrection` cascade from
-`AttendanceRecord`). It runs **before** the suite too, so an interrupted previous
-run cannot poison the next one: a leftover attendance row would leave the check-in
-button disabled, and a leftover leave request would double-spend the balance.
+`AttendanceRecord`).
+
+`expense-fixture.ts` creates the MANAGER account the expense suite needs and
+removes the reports and the account again:
 
 ```bash
 npx tsx _e2e/cleanup.ts
+npx tsx _e2e/expense-fixture.ts setup     # or: cleanup
 ```
+
+Creating the account in the database is only test scaffolding. Everything the
+suite asserts runs through the browser against the real forms.
+
+One thing to get right if you extend it: `Employee.user` is an optional relation
+with **no `onDelete` rule**, so deleting the `User` leaves the `Employee` behind
+as an orphan. `Employee` is unique on `(companyId, email)`, so that orphan makes
+the next `setup` fail with `P2002`. Delete the employee first, then the user.
+
+Every fixture runs before *and* after its suite, so an interrupted run cannot
+poison the next one: a leftover attendance row leaves the check-in button
+disabled, a leftover leave request double-spends the balance, and a leftover
+`SUBMITTED` report sits in the approval inbox and breaks the expected counts.
 
 ## Adding a case
 
-`page.eval()` takes a function body, not an expression:
+**`page.eval()` takes a function body, and the body is wrapped as `(() => { ... })()`.**
+That has one sharp edge: interpolating bare statements after a `return` is
+silently rewritten by automatic semicolon insertion, so it returns `undefined`
+and raises nothing.
+
+```js
+// undefined, no error - this is `return;` followed by dead code
+await page.eval(`return ${`const el = document.querySelector("#x"); return el;`}`);
+
+// correct: an IIFE expression
+const el = await page.eval(`return ${`(() => { const e = document.querySelector("#x"); return e; })()`}`);
+```
+
+`await` inside a bare body is a `SyntaxError`; it is only valid in the async IIFE
+form. A plain click needs nothing special:
 
 ```js
 const ok = await page.eval(`
@@ -136,6 +204,13 @@ const set = (el, v) => {
 **Format dates from the local calendar fields.** `toISOString()` shifts a
 local-midnight date back by a day on any machine ahead of UTC, which quietly turns
 a "future" date into today and gets it rejected by past-date validation.
+
+**`innerText` reflects CSS `text-transform`.** A heading with a Tailwind
+`uppercase` class reads back as `ITEMS (2)`, not `Items (2)`. Match
+case-insensitively.
+
+**Trim what you compare.** The CSV export is written with CRLF line endings, so
+splitting on `\n` leaves a trailing `\r` on the header.
 
 Cookies are read with `Network.getAllCookies`, which is how the `httpOnly` `locale`
 cookie is asserted even though `document.cookie` cannot see it.

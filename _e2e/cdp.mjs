@@ -192,6 +192,23 @@ export class Page {
     return r.result.value;
   }
 
+  /**
+   * Evaluates a function body in the page and returns its value.
+   *
+   * The body is wrapped as `(() => { ... })()`, so anything that is not a single
+   * expression has to be a `return` of an expression. Interpolating bare
+   * statements after a `return` looks fine but is silently rewritten by
+   * automatic semicolon insertion:
+   *
+   *   page.eval(`return ${`const x = 1; return x;`}`)   // -> undefined, no error
+   *   page.eval(`return ${`(() => { const x = 1; return x; })()`}`)  // -> 1
+   *
+   * The first form is `return; const x = 1;` — a complete no-op that returns
+   * undefined and raises nothing. It cost a full debugging cycle to find, so
+   * prefer the IIFE form for anything non-trivial.
+   *
+   * `await` is only valid inside the async IIFE form, not in a bare body.
+   */
   async eval(expression) {
     const r = await this.s.send("Runtime.evaluate", {
       expression: `(() => { ${expression} })()`,

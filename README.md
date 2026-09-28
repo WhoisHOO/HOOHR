@@ -172,6 +172,7 @@ Authenticated routes live under **`/hoohr`**. The pre-rename `/app` prefix still
 | `npx tsc --noEmit` | Type check |
 | `npm run test:e2e` | Browser E2E: locale switcher (needs `npm run dev`) |
 | `npm run test:e2e:forms` | Browser E2E: attendance + leave forms |
+| `npm run test:e2e:expenses` | Browser E2E: expense create → submit → decide → pay |
 | `npm run db:migrate` | Create/apply a development migration |
 | `npm run db:seed` | Seed the bootstrap company, policies, and admin |
 | `npm run db:studio` | Prisma Studio |
@@ -211,13 +212,16 @@ browser download.
 |---|---|
 | `npm run test:e2e` | Login + locale switcher (20 checks) |
 | `npm run test:e2e:forms` | Attendance check-in/out + leave request/cancel (21 checks) |
-| `npm run test:e2e:all` | Both |
+| `npm run test:e2e:expenses` | Expense create/submit/approve/reject/pay/delete (33 checks) |
+| `npm run test:e2e:all` | All three |
 
 The switcher suite logs in with a real typed-in form, clicks **English** and
 **한국어**, and asserts the `httpOnly` `locale` cookie, the switched UI, persistence
 across reloads, `<html lang>`, and sign-out. The forms suite exercises attendance
-check-in/check-out and the leave request/cancel round trip, then deletes what it
-created. See [`_e2e/README.md`](./_e2e/README.md).
+check-in/check-out and the leave request/cancel round trip. The expenses suite
+walks the full expense lifecycle across two accounts, which is the only way to
+reach it: self-review is forbidden and a second admin cannot be invited. See
+[`_e2e/README.md`](./_e2e/README.md).
 
 ---
 

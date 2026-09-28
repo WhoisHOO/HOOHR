@@ -13,9 +13,9 @@
 
 ---
 
-## 📍 Current Status (as of 2026-09-28, end of Session 13)
+## 📍 Current Status (as of 2026-09-28, end of Session 14)
 
-**Progress: The whole MVP feature set is implemented ✅ Auth + Attendance + Leave + Expense, employee/org admin, team-scoped approvals, expense CSV export, and the settings module with holiday-aware leave counting. The project is branded HOOHR, public on GitHub, and clone-and-run: real `Dockerfile`, working `docker-compose.yml`, `.env.example`, and a rewritten README. The UI is bilingual: Korean and English, switchable at runtime from the sidebar, with no external i18n library. The UI is now covered by real-browser E2E with zero added dependencies, and that harness immediately caught a bug that had made the leave request form completely unusable since Session 6. Remaining MVP item: email notifications (NOT-1/2), which needs SMTP credentials.**
+**Progress: The whole MVP feature set is implemented ✅ Auth + Attendance + Leave + Expense, employee/org admin, team-scoped approvals, expense CSV export, and the settings module with holiday-aware leave counting. The project is branded HOOHR, public on GitHub, and clone-and-run: real `Dockerfile`, working `docker-compose.yml`, `.env.example`, and a rewritten README. The UI is bilingual: Korean and English, switchable at runtime from the sidebar, with no external i18n library. The UI is now covered by real-browser E2E with zero added dependencies, and that harness has already caught two defects that had survived multiple sessions: a leave request form that could not be submitted at all, and an entire expense action layer that no test had ever invoked. Every module now has real-browser form coverage (74 checks). Remaining MVP item: email notifications (NOT-1/2), which needs SMTP credentials.**
 
 > **Session 6 note**: Session 5 ended five minutes before the Leave module files were produced. The DB logic round-trip (`_test-leave.ts`), lint/tsc, and GET checks were done in Session 6. Server-action E2E (browser) of leave forms remained impossible for sessions after that, and Session 13 finally closed that gap — and found the leave form had been broken that whole time.
 
@@ -58,6 +58,7 @@
 | Browser E2E harness (CDP, zero dependencies) | ✅ `0b96554` — locale switcher 20/20 in a real browser |
 | **Leave request form unusable since Session 6** | ✅ **Fixed (Session 13)** — unchecked checkbox sent `""`, which `.optional()` rejects; `isHalfDay` error was also swallowed by the form |
 | Browser E2E of the attendance + leave forms | ✅ **Done (Session 13)** — `_e2e/forms.mjs`, 21/21 |
+| **Expense action layer never invoked by any test** | ✅ **Covered (Session 14)** — `_test-expense.ts` only wrote Prisma; `_e2e/expenses.mjs` 33/33 drives the real forms |
 | **Remaining MVP item: email notifications (NOT-1/2)** | ⛔ **Blocked — needs SMTP credentials** |
 
 > **Key notes:**
@@ -640,6 +641,51 @@ C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchang
   Remaining, in rough priority order — **expense form E2E** (submit, approve, reject, CSV) now that `_e2e` makes
   it cheap — **email notifications (NOT-1/2)** once SMTP credentials exist — the `storage.ts` tracing warning —
   **stable domain** via a free subdomain + named tunnel — `pipelines/deploy` runtime validation.
+
+### Session 14 (2026-09-28): browser E2E of the expense flow - the least-tested layer in the project
+
+- **Goal**: the last major module with no real form coverage. After Session 13's leave bug, the obvious question was
+  what else had been assumed rather than tested.
+- **Answer: the entire expense action layer.** `_test-expense.ts` writes every status transition straight to the
+  database with Prisma, so `createExpenseReport`, `submitExpenseReport`, `decideExpense` and `deleteExpenseReport`
+  had **never been called by anything**. Its step 7 is the clearest tell in the repo: it logs that a report is `PAID`
+  and calls that a guard check, without ever invoking the action that would refuse the transition. A regression in
+  any of those four functions would have been invisible to every existing test.
+- **The flow needs two accounts, and only one is seeded.** Two deliberate rules make that non-obvious:
+  - `inviteEmployee()` only accepts `["EMPLOYEE", "MANAGER"]` (`src/lib/auth-validation.ts:31`), so the UI cannot
+    create a second admin, and paying requires `canActAsAdmin()`.
+  - **Self-review is forbidden.** `canReviewEmployee()` returns false when `target.employeeId === reviewer.employeeId`
+    (`src/lib/team.ts:158`), and `approvalInboxEmployeeWhere()` drops the reviewer's own employee from the inbox.
+  - Resolution: the report is owned by a **MANAGER** and reviewed by the seeded admin. That reaches every transition
+    - `DRAFT -> SUBMITTED -> REJECTED` and `DRAFT -> SUBMITTED -> APPROVED -> PAID` - **without mutating the admin's
+    own employee record**, which is what the obvious alternative would have required.
+- **New suite `_e2e/expenses.mjs`, 33 checks, all passing.** Category dropdown, live total, draft listing, submit,
+  delete, the admin inbox, approve, reject, payment, and the English CSV headers. Two guards are now covered that
+  nothing had ever touched: **rejecting without a reason is refused** and the report stays pending
+  (`decideExpense` requires a 2-character comment), and a **manager is not offered the payment queue**.
+- **Fixture: `_e2e/expense-fixture.ts`**, self-cleaning and idempotent, run before and after the suite.
+  - **Gotcha worth remembering: `Employee.user` is an optional relation with no `onDelete` rule.** Deleting the
+    `User` leaves the `Employee` behind as an orphan, and `Employee` is unique on `(companyId, email)`, so the next
+    setup fails with `P2002`. I hit this on the second run. Delete the employee first, then the user.
+- **Harness bug that cost a full debugging cycle, and it is nasty.** `page.eval()` wraps the body as
+  `(() => { ... })()`. Interpolating bare statements after a `return` looks correct but is silently rewritten by
+  **automatic semicolon insertion** into `return;` followed by dead code - it returns `undefined` and throws
+  nothing. Six assertions failed this way with no error anywhere. The fix is an IIFE **expression**
+  (`return (() => { ... })()`), which is what `attState` in `forms.mjs` already did. Documented on `Page.eval` and
+  in `_e2e/README.md`.
+  - Two smaller versions of the same class: `innerText` **reflects CSS `text-transform`**, so a Tailwind
+    `uppercase` heading reads back as `ITEMS (2)`; and the CSV export is CRLF, so splitting on `\n` leaves a
+    trailing `\r` on the header. Both initially failed while the value *looked* exactly right in the failure output.
+- **Also fixed while extending the harness**: `createReport` in the new suite was silently skipping its fill when
+  the row count did not match, because the eval's return value was discarded. It now asserts the count and reports
+  the action's own message on failure, so a broken create says why instead of only "not in the list".
+- **Verification**: `test:e2e:all` -> 20 + 21 + 33 = **74 checks, 0 failures**. `tsc` 0 errors, lint 0,
+  `build` ✓. `_test-leave` 7/7, `_test-team` 27/27, `_test-settings` 23/23, 0 leftovers. No application code was
+  changed in this session, so the module behaviour is unchanged by construction.
+- **Result/next**: every module now has real-browser form coverage, and the two suites found two real defects that
+  had survived multiple sessions. Remaining, in rough priority order - **email notifications (NOT-1/2)** once SMTP
+  credentials exist, the only MVP item still open - the `storage.ts` tracing warning - **stable domain** via a free
+  subdomain + named tunnel - `pipelines/deploy` runtime validation.
 
 <!-- ====== Template for next sessions (copy & use) ======
 ### Session 5 (2026-09-24): <title>
