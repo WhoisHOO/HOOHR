@@ -3,8 +3,10 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/dal";
 import { getCompanyTimezone } from "@/lib/company";
-import { addMonths, monthBounds, monthLabel, zonedToday } from "@/lib/attendance";
-import { formatLeaveRange, remainingDays } from "@/lib/leave";
+import { addMonths, monthBounds, monthLabel, parseIsoDate, zonedToday } from "@/lib/attendance";
+import { formatLeaveDay, formatLeaveRange, remainingDays } from "@/lib/leave";
+import { isoDateKey } from "@/lib/holidays";
+import { getCompanyHolidayNames } from "@/lib/holiday-store";
 import {
   approvalInboxEmployeeWhere,
   isApprovalReviewer,
@@ -69,7 +71,7 @@ export default async function LeavePage({
     ? teamEmployeeWhere(user, true)
     : { id: { in: [] } };
 
-  const [policies, balances, myRequests, myMonthLeaves, inbox, companyMonthLeaves] =
+  const [policies, balances, myRequests, myMonthLeaves, inbox, companyMonthLeaves, holidayNames] =
     await Promise.all([
       prisma.leavePolicy.findMany({
         where: { companyId: user.companyId, active: true },
@@ -129,7 +131,15 @@ export default async function LeavePage({
             orderBy: { startDate: "asc" },
           })
         : Promise.resolve([]),
+      getCompanyHolidayNames(user.companyId),
     ]);
+
+  const holidayDates = [...holidayNames.keys()];
+  const startKey = isoDateKey(monthStart);
+  const endKey = isoDateKey(monthEnd);
+  const monthHolidayNames = [...holidayNames.entries()]
+    .filter(([key]) => key >= startKey && key <= endKey)
+    .map(([key, name]) => `${formatLeaveDay(parseIsoDate(key))} ${name}`);
 
   const balanceByPolicy = new Map(balances.map((b) => [b.policyId, b]));
 
@@ -202,6 +212,7 @@ export default async function LeavePage({
                 <LeaveRequestForm
                   policies={policyOptions}
                   today={`${today.getUTCFullYear()}-${String(today.getUTCMonth() + 1).padStart(2, "0")}-${String(today.getUTCDate()).padStart(2, "0")}`}
+                  holidays={holidayDates}
                 />
               )}
             </div>
@@ -296,6 +307,12 @@ export default async function LeavePage({
               </li>
             ))}
           </ul>
+        )}
+
+        {monthHolidayNames.length > 0 && (
+          <p className="mt-4 text-xs text-zinc-500">
+            공휴일: {monthHolidayNames.join(", ")}
+          </p>
         )}
       </section>
 

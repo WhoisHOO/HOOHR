@@ -1,8 +1,9 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { requestLeave } from "@/app/actions/leave";
 import { countWorkdays } from "@/lib/leave";
+import { isWorkday } from "@/lib/holidays";
 import type { LeaveRequestState } from "@/lib/leave-validation";
 
 export type LeavePolicyOption = {
@@ -20,9 +21,11 @@ function parseIso(value: string): Date | null {
 export function LeaveRequestForm({
   policies,
   today,
+  holidays,
 }: {
   policies: LeavePolicyOption[];
   today: string;
+  holidays: string[];
 }) {
   const [state, action, pending] = useActionState<LeaveRequestState, FormData>(
     requestLeave,
@@ -37,15 +40,19 @@ export function LeaveRequestForm({
   const selected = policies.find((p) => p.id === policyId);
   const start: Date | null = parseIso(startDate);
   const end: Date | null = isHalfDay ? start : parseIso(endDate);
+  const holidaySet = useMemo(() => new Set(holidays), [holidays]);
   const days =
     start && end && start.getTime() <= end.getTime() && !isHalfDay
-      ? countWorkdays(start, end)
+      ? countWorkdays(start, end, holidaySet)
       : isHalfDay && start
         ? 0.5
         : 0;
   const remaining = selected?.remaining ?? null;
   const remainingAfter = remaining !== null ? Math.max(0, remaining - days) : null;
   const over = remaining !== null && days > remaining;
+  // Server refuses a half-day on a weekend/holiday; mirror it so the button state matches.
+  const halfDayBlocked = isHalfDay && start !== null && !isWorkday(start, holidaySet);
+  const blocked = over || halfDayBlocked || days <= 0;
 
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -156,12 +163,18 @@ export function LeaveRequestForm({
         </p>
         <button
           type="submit"
-          disabled={pending || over || days <= 0}
+          disabled={pending || blocked}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {pending ? "신청 중..." : "휴가 신청"}
         </button>
       </div>
+
+      {halfDayBlocked && (
+        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          선택한 날짜는 주말 또는 공휴일이므로 반차를 신청할 수 없습니다.
+        </p>
+      )}
 
       {over && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">

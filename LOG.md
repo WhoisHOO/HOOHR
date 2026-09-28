@@ -13,9 +13,9 @@
 
 ---
 
-## 📍 Current Status (as of 2026-09-25, end of Session 9)
+## 📍 Current Status (as of 2026-09-28, end of Session 10)
 
-**Progress: Auth + Attendance + Leave + Expense MVP done (incl. expense CSV export), plus employee/org admin (EMP-1/3/4) and team-scoped approvals. Remaining MVP: email notifications (NOT-1/2), settings module (SET-1..4), stable domain & GitHub push (`gh auth login`).**
+**Progress: The whole MVP feature set is implemented — Auth + Attendance + Leave + Expense, employee/org admin, team-scoped approvals, expense CSV export, and the settings module with holiday-aware leave counting. Remaining MVP items: email notifications (NOT-1/2) and GitHub push (`gh auth login`).**
 
 > **Session 6 note**: Session 5 ended five minutes before the Leave module files were produced. The DB logic round-trip (`_test-leave.ts`), lint/tsc, and GET checks were done in Session 6. Server-action E2E (browser) of leave forms remains, same as attendance.
 
@@ -43,11 +43,13 @@
 | Expense CSV export (EXP-6) | ✅ Done (Session 8) |
 | Employee & org admin (departments, profile, status, re-invite) | ✅ Done (Session 9) |
 | Team-scoped approval inboxes (attendance/leave/expense) | ✅ Done (Session 9) |
+| Settings module (company profile, policies, holidays, categories) | ✅ Done (Session 10) |
+| Holiday-aware leave day counting | ✅ Done (Session 10) |
 | Email notifications (NOT-1/2) | ⬜ Pending — needs SMTP config |
-| Settings module (company profile, holidays, policy mgmt) | ⬜ Pending (SET-1..4) |
-| Checkpoint commit (Session 5–8) | ✅ Commits local; push needs `gh auth login` |
+| Checkpoint commit (Session 5–9) | ✅ Commits local; **no git remote configured yet** |
 
 > **Key notes:**
+> - **No `git remote` is configured and `gh` is not logged in** — this is why `github.com/WhoisHOO` shows no hr-app repo. Everything is local commits only. Session 10 decided the repo name is **`hr-app`** and set up the public-repo push (see that section).
 > - **500 "Connection closed." when POSTing server actions via curl/fetch is a known Next.js restriction** — not an app bug. Test real flows via browser.
 > - Quick-tunnel URL persists only while the same `cloudflared` process is alive; restart/reboot generates a **new random URL**. Unrelated to dev-server restarts.
 > - This PC's router DNS (192.168.1.254) fails to resolve some trycloudflare hostnames → verify via `--resolve` or 8.8.8.8. Other devices are fine.
@@ -107,7 +109,7 @@
 - "Claim expenses with receipts when on sick leave" — attach proof to leave request, or a separate expense claim? Needs separation
 
 ### 4. Project name/brand
-- Working name: `hr-app` (internal folder name). Final name needed before release
+- Working name: `hr-app` (folder + **GitHub repo name decided in Session 10**). Display/brand name still open — keep in mind that `README.md`/`package.json`/`LICENSE` use `hr-app`
 
 ### 5. OCR (receipt auto-extraction) in MVP?
 - UX research ranks OCR as an "Expensify-class core" feature but MVP-later → deferred to v0.2
@@ -350,6 +352,46 @@ C:\apps\projects\hr-app\
   - Position stays free text (no master-data model); a department without a manager simply has no approver, so such requests are only decidable by an ADMIN
 - **Checkpoint commit**: `98f7ab8 feat(admin,approvals): employee & org management, team-scoped approvals, expense CSV export` — covers Session 8 (CSV export) + Session 9. Local only; push still needs `gh auth login`. Working tree clean.
 - **Result/next**: Session 9 complete — employee/org admin + team-scoped approvals implemented and verified. Next: ① settings module (SET-1..4: company profile, holidays for holiday-aware day counts, policy management) ② email notifications (NOT-1/2) once SMTP is configured ③ stable domain + `gh auth login` + GitHub push ④ pipelines/deploy runtime validation.
+
+### Session 10 (2026-09-25): Settings module (SET-1..4) + holiday-aware leave day counting
+
+> **Note**: Record updated incrementally while working (sessions keep getting cut).
+
+- **Goal**: close the last admin gap — company profile, leave policy management, holiday calendar, expense categories — and make holidays actually affect leave day counts (deferred since Session 6, where the `Holiday` model existed but was unused).
+- **Plan** (per `docs/REQUIREMENTS.md` §3.6 SET-1..4, permission matrix: ADMIN only):
+  - SET-1 company name + timezone (IANA). **Decision: no `domain` column** — nothing in the MVP consumes it (`APP_URL` env is what builds invite links), so adding an unused column is rejected; recorded here instead
+  - SET-2 leave policy edit (annualDays, carry-over cap, isPaid, requiresApproval, active) + an explicit "apply grantedDays to this year's balances" action (the one-off `_apply-policy.ts` from Session 9 becomes a real admin action)
+  - SET-3 holiday calendar CRUD per year **and** holiday-aware `countWorkdays` (server action + client-side preview must agree)
+  - SET-4 expense category CRUD, deactivate (not delete) when items reference it
+  - New: `src/lib/settings-validation.ts`, `src/app/actions/settings.ts`, `src/lib/holidays.ts`, `/app/admin/settings` page + client components, sidebar link
+- **Progress**: plan recorded; implementation starting.
+
+- **Settings module — done** (SET-1..4, no schema/migration needed — every field already existed in `init`):
+  - `src/lib/holidays.ts` — pure holiday helpers: `HolidaySet` (a `ReadonlySet` of `"YYYY-MM-DD"` keys), `isoDateKey()`, `toHolidaySet()` (DB rows → set), `isWorkday()` (the single weekend+holiday predicate every calculation shares)
+  - `src/lib/holiday-store.ts` — `server-only` read layer: `getCompanyHolidays()` (set, for calculations), `getCompanyHolidayNames()` (map, for display), `getCompanyHolidayName()` (single-date lookup, for the half-day guard message)
+  - `src/lib/settings-validation.ts` — zod schemas per action (company, policy update/apply, holiday create/delete, category create/update/delete) + shared `SettingsState` action-state type
+  - `src/app/actions/settings.ts` — `updateCompanySettings` (IANA timezone validated via `Intl.DateTimeFormat`, no `domain` column — see the plan note), `updateLeavePolicy`, `applyPolicyToCurrentYear` (the Session 9 `_apply-policy.ts` one-off promoted to a real admin action: updates `grantedDays` on **existing** current-year balance rows only, never `usedDays`/`adjustDays`), `createHoliday`/`deleteHoliday`, `createExpenseCategory`/`updateExpenseCategory`/`deleteExpenseCategory` (in-use categories are refused and must be deactivated instead; P2002 → friendly Korean message)
+  - `src/app/app/admin/settings/` — `page.tsx` (server) + `settings-client.tsx` (client, four `useActionState` sections): company info w/ full IANA timezone list, one editable card per leave policy (+ the "apply granted days to this year's balances" action), holiday calendar with `?year=YYYY` nav, expense category CRUD. Sidebar admin link added
+- **Holiday-aware leave counting** (the piece deferred since Session 6, where the `Holiday` model existed but nothing read it):
+  - `src/lib/leave.ts` — `countWorkdays(start, end, holidays?)` / `computeLeaveDays(..., holidays?)` take an optional holiday set and route every day through `isWorkday`
+  - `src/app/actions/leave.ts` — loads the company holiday set and computes the request days holiday-aware; the "no workdays" error now reads `주말 또는 공휴일만 포함됨`
+  - `src/app/app/leave/page.tsx` — passes the holiday date list to the request form and prints a `공휴일: 9월 7일 Labor Day` line under the month schedule; reads holidays through the store instead of an inline query (one place owns holiday reads)
+  - `src/app/app/leave/leave-form.tsx` — live day preview subtracts holidays from the same set, so the client preview and the server action cannot disagree
+  - **Extra guard found while doing this**: a half-day was accepted on any day, including a Saturday or a holiday, because half-day always resolves to 0.5 and therefore never trips the `days <= 0` check. `requestLeave` now refuses it (naming the holiday when there is one) and the form disables the submit button with the same predicate, so the button state matches the action
+- **Verification**:
+  - `npm run lint` clean, `npx tsc --noEmit` clean
+  - `_test-settings.ts` (new, self-cleaning with a pre-run sweep): **23/23** — pure holiday counting (holiday inside the week drops the count, a holiday on a weekend changes nothing, a full holiday week is 0), the three half-day guard cases, holiday row persisted + duplicate rejected by the unique index, a real `LeaveRequest` stores 4 days for a Mon–Fri week with a Wednesday holiday while the balance is untouched, policy edit + apply (every row updated, `usedDays` preserved), expense category delete-when-unused vs FK-rejected-when-in-use; 0 leftovers after cleanup
+  - Regressions green: `_test-leave.ts`, `_test-expense.ts`, `_test-team.ts` (27/27) re-run after the change
+  - Live page checks with a minted admin cookie: `/app`, `/app/admin/settings`, `/app/admin/settings?year=2027`, `/app/leave`, `/app/leave?month=2026-10`, `/app/attendance`, `/app/expenses`, `/app/admin/employees`, `/app/admin/invite`, `/app/admin/balances`, `/app/expenses/export?month=2026-09` all 200; unauthenticated `/app/admin/settings` → 307 `/login`; no errors in the dev log. Rendered content asserted on the saved HTML: all four sections, the policy cards, the seeded holidays (설날 etc.), `2027년 0개` + `올해로` on the year nav, and the RSC payload carrying all 11 holiday dates into the form
+  - Live DB left in the agreed state: PTO 10 / SICK 5, 11 holidays, 6 categories
+- **Notes/ops**:
+  - Fixed mojibake in the new settings UI (`예:교육비` → `예: 교육비`) — the same encoding trap as Session 1
+  - Docker Desktop was down at session start again (4th occurrence) — relaunched, `hr_app_db` healthy
+  - `next dev` also died with the shell that launched it (`Start-Job`), so a relaunch used `Start-Process cmd /c` to detach. **Dev helper note: launch the dev server detached, otherwise it stops when the launching shell exits**
+  - Dead code removed while refactoring: `holidayNameOn()` (never called); the leave page now shares the store's `isoDateKey` instead of repeating the `toISOString().slice(0,10)` conversion
+  - `applyPolicyToCurrentYear` deliberately does **not** create balance rows, so employees who never got a CSV import or a grant stay absent rather than silently appearing with a fresh 0 used-days balance. Grant-on-hire/carry-over remains open in "Open Decisions #2"
+- **GitHub push setup**: confirmed the repo was absent from GitHub because **no remote was ever configured and `gh` was not logged in** (local commits only). Decided the repo name is **`hr-app`** (public, Apache-2.0), and the user runs `gh auth login` themselves so no token is shared. Push itself is recorded in the "Checkpoint commit" line below once it lands.
+- **Result/next**: Session 10 complete — **every MVP module is now implemented and verified**, including the settings module and holiday-aware leave counting. Remaining: ① push to the public `hr-app` repo (after `gh auth login`) ② email notifications (NOT-1/2) once SMTP is configured ③ browser E2E sweep of every form (still impossible via curl — known Next.js restriction) ④ stable domain via a free subdomain ⑤ pipelines/deploy runtime validation.
 
 <!-- ====== Template for next sessions (copy & use) ======
 ### Session 5 (2026-09-24): <title>

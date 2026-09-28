@@ -69,6 +69,12 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
               >
                 연차 잔여 가져오기
               </Link>
+              <Link
+                href="/app/admin/settings"
+                className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+              >
+                회사 설정
+              </Link>
             </>
           )}
         </nav>

@@ -8,6 +8,8 @@ import { fieldErrors } from "@/lib/form-utils";
 import { getCompanyTimezone } from "@/lib/company";
 import { parseIsoDate, zonedToday } from "@/lib/attendance";
 import { computeLeaveDays, remainingDays } from "@/lib/leave";
+import { isWorkday } from "@/lib/holidays";
+import { getCompanyHolidayName, getCompanyHolidays } from "@/lib/holiday-store";
 import {
   approvalReviewerFromUser,
   approvalReviewerSelect,
@@ -67,9 +69,18 @@ export async function requestLeave(
     return { message: "선택한 휴가 유형(정책)이 존재하지 않습니다." };
   }
 
-  const days = computeLeaveDays(start, end, isHalfDay);
+  const holidays = await getCompanyHolidays(user.companyId);
+  const days = computeLeaveDays(start, end, isHalfDay, holidays);
   if (days <= 0) {
-    return { message: "선택 기간에 근무일이 없습니다 (주말만 선택됨)." };
+    return { message: "선택 기간에 근무일이 없습니다 (주말 또는 공휴일만 포함됨)." };
+  }
+  if (isHalfDay && !isWorkday(start, holidays)) {
+    const name = await getCompanyHolidayName(user.companyId, start);
+    return {
+      message: name
+        ? `${name}(${start.getUTCMonth() + 1}월 ${start.getUTCDate()}일)는 공휴일이므로 반차를 신청할 수 없습니다.`
+        : `${start.getUTCMonth() + 1}월 ${start.getUTCDate()}일은 주말이므로 반차를 신청할 수 없습니다.`,
+    };
   }
 
   if (policy.kind !== "UNPAID") {

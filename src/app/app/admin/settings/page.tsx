@@ -1,0 +1,115 @@
+import type { Metadata } from "next";
+import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/dal";
+import { getCompanyTimezone } from "@/lib/company";
+import { zonedToday } from "@/lib/attendance";
+import { formatLeaveDay } from "@/lib/leave";
+import { SettingsClient, type PolicyView, type CategoryView, type HolidayView } from "./settings-client";
+
+export const metadata: Metadata = {
+  title: "회사 설정",
+};
+
+const LEAVE_KIND_LABELS: Record<string, string> = {
+  PTO: "연차",
+  SICK: "병가",
+  UNPAID: "무급휴직",
+};
+
+function toDateInput(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ year?: string }>;
+}) {
+  const admin = await requireAdmin();
+  const tz = await getCompanyTimezone(admin.companyId);
+  const currentYear = zonedToday(tz).getUTCFullYear();
+
+  const params = await searchParams;
+  const requestedYear = Number(params.year);
+  const year =
+    Number.isInteger(requestedYear) && requestedYear >= 2000 && requestedYear <= 2100
+      ? requestedYear
+      : currentYear;
+
+  const [company, policies, holidays, categories] = await Promise.all([
+    prisma.company.findUniqueOrThrow({
+      where: { id: admin.companyId },
+      select: { name: true, timezone: true },
+    }),
+    prisma.leavePolicy.findMany({
+      where: { companyId: admin.companyId },
+      orderBy: [{ kind: "asc" }, { name: "asc" }],
+      include: { _count: { select: { balances: true } } },
+    }),
+    prisma.holiday.findMany({
+      where: { companyId: admin.companyId },
+      orderBy: { date: "asc" },
+      select: { id: true, date: true, name: true },
+    }),
+    prisma.expenseCategory.findMany({
+      where: { companyId: admin.companyId },
+      orderBy: { name: "asc" },
+      include: { _count: { select: { items: true } } },
+    }),
+  ]);
+
+  const policyViews: PolicyView[] = policies.map((policy) => ({
+    id: policy.id,
+    name: policy.name,
+    kind: policy.kind,
+    kindLabel: LEAVE_KIND_LABELS[policy.kind] ?? policy.kind,
+    annualDays: policy.annualDays,
+    maxCarryOverDays: policy.maxCarryOverDays,
+    isPaid: policy.isPaid,
+    requiresApproval: policy.requiresApproval,
+    active: policy.active,
+    balanceCount: policy._count.balances,
+  }));
+
+  const holidayViews: HolidayView[] = holidays.map((holiday) => ({
+    id: holiday.id,
+    date: toDateInput(holiday.date),
+    label: `${formatLeaveDay(holiday.date)} ${holiday.name}`,
+    year: holiday.date.getUTCFullYear(),
+    name: holiday.name,
+  }));
+
+  const categoryViews: CategoryView[] = categories.map((category) => ({
+    id: category.id,
+    name: category.name,
+    active: category.active,
+    itemCount: category._count.items,
+  }));
+
+  const prevYear = year - 1;
+  const nextYear = year + 1;
+
+  return (
+    <div className="mx-auto max-w-4xl space-y-8">
+      <div>
+        <h1 className="text-2xl font-semibold text-zinc-900">회사 설정</h1>
+        <p className="mt-1 text-sm text-zinc-500">
+          회사 기본 정보, 휴가 정책, 공휴일, 경비 분류를 관리합니다.
+        </p>
+      </div>
+
+      <SettingsClient
+        companyName={company.name}
+        timezone={company.timezone}
+        timezones={Intl.supportedValuesOf("timeZone")}
+        currentYear={currentYear}
+        year={year}
+        prevYear={prevYear}
+        nextYear={nextYear}
+        policies={policyViews}
+        holidays={holidayViews}
+        categories={categoryViews}
+      />
+    </div>
+  );
+}

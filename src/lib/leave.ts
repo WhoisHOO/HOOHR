@@ -1,20 +1,30 @@
 // 휴가 도메인의 순수 유틸 — 표시/계산 전용 (DB 접근 없음).
 
-/** [start, end] 구간의 근무일 수 (주말 Sat/Sun 제외, UTC 날짜 기준). */
-export function countWorkdays(start: Date, end: Date): number {
+import { isWorkday, type HolidaySet } from "@/lib/holidays";
+
+/** [start, end] 구간의 근무일 수 (주말 제외 + 등록된 공휴일 제외, UTC 날짜 기준). */
+export function countWorkdays(
+  start: Date,
+  end: Date,
+  holidays?: HolidaySet,
+): number {
   let count = 0;
   const cur = new Date(start.getTime());
   while (cur.getTime() <= end.getTime()) {
-    const dow = cur.getUTCDay();
-    if (dow !== 0 && dow !== 6) count += 1;
+    if (isWorkday(cur, holidays)) count += 1;
     cur.setUTCDate(cur.getUTCDate() + 1);
   }
   return count;
 }
 
 /** 요청 일수: 반차면 0.5, 아니면 근무일 수. */
-export function computeLeaveDays(start: Date, end: Date, isHalfDay: boolean): number {
-  return isHalfDay ? 0.5 : countWorkdays(start, end);
+export function computeLeaveDays(
+  start: Date,
+  end: Date,
+  isHalfDay: boolean,
+  holidays?: HolidaySet,
+): number {
+  return isHalfDay ? 0.5 : countWorkdays(start, end, holidays);
 }
 
 /** 잔여 연차 = 부여 - 사용 + 조정. */
