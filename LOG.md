@@ -54,7 +54,7 @@
 | Brand-rename + Dockerfile + README final commit | ✅ `3091263` (pushed to `main`, Session 11) |
 | **i18n: Korean / English, runtime switch** | ✅ **Done (Session 12)** ✅ dependency-free; `locale` cookie (ko default), 9 dictionary namespaces, locale-aware dates/numbers/CSV |
 | i18n infrastructure commit (auth + nav) | ✅ `b036e2b` (pushed to `main`, Session 12) |
-| i18n full-module extraction + verification | ✅ verified in Session 12 🔄 awaiting commit |
+| i18n full-module extraction + verification | ✅ `930ac5c` (pushed to `main`, Session 12) |
 
 > **Key notes:**
 > - **The repo is live: https://github.com/WhoisHOO/HOOHR** (public, `main`, renamed in Session 11). `gh` is authenticated as `WhoisHOO`, so `git push` works without any further setup. App routes live under `/hoohr`.
@@ -526,6 +526,17 @@ C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchang
     `날짜,카테고리,...` for ko, `Date,Category,...` for en.
   - DB regression tests all pass with **0 leftovers**: `_test-team` 27/27, `_test-settings` 23/23,
     `_test-leave` and `_test-expense` full step traces green.
+  - **`npm run build` succeeds** (`✓ Compiled successfully`, exit 0, `.next/BUILD_ID` written). This was the
+    check that matters most for i18n, because dev mode tolerates mistakes a production build rejects: a client
+    component calling `getLocale()`/`cookies()`, or a non-serializable prop crossing the server/client boundary
+    (`intl` is threaded as a plain string, so it is safe). All 14 routes are correctly classified `ƒ (Dynamic)`
+    server-rendered on demand — every screen now depends on the locale cookie, so none of them may be
+    prerendered at build time. Zero RSC boundary errors.
+- **Pre-existing build warning, not from this work**: `npm run build` warns that
+  `uploadDir()` in `src/lib/storage.ts` is a dynamic filesystem access, so the whole project gets traced into the
+  server output. It predates i18n (only the `ReceiptError` return codes changed here) and is a deployment-size
+  concern, not a correctness one. Left alone deliberately; the fix is a static `path.join(process.cwd(), ...)`
+  plus `outputFileTracingExcludes`.
 - **Not verified**: clicking the switcher in a real browser. The locale *read* path is proven (a `locale=en`
   cookie changes every page), and the switcher renders with both options, but the server-action *write*
   path cannot be exercised over curl ✅ same known Next.js restriction as the other forms.
@@ -534,9 +545,16 @@ C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchang
     The file is fine; verify with Python `io.open(..., encoding="utf-8")` before believing any mojibake here.
   - PowerShell 5.1 has **no ternary operator** (`? :`) — it is a parse error, not a syntax to work around.
   - Do not bulk-kill `node` processes to restart the dev server (Docker Desktop side effects).
-- **Result/next**: the UI is bilingual end to end. Next, in rough priority order — commit + push the
-  full-module i18n diff (it is still uncommitted working tree after `b036e2b`), then browser E2E of the
-  locale switcher, then email notifications once SMTP credentials exist, then a stable domain for the tunnel.
+- **Commit + push**: `930ac5c` `feat(i18n): extract every module into ko/en dictionaries with locale-aware
+  formatting` pushed to `origin/main` (48 files, +2393/-781). Secret audit on the staged diff was clean: no
+  `Admin1234`, no `dev-only-secret`, no `AUTH_SECRET=`/`DATABASE_URL`/`SMTP_PASSWORD` values, no `sk-`/`ghp_`/`AKIA`
+  tokens, no private key. The 16 long `[A-Za-z0-9+/]{32,}` matches were all git diff file headers
+  (`+++ b/src/...`). `.env` confirmed **absent from the index** via `git ls-files`. Committed with
+  `git commit -F <file>` per the Session 11 lesson that PowerShell mangles parentheses and quotes in inline `-m`.
+- **Result/next**: the UI is bilingual end to end, committed and pushed. Remaining, in rough priority order —
+  **browser E2E of the locale switcher** (the one thing curl cannot prove) — **email notifications (NOT-1/2)** once
+  SMTP credentials exist — the `storage.ts` tracing warning — **stable domain** via a free subdomain + named tunnel
+  — `pipelines/deploy` runtime validation.
 
 <!-- ====== Template for next sessions (copy & use) ======
 ### Session 5 (2026-09-24): <title>
