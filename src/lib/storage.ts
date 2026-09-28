@@ -19,6 +19,18 @@ export type StoredFile = {
   size: number;
 };
 
+/**
+ * Receipt storage is runtime data, not a build-time dependency.
+ *
+ * `uploads/` is created on demand by `mkdir` in `saveReceipt`, and the
+ * Dockerfile pre-creates `/app/uploads` owned by the `node` user for the same
+ * reason. The `UPLOAD_DIR` override can point anywhere, so the bundler's static
+ * analyzer cannot scope the resulting path to a subfolder of `process.cwd()` and
+ * falls back to conservatively tracing the entire project into the server
+ * output - 158 stray files, including LOG.md, every `_test-*.ts` and the whole
+ * `src/` tree. The `turbopackIgnore` comments below are the opt-out the analyzer
+ * itself suggests for filesystem access that only ever happens at runtime.
+ */
 export function uploadDir(): string {
   return process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
 }
@@ -40,7 +52,7 @@ export async function saveReceipt(
   const buf = Buffer.from(await file.arrayBuffer());
   const dir = uploadDir();
   await mkdir(dir, { recursive: true });
-  await writeFile(path.join(dir, storedName), buf);
+  await writeFile(path.join(/*turbopackIgnore: true*/ dir, storedName), buf);
 
   return {
     ok: true,
@@ -55,12 +67,12 @@ export async function saveReceipt(
 
 export async function removeReceipt(storedName: string): Promise<void> {
   try {
-    await unlink(path.join(uploadDir(), storedName));
+    await unlink(path.join(/*turbopackIgnore: true*/ uploadDir(), storedName));
   } catch {
     // 이미 없거나 경로 문제 — 무시
   }
 }
 
 export function receiptPath(storedName: string): string {
-  return path.join(uploadDir(), path.basename(storedName));
+  return path.join(/*turbopackIgnore: true*/ uploadDir(), path.basename(storedName));
 }

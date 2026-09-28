@@ -13,7 +13,7 @@
 
 ---
 
-## 📍 Current Status (as of 2026-09-28, end of Session 14)
+## 📍 Current Status (as of 2026-09-28, end of Session 15)
 
 **Progress: The whole MVP feature set is implemented ✅ Auth + Attendance + Leave + Expense, employee/org admin, team-scoped approvals, expense CSV export, and the settings module with holiday-aware leave counting. The project is branded HOOHR, public on GitHub, and clone-and-run: real `Dockerfile`, working `docker-compose.yml`, `.env.example`, and a rewritten README. The UI is bilingual: Korean and English, switchable at runtime from the sidebar, with no external i18n library. The UI is now covered by real-browser E2E with zero added dependencies, and that harness has already caught two defects that had survived multiple sessions: a leave request form that could not be submitted at all, and an entire expense action layer that no test had ever invoked. Every module now has real-browser form coverage (74 checks). Remaining MVP item: email notifications (NOT-1/2), which needs SMTP credentials.**
 
@@ -60,6 +60,8 @@
 | Browser E2E of the attendance + leave forms | ✅ **Done (Session 13)** — `_e2e/forms.mjs`, 21/21 |
 | **Expense action layer never invoked by any test** | ✅ **Covered (Session 14)** — `_test-expense.ts` only wrote Prisma; `_e2e/expenses.mjs` 33/33 drives the real forms |
 | **Remaining MVP item: email notifications (NOT-1/2)** | ⛔ **Blocked — needs SMTP credentials** |
+| `storage.ts` tracing warning | ✅ **Fixed (Session 15)** — 3 build warnings → 0; stray project files traced 158 → 10 |
+| `src/lib/storage.ts` had zero test coverage | ✅ `_test-storage.ts` 11/11 (Session 15) — MIME, size, errors, traversal |
 
 > **Key notes:**
 > - **The repo is live: https://github.com/WhoisHOO/HOOHR** (public, `main`, renamed in Session 11). `gh` is authenticated as `WhoisHOO`, so `git push` works without any further setup. App routes live under `/hoohr`.
@@ -686,6 +688,47 @@ C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchang
   had survived multiple sessions. Remaining, in rough priority order - **email notifications (NOT-1/2)** once SMTP
   credentials exist, the only MVP item still open - the `storage.ts` tracing warning - **stable domain** via a free
   subdomain + named tunnel - `pipelines/deploy` runtime validation.
+
+### Session 15 (2026-09-28): clear the storage.ts dynamic-filesystem tracing warning
+
+- **Goal**: the pre-existing `npm run build` warning carried over from Session 12. Three `Turbopack build encountered`
+  warnings, all from `src/lib/storage.ts` and all traced through
+  `./src/app/hoohr/files/[file]/route.ts`.
+- **What it actually was, measured rather than assumed**: the analyzer cannot scope a path built from a runtime env
+  var to a subfolder of `process.cwd()`, so it conservatively traced the **whole project** into the server output.
+  The `.nft.json` manifest for that one route listed **317 files, 158 of them project files** that should never ship:
+  `LOG.md`, `AGENTS.md`, `Dockerfile`, `docker-compose.yml`, `dev-server.log`, every `_test-*.ts`, the whole
+  `_e2e/` harness, all of `docs/`, and the entire `src/` tree.
+- **Why `turbopackIgnore` is the right fix, not a workaround**: receipt storage is runtime data, not a build-time
+  dependency. `mkdir(recursive)` creates it on demand, and `Dockerfile:45` already does
+  `mkdir -p /app/uploads && chown -R node:node /app/uploads` before dropping to `USER node`. The `UPLOAD_DIR`
+  override can point anywhere, so the analyzer can never scope it. `/*turbopackIgnore: true*/` is the opt-out the
+  analyzer itself prints, applied to the three `path.join()` calls it highlighted.
+- **Result**: 3 warnings -> 0. Project files traced for that route: **158 -> 10**, and all 10 are legitimate build
+  artifacts (chunks plus the route client-reference manifest). Total traced 317 -> 169.
+- **Runtime behaviour is unchanged, and now proven.** Added `_test-storage.ts` (11 checks, all passing) because
+  `src/lib/storage.ts` had **zero** test coverage of any kind. It covers the MIME whitelist with a real 1x1 PNG,
+  `EMPTY` / `TOO_LARGE` / `UNSUPPORTED_TYPE`, the original-filename and mime/size recording, `removeReceipt`
+  including the missing-file no-op, and asserts `basename()` still contains a `../../../etc/passwd` traversal.
+  - Two harness details worth keeping: `src/lib/storage.ts` starts with `import "server-only"`, which throws
+    outside a React Server Component, so the test has to stub it the way Next.js aliases it for the server build;
+    and tsx transpiles to CJS here, so top-level `await` is a `TransformError` - the test wraps itself in
+    `main()`.
+- **Honest scope note**: the image is **not** currently bloated by this, because `output: "standalone"` is not
+  enabled and the Dockerfile copies `.next` wholesale. The `.nft.json` files are manifests, not copies. So the win
+  today is a clean build and a trap defused for whoever does enable standalone later, not a smaller image. Enabling
+  standalone properly is a separate change and was deliberately not made here.
+- **Flagged, not acted on**: `_mint-cookie.ts` is committed to the public repo and mints an authenticated session for
+  any user without going through login. It needs `AUTH_SECRET`, so it is not a live vulnerability, but it is a
+  sharp tool in a public repository and should probably be removed or moved. Also committed and unused-by-anything:
+  `_db-state.ts`. Left in place because removing them is the user's call.
+- **Verification**: build 0 warnings. `test:e2e:all` -> 20 + 21 + 33 = 74 checks, 0 failures. `_test-storage` 11/11,
+  `_test-team` 27/27, `_test-settings` 23/23, `_test-leave` 7/7, `_test-expense` 8/8, 0 leftovers, 0 stray files in
+  `uploads/`. `tsc` 0 errors, lint 0.
+- **Result/next**: the build is warning-free. Remaining, in rough priority order - **email notifications
+  (NOT-1/2)** once SMTP credentials exist, the only MVP item still open; whether to enable
+  `output: "standalone"` for a much smaller runtime image; **stable domain** via a free subdomain + named tunnel;
+  `pipelines/deploy` runtime validation; and the housekeeping noted above.
 
 <!-- ====== Template for next sessions (copy & use) ======
 ### Session 5 (2026-09-24): <title>
