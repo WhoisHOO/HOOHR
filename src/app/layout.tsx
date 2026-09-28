@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { getDict, getLocale } from "@/i18n/server";
+import { LocaleProvider } from "@/i18n/client";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,17 +19,22 @@ export const metadata: Metadata = {
     default: "HOOHR",
     template: "%s · HOOHR",
   },
-  description: "20인 규모 스타트업을 위한 근태·휴가·경비 관리 툴",
+  description: "HR management for small teams: attendance, leave, expenses",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await getLocale();
+  const d = await getDict();
+
   return (
     <html
-      lang="ko"
+      lang={locale}
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-zinc-50 text-zinc-900">
-        {children}
+        <LocaleProvider locale={locale} d={d}>
+          {children}
+        </LocaleProvider>
       </body>
     </html>
   );

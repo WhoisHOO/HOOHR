@@ -1,49 +1,54 @@
 import { z } from "zod";
+import { interpolate } from "@/i18n/format";
+import type { AuthValidationMessages } from "@/i18n/dictionaries/auth";
 
-export const LoginFormSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .min(1, { error: "이메일을 입력하세요" })
-    .email({ error: "이메일 형식이 올바르지 않습니다" }),
-  password: z.string().min(1, { error: "비밀번호를 입력하세요" }),
-});
+/**
+ * Schemas are locale-aware factories: the messages come from the active
+ * dictionary, so validation errors render in the language the user picked.
+ * Actions build them with `(await getDict())`.
+ */
+export function loginFormSchema(v: AuthValidationMessages) {
+  return z.object({
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .min(1, { error: v.emailRequired })
+      .email({ error: v.emailInvalid }),
+    password: z.string().min(1, { error: v.passwordRequired }),
+  });
+}
 
-export const InviteFormSchema = z.object({
-  email: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .min(1, { error: "이메일을 입력하세요" })
-    .email({ error: "이메일 형식이 올바르지 않습니다" }),
-  name: z
-    .string()
-    .trim()
-    .min(2, { error: "이름은 2자 이상 입력하세요" }),
-  role: z.enum(["EMPLOYEE", "MANAGER"], {
-    error: "역할을 선택하세요",
-  }),
-});
+export function inviteFormSchema(v: AuthValidationMessages) {
+  return z.object({
+    email: z
+      .string()
+      .trim()
+      .toLowerCase()
+      .min(1, { error: v.emailRequired })
+      .email({ error: v.emailInvalid }),
+    name: z.string().trim().min(2, { error: interpolate(v.nameMin, { min: 2 }) }),
+    role: z.enum(["EMPLOYEE", "MANAGER"], { error: v.roleRequired }),
+  });
+}
 
-export const ReinviteEmployeeFormSchema = z.object({
-  employeeId: z.string().trim().min(1, { error: "직원을 선택하세요" }),
-  role: z.enum(["EMPLOYEE", "MANAGER"], {
-    error: "역할을 선택하세요",
-  }),
-});
+export function reinviteEmployeeFormSchema(v: AuthValidationMessages) {
+  return z.object({
+    employeeId: z.string().trim().min(1, { error: v.roleRequired }),
+    role: z.enum(["EMPLOYEE", "MANAGER"], { error: v.roleRequired }),
+  });
+}
 
-export const AcceptInviteFormSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(2, { error: "이름은 2자 이상 입력하세요" }),
-  password: z
-    .string()
-    .min(8, { error: "비밀번호는 8자 이상이어야 합니다" })
-    .regex(/[a-zA-Z]/, { error: "영문자를 포함해야 합니다" })
-    .regex(/[0-9]/, { error: "숫자를 포함해야 합니다" }),
-});
+export function acceptInviteFormSchema(v: AuthValidationMessages) {
+  return z.object({
+    name: z.string().trim().min(2, { error: interpolate(v.nameMin, { min: 2 }) }),
+    password: z
+      .string()
+      .min(8, { error: interpolate(v.passwordMin, { min: 8 }) })
+      .regex(/[a-zA-Z]/, { error: v.passwordNeedsLetter })
+      .regex(/[0-9]/, { error: v.passwordNeedsDigit }),
+  });
+}
 
 export type FieldErrors = Record<string, string[] | undefined>;
 

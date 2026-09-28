@@ -3,8 +3,10 @@
 import { useActionState } from "react";
 import { login } from "@/app/actions/auth";
 import type { LoginState } from "@/lib/auth-validation";
+import { useI18n } from "@/i18n/client";
 
 export function LoginForm() {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<LoginState, FormData>(
     login,
     undefined,
@@ -14,7 +16,7 @@ export function LoginForm() {
     <form action={action} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <label htmlFor="email" className="text-sm font-medium text-zinc-700">
-          이메일
+          {d.common.fields.email}
         </label>
         <input
           id="email"
@@ -31,7 +33,7 @@ export function LoginForm() {
 
       <div className="flex flex-col gap-1">
         <label htmlFor="password" className="text-sm font-medium text-zinc-700">
-          비밀번호
+          {d.common.fields.password}
         </label>
         <input
           id="password"
@@ -57,7 +59,7 @@ export function LoginForm() {
         disabled={pending}
         className="mt-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
       >
-        {pending ? "로그인 중..." : "로그인"}
+        {pending ? d.auth.login.submitting : d.auth.login.submit}
       </button>
     </form>
   );

@@ -6,14 +6,15 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import {
-  AcceptInviteFormSchema,
-  InviteFormSchema,
-  LoginFormSchema,
-  ReinviteEmployeeFormSchema,
+  acceptInviteFormSchema,
+  inviteFormSchema,
+  loginFormSchema,
+  reinviteEmployeeFormSchema,
   type AcceptInviteState,
   type InviteState,
   type LoginState,
 } from "@/lib/auth-validation";
+import { getDict, interpolate } from "@/i18n/server";
 import { createSession, deleteSession } from "@/lib/session";
 import { requireAdmin } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
@@ -21,7 +22,8 @@ import { fieldErrors } from "@/lib/form-utils";
 // ============ 로그인 / 로그아웃 ============
 
 export async function login(_state: LoginState, formData: FormData): Promise<LoginState> {
-  const parsed = LoginFormSchema.safeParse({
+  const { common, auth } = await getDict();
+  const parsed = loginFormSchema(common.validation).safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
   });
@@ -33,7 +35,7 @@ export async function login(_state: LoginState, formData: FormData): Promise<Log
   const user = await prisma.user.findUnique({ where: { email } });
 
   // 계정 존재 여부를 노출하지 않도록 동일 메시지
-  const invalid = { message: "이메일 또는 비밀번호가 올바르지 않습니다" };
+  const invalid = { message: auth.login.invalid };
 
   if (!user || !user.isActive) return invalid;
 
@@ -61,8 +63,9 @@ export async function inviteEmployee(
   formData: FormData,
 ): Promise<InviteState> {
   const admin = await requireAdmin();
+  const { common, auth } = await getDict();
 
-  const parsed = InviteFormSchema.safeParse({
+  const parsed = inviteFormSchema(common.validation).safeParse({
     email: formData.get("email"),
     name: formData.get("name"),
     role: formData.get("role"),
@@ -110,7 +113,7 @@ export async function inviteEmployee(
   });
 
   if (result.kind === "existing_user") {
-    return { message: "이미 등록된 이메일입니다" };
+    return { message: auth.messages.emailExists };
   }
 
   const baseUrl = process.env.APP_URL || "http://localhost:3000";
@@ -119,7 +122,10 @@ export async function inviteEmployee(
   revalidatePath("/hoohr/admin/invite");
   return {
     inviteUrl,
-    message: `${result.employee.name}(${email}) 초대 링크 생성됨 (7일 유효)`,
+    message: interpolate(auth.invite.createdFor, {
+      name: result.employee.name,
+      email,
+    }),
   };
 }
 
@@ -128,7 +134,8 @@ export async function reinviteEmployee(
   formData: FormData,
 ): Promise<InviteState> {
   const admin = await requireAdmin();
-  const parsed = ReinviteEmployeeFormSchema.safeParse({
+  const { common, auth } = await getDict();
+  const parsed = reinviteEmployeeFormSchema(common.validation).safeParse({
     employeeId: formData.get("employeeId"),
     role: formData.get("role"),
   });
@@ -142,12 +149,12 @@ export async function reinviteEmployee(
     select: { id: true, name: true, email: true, userId: true },
   });
   if (!employee || employee.userId) {
-    return { message: "초대 대기 중인 직원만 다시 초대할 수 있습니다." };
+    return { message: auth.messages.notInvited };
   }
 
   const existingUser = await prisma.user.findUnique({ where: { email: employee.email } });
   if (existingUser) {
-    return { message: "이미 등록된 이메일입니다" };
+    return { message: auth.messages.emailExists };
   }
 
   const token = randomBytes(32).toString("base64url");
@@ -184,10 +191,10 @@ export async function reinviteEmployee(
   });
 
   if (result.kind === "unavailable") {
-    return { message: "더 이상 초대 대기 상태가 아닌 직원입니다." };
+    return { message: auth.messages.noLongerInvited };
   }
   if (result.kind === "existing_user") {
-    return { message: "이미 등록된 이메일입니다" };
+    return { message: auth.messages.emailExists };
   }
 
   const baseUrl = process.env.APP_URL || "http://localhost:3000";
@@ -196,7 +203,10 @@ export async function reinviteEmployee(
   revalidatePath("/hoohr/admin/invite");
   return {
     inviteUrl,
-    message: `${result.employee.name}(${result.employee.email}) 초대 링크 생성됨 (7일 유효)`,
+    message: interpolate(auth.invite.createdFor, {
+      name: result.employee.name,
+      email: result.employee.email,
+    }),
   };
 }
 
@@ -207,13 +217,14 @@ export async function acceptInvitation(
   _state: AcceptInviteState,
   formData: FormData,
 ): Promise<AcceptInviteState> {
+  const { common, auth } = await getDict();
   const invitation = await prisma.invitation.findUnique({ where: { token } });
 
   if (!invitation || invitation.usedAt || invitation.expiresAt < new Date()) {
-    return { message: "초대 링크가 만료되었거나 이미 사용되었습니다" };
+    return { message: auth.messages.inviteUsed };
   }
 
-  const parsed = AcceptInviteFormSchema.safeParse({
+  const parsed = acceptInviteFormSchema(common.validation).safeParse({
     name: formData.get("name"),
     password: formData.get("password"),
   });
@@ -227,7 +238,7 @@ export async function acceptInvitation(
     where: { email: invitation.email },
   });
   if (existingUser) {
-    return { message: "이미 등록된 이메일입니다" };
+    return { message: auth.messages.emailExists };
   }
 
   const passwordHash = await bcrypt.hash(password, 10);

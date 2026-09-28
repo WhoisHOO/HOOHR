@@ -1,16 +1,19 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/dal";
 import { logout } from "@/app/actions/auth";
+import { getDict } from "@/i18n/server";
+import { LocaleSwitcher } from "@/i18n/LocaleSwitcher";
 
 const NAV_ITEMS = [
-  { href: "/hoohr", label: "대시보드", ready: true },
-  { href: "/hoohr/attendance", label: "근태", ready: true },
-  { href: "/hoohr/leave", label: "휴가", ready: true },
-  { href: "/hoohr/expenses", label: "경비", ready: true },
-];
+  { href: "/hoohr", label: "dashboard" },
+  { href: "/hoohr/attendance", label: "attendance" },
+  { href: "/hoohr/leave", label: "leave" },
+  { href: "/hoohr/expenses", label: "expenses" },
+] as const;
 
 export default async function AppLayout({ children }: LayoutProps<"/hoohr">) {
   const user = await requireUser();
+  const { nav } = await getDict();
 
   return (
     <div className="flex min-h-screen">
@@ -23,57 +26,45 @@ export default async function AppLayout({ children }: LayoutProps<"/hoohr">) {
         </div>
 
         <nav className="flex-1 space-y-1 px-3 py-4">
-          {NAV_ITEMS.map((item) =>
-            item.ready ? (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
-              >
-                {item.label}
-              </Link>
-            ) : (
-              <span
-                key={item.href}
-                className="flex items-center justify-between rounded-md px-3 py-2 text-sm text-zinc-400"
-              >
-                {item.label}
-                <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-[10px] text-zinc-500">
-                  준비중
-                </span>
-              </span>
-            ),
-          )}
+          {NAV_ITEMS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
+            >
+              {nav[item.label]}
+            </Link>
+          ))}
 
           {user.role === "ADMIN" && (
             <>
               <div className="my-2 border-t border-zinc-200" />
               <p className="px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-400">
-                관리자
+                {nav.adminSection}
               </p>
               <Link
                 href="/hoohr/admin/employees"
                 className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
               >
-                직원·조직
+                {nav.employees}
               </Link>
               <Link
                 href="/hoohr/admin/invite"
                 className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
               >
-                직원 초대
+                {nav.invite}
               </Link>
               <Link
                 href="/hoohr/admin/balances"
                 className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
               >
-                연차 잔여 가져오기
+                {nav.balances}
               </Link>
               <Link
                 href="/hoohr/admin/settings"
                 className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
               >
-                회사 설정
+                {nav.settings}
               </Link>
             </>
           )}
@@ -84,14 +75,17 @@ export default async function AppLayout({ children }: LayoutProps<"/hoohr">) {
             {user.name}
           </p>
           <p className="truncate text-xs text-zinc-500">{user.email}</p>
-          <form action={logout} className="mt-2">
-            <button
-              type="submit"
-              className="text-xs font-medium text-zinc-500 hover:text-zinc-900"
-            >
-              로그아웃
-            </button>
-          </form>
+          <div className="mt-2 flex items-center justify-between">
+            <form action={logout}>
+              <button
+                type="submit"
+                className="text-xs font-medium text-zinc-500 hover:text-zinc-900"
+              >
+                {nav.logout}
+              </button>
+            </form>
+            <LocaleSwitcher label={nav.language} />
+          </div>
         </div>
       </aside>
 
