@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import { requireUser } from "@/lib/dal";
 import { prisma } from "@/lib/prisma";
+import { getDict, getLocale, interpolate, INTL_LOCALES } from "@/i18n/server";
 
-export const metadata: Metadata = {
-  title: "대시보드",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { dashboard } = await getDict();
+  return { title: dashboard.page.title };
+}
 
-function formatDate(d: Date | null): string {
+function formatDate(d: Date | null, locale: string): string {
   if (!d) return "-";
-  return d.toLocaleDateString("ko-KR", {
+  return d.toLocaleDateString(locale, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -16,9 +18,9 @@ function formatDate(d: Date | null): string {
   });
 }
 
-function formatTime(d: Date | null, timeZone: string): string | null {
+function formatTime(d: Date | null, timeZone: string, locale: string): string | null {
   if (!d) return null;
-  return d.toLocaleTimeString("ko-KR", {
+  return d.toLocaleTimeString(locale, {
     hour: "2-digit",
     minute: "2-digit",
     timeZone,
@@ -27,6 +29,8 @@ function formatTime(d: Date | null, timeZone: string): string | null {
 
 export default async function DashboardPage() {
   const user = await requireUser();
+  const { common, dashboard } = await getDict();
+  const locale = INTL_LOCALES[await getLocale()];
   const now = new Date();
   const year = now.getUTCFullYear();
 
@@ -81,40 +85,63 @@ export default async function DashboardPage() {
     ? ptoBalance.grantedDays - ptoBalance.usedDays + ptoBalance.adjustDays
     : null;
 
-  const checkInTime = formatTime(todayAttendance?.checkInAt ?? null, tz);
-  const checkOutTime = formatTime(todayAttendance?.checkOutAt ?? null, tz);
+  const checkInTime = formatTime(todayAttendance?.checkInAt ?? null, tz, locale);
+  const checkOutTime = formatTime(todayAttendance?.checkOutAt ?? null, tz, locale);
 
   return (
     <div className="mx-auto max-w-4xl">
       <h1 className="text-2xl font-semibold text-zinc-900">
-        안녕하세요, {user.name}님
+        {interpolate(dashboard.greeting, { name: user.name })}
       </h1>
       <p className="mt-1 text-sm text-zinc-500">
-        {employee?.department?.name ?? "-"} · {employee?.position ?? "-"} · 입사{" "}
-        {formatDate(employee?.hireDate ?? null)}
+        {interpolate(dashboard.profile, {
+          department: employee?.department?.name ?? "-",
+          position: employee?.position ?? "-",
+          date: formatDate(employee?.hireDate ?? null, locale),
+        })}
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="연차 잔여"
-          value={ptoRemaining !== null ? `${ptoRemaining}일` : "-"}
-          sub={`발생 ${ptoBalance?.grantedDays ?? 0}일 · 사용 ${ptoBalance?.usedDays ?? 0}일`}
+          title={dashboard.stats.ptoRemaining}
+          value={
+            ptoRemaining !== null
+              ? interpolate(common.units.days, { n: ptoRemaining })
+              : "-"
+          }
+          sub={interpolate(dashboard.stats.ptoGrantedUsed, {
+            granted: ptoBalance?.grantedDays ?? 0,
+            used: ptoBalance?.usedDays ?? 0,
+          })}
         />
         <StatCard
-          title="오늘 근태"
-          value={checkInTime ? `체크인 ${checkInTime}` : "미기록"}
-          sub={checkOutTime ? `체크아웃 ${checkOutTime}` : "체크아웃 전"}
+          title={dashboard.stats.attendanceToday}
+          value={
+            checkInTime
+              ? interpolate(dashboard.stats.checkIn, { time: checkInTime })
+              : dashboard.stats.notRecorded
+          }
+          sub={
+            checkOutTime
+              ? interpolate(dashboard.stats.checkOut, { time: checkOutTime })
+              : dashboard.stats.beforeCheckOut
+          }
         />
-        <StatCard title="승인 대기 휴가" value={`${pendingLeave}건`} sub="본인 신청" />
-        <StatCard title="제출 경비" value={`${pendingExpense}건`} sub="결제 대기" />
+        <StatCard
+          title={dashboard.stats.pendingLeave}
+          value={interpolate(common.units.count, { n: pendingLeave })}
+          sub={dashboard.stats.myRequests}
+        />
+        <StatCard
+          title={dashboard.stats.submittedExpenses}
+          value={interpolate(common.units.count, { n: pendingExpense })}
+          sub={dashboard.stats.awaitingPayment}
+        />
       </div>
 
       <div className="mt-8 rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-sm font-semibold text-zinc-900">다음 단계</h2>
-        <p className="mt-2 text-sm text-zinc-600">
-          근태 · 휴가 · 경비 모듈이 모두 열렸습니다. 이제 출근 체크, 휴가 신청,
-          경비 정산을 이용할 수 있습니다.
-        </p>
+        <h2 className="text-sm font-semibold text-zinc-900">{dashboard.next.title}</h2>
+        <p className="mt-2 text-sm text-zinc-600">{dashboard.next.body}</p>
       </div>
     </div>
   );

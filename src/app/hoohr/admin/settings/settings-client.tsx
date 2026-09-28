@@ -19,6 +19,7 @@ import type {
   HolidayState,
   LeavePolicyState,
 } from "@/lib/settings-validation";
+import { interpolate, useI18n } from "@/i18n/client";
 
 export type PolicyView = {
   id: string;
@@ -110,6 +111,7 @@ function Section({
 // ---- SET-1 ----
 
 function CompanyForm({ name, timezone, timezones }: CompanyFormProps) {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<CompanySettingsState, FormData>(
     updateCompanySettings,
     undefined,
@@ -119,7 +121,7 @@ function CompanyForm({ name, timezone, timezones }: CompanyFormProps) {
     <form action={action} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
       <div className="flex flex-col gap-1">
         <label htmlFor="company-name" className="text-xs font-medium text-zinc-500">
-          회사명
+          {d.settings.labels.companyName}
         </label>
         <input
           id="company-name"
@@ -133,7 +135,7 @@ function CompanyForm({ name, timezone, timezones }: CompanyFormProps) {
       </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="company-timezone" className="text-xs font-medium text-zinc-500">
-          시간대 (표시 기준)
+          {d.settings.labels.timezone}
         </label>
         <select
           id="company-timezone"
@@ -150,7 +152,7 @@ function CompanyForm({ name, timezone, timezones }: CompanyFormProps) {
         <FieldError state={state} name="timezone" />
       </div>
       <button type="submit" disabled={pending} className={primaryButtonClass}>
-        {pending ? "저장 중..." : "저장"}
+        {pending ? d.common.buttons.saving : d.common.actions.save}
       </button>
       <div className="sm:col-span-3">
         <Message state={state} />
@@ -166,10 +168,12 @@ type CompanyFormProps = {
 };
 
 function CompanySection(props: CompanyFormProps) {
+  const { d } = useI18n();
+
   return (
     <Section
-      title="회사 정보"
-      description="회사명과 시간대를 지정합니다. 시간대는 근태·휴가 화면의 날짜 기준입니다."
+      title={d.settings.sections.company.title}
+      description={d.settings.sections.company.description}
     >
       <CompanyForm {...props} />
     </Section>
@@ -179,6 +183,7 @@ function CompanySection(props: CompanyFormProps) {
 // ---- SET-2 ----
 
 function PolicyRow({ policy, currentYear }: { policy: PolicyView; currentYear: number }) {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<LeavePolicyState, FormData>(
     updateLeavePolicy,
     undefined,
@@ -201,19 +206,21 @@ function PolicyRow({ policy, currentYear }: { policy: PolicyView; currentYear: n
             type="text"
             required
             defaultValue={policy.name}
-            aria-label="정책명"
+            aria-label={d.settings.labels.policyName}
             className={`${inputClass} max-w-48`}
           />
           {!policy.active && (
             <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700">
-              비활성
+              {d.settings.labels.inactive}
             </span>
           )}
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500">연간 부여 일수</label>
+            <label className="text-xs font-medium text-zinc-500">
+              {d.settings.labels.annualDays}
+            </label>
             <input
               name="annualDays"
               type="number"
@@ -226,7 +233,9 @@ function PolicyRow({ policy, currentYear }: { policy: PolicyView; currentYear: n
             <FieldError state={state} name="annualDays" />
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500">이월 한도</label>
+            <label className="text-xs font-medium text-zinc-500">
+              {d.settings.labels.maxCarryOver}
+            </label>
             <input
               name="maxCarryOverDays"
               type="number"
@@ -245,7 +254,7 @@ function PolicyRow({ policy, currentYear }: { policy: PolicyView; currentYear: n
               defaultChecked={policy.isPaid}
               className="h-4 w-4 rounded border-zinc-300 text-blue-600"
             />
-            유급
+            {d.settings.labels.isPaid}
           </label>
           <div className="flex flex-col gap-2 text-sm text-zinc-700">
             <label className="flex items-center gap-2">
@@ -255,7 +264,7 @@ function PolicyRow({ policy, currentYear }: { policy: PolicyView; currentYear: n
                 defaultChecked={policy.requiresApproval}
                 className="h-4 w-4 rounded border-zinc-300 text-blue-600"
               />
-              승인 필요
+              {d.settings.labels.requiresApproval}
             </label>
             <label className="flex items-center gap-2">
               <input
@@ -264,17 +273,17 @@ function PolicyRow({ policy, currentYear }: { policy: PolicyView; currentYear: n
                 defaultChecked={policy.active}
                 className="h-4 w-4 rounded border-zinc-300 text-blue-600"
               />
-              사용 중
+              {d.settings.labels.inUse}
             </label>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
           <button type="submit" disabled={pending} className={primaryButtonClass}>
-            {pending ? "저장 중..." : "정책 저장"}
+            {pending ? d.common.buttons.saving : d.settings.actions.savePolicy}
           </button>
           <span className="text-xs text-zinc-400">
-            잔액 행 {policy.balanceCount}건
+            {interpolate(d.settings.counts.balanceRows, { n: policy.balanceCount })}
           </span>
           <Message state={state} />
         </div>
@@ -284,12 +293,12 @@ function PolicyRow({ policy, currentYear }: { policy: PolicyView; currentYear: n
         <form action={applyAction}>
           <input type="hidden" name="id" value={policy.id} />
           <button type="submit" disabled={applyPending} className={secondaryButtonClass}>
-            {applyPending ? "적용 중..." : `${currentYear}년 잔액에 부여일 반영`}
+            {applyPending
+              ? d.settings.pending.applying
+              : interpolate(d.settings.actions.applyToYear, { year: currentYear })}
           </button>
         </form>
-        <p className="text-xs text-zinc-500">
-          기존 잔액 행의 부여 일수만 갱신합니다 (사용일·조정일 유지).
-        </p>
+        <p className="text-xs text-zinc-500">{d.settings.hints.applyToYear}</p>
         <Message state={applyState} />
       </div>
     </article>
@@ -297,11 +306,13 @@ function PolicyRow({ policy, currentYear }: { policy: PolicyView; currentYear: n
 }
 
 function PolicySection({ policies, currentYear }: { policies: PolicyView[]; currentYear: number }) {
+  const { d } = useI18n();
+
   return (
     <Section
-      title="휴가 정책"
-      description="유형별 연간 부여 일수와 이월 한도를 관리합니다. 정책 값은 신청 가능 여부에, 부여일 반영은 잔액에 적용됩니다."
-      count={`${policies.length}개`}
+      title={d.settings.sections.policy.title}
+      description={d.settings.sections.policy.description}
+      count={interpolate(d.settings.counts.items, { n: policies.length })}
     >
       {policies.map((policy) => (
         <PolicyRow key={policy.id} policy={policy} currentYear={currentYear} />
@@ -313,6 +324,7 @@ function PolicySection({ policies, currentYear }: { policies: PolicyView[]; curr
 // ---- SET-3 ----
 
 function HolidayDeleteForm({ holiday }: { holiday: HolidayView }) {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<HolidayState, FormData>(
     deleteHoliday,
     undefined,
@@ -325,9 +337,9 @@ function HolidayDeleteForm({ holiday }: { holiday: HolidayView }) {
         type="submit"
         disabled={pending}
         className={dangerButtonClass}
-        aria-label={`${holiday.name} 삭제`}
+        aria-label={interpolate(d.settings.a11y.deleteHoliday, { name: holiday.name })}
       >
-        {pending ? "삭제 중..." : "삭제"}
+        {pending ? d.settings.pending.deleting : d.common.actions.delete}
       </button>
       <Message state={state} />
     </form>
@@ -347,6 +359,7 @@ function HolidaySection({
   nextYear: number;
   currentYear: number;
 }) {
+  const { d } = useI18n();
   const [createState, createAction, createPending] = useActionState<HolidayState, FormData>(
     createHoliday,
     undefined,
@@ -355,30 +368,35 @@ function HolidaySection({
 
   return (
     <Section
-      title="공휴일"
-      description="등록된 공휴일은 휴가 신청일수 계산에서 자동으로 제외됩니다."
-      count={`${year}년 ${yearHolidays.length}개`}
+      title={d.settings.sections.holiday.title}
+      description={d.settings.sections.holiday.description}
+      count={interpolate(d.settings.counts.holidays, {
+        year,
+        n: yearHolidays.length,
+      })}
     >
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <Link
           href={`/hoohr/admin/settings?year=${prevYear}`}
           className={secondaryButtonClass}
         >
-          ← {prevYear}년
+          {interpolate(d.settings.actions.yearPrev, { year: prevYear })}
         </Link>
-        <span className="font-medium text-zinc-800">{year}년</span>
+        <span className="font-medium text-zinc-800">
+          {interpolate(d.settings.actions.yearCurrent, { year })}
+        </span>
         <Link
           href={`/hoohr/admin/settings?year=${nextYear}`}
           className={secondaryButtonClass}
         >
-          {nextYear}년 →
+          {interpolate(d.settings.actions.yearNext, { year: nextYear })}
         </Link>
         {year !== currentYear && (
           <Link
             href="/hoohr/admin/settings"
             className="text-xs font-medium text-blue-600 hover:underline"
           >
-            올해로
+            {d.settings.actions.thisYear}
           </Link>
         )}
       </div>
@@ -386,7 +404,7 @@ function HolidaySection({
       <form action={createAction} className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="flex flex-col gap-1">
           <label htmlFor="holiday-date" className="text-xs font-medium text-zinc-500">
-            날짜
+            {d.common.fields.date}
           </label>
           <input
             id="holiday-date"
@@ -400,20 +418,20 @@ function HolidaySection({
         </div>
         <div className="flex flex-1 flex-col gap-1">
           <label htmlFor="holiday-name" className="text-xs font-medium text-zinc-500">
-            공휴일명
+            {d.settings.labels.holidayName}
           </label>
           <input
             id="holiday-name"
             name="name"
             type="text"
             required
-            placeholder="예: 설날 연휴"
+            placeholder={d.settings.placeholders.holidayName}
             className={inputClass}
           />
           <FieldError state={createState} name="name" />
         </div>
         <button type="submit" disabled={createPending} className={primaryButtonClass}>
-          {createPending ? "등록 중..." : "공휴일 등록"}
+          {createPending ? d.settings.pending.addingHoliday : d.settings.actions.addHoliday}
         </button>
         <div className="w-full sm:w-auto">
           <Message state={createState} />
@@ -421,7 +439,9 @@ function HolidaySection({
       </form>
 
       {yearHolidays.length === 0 ? (
-        <p className="text-sm text-zinc-500">{year}년에 등록된 공휴일이 없습니다.</p>
+        <p className="text-sm text-zinc-500">
+          {interpolate(d.settings.empty.holidays, { year })}
+        </p>
       ) : (
         <ul className="divide-y divide-zinc-100">
           {yearHolidays.map((holiday) => (
@@ -445,6 +465,7 @@ function HolidaySection({
 // ---- SET-4 ----
 
 function CategoryRow({ category }: { category: CategoryView }) {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<ExpenseCategoryState, FormData>(
     updateExpenseCategory,
     undefined,
@@ -463,7 +484,7 @@ function CategoryRow({ category }: { category: CategoryView }) {
           type="text"
           required
           defaultValue={category.name}
-          aria-label="분류명"
+          aria-label={d.settings.labels.categoryName}
           className={`${inputClass} max-w-48`}
         />
         <label className="flex items-center gap-1 text-xs text-zinc-600">
@@ -473,16 +494,18 @@ function CategoryRow({ category }: { category: CategoryView }) {
             defaultChecked={category.active}
             className="h-4 w-4 rounded border-zinc-300 text-blue-600"
           />
-          사용 중
+          {d.settings.labels.inUse}
         </label>
         <button type="submit" disabled={pending} className={secondaryButtonClass}>
-          {pending ? "저장 중..." : "저장"}
+          {pending ? d.common.buttons.saving : d.common.actions.save}
         </button>
       </form>
-      <span className="text-xs text-zinc-400">항목 {category.itemCount}건</span>
+      <span className="text-xs text-zinc-400">
+        {interpolate(d.settings.counts.categoryItems, { n: category.itemCount })}
+      </span>
       {!category.active && (
         <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-medium text-zinc-600">
-          비활성
+          {d.settings.labels.inactive}
         </span>
       )}
       <form action={deleteAction}>
@@ -490,10 +513,12 @@ function CategoryRow({ category }: { category: CategoryView }) {
         <button
           type="submit"
           disabled={deletePending || category.itemCount > 0}
-          title={category.itemCount > 0 ? "사용 중인 분류는 삭제할 수 없습니다" : undefined}
+          title={
+            category.itemCount > 0 ? d.settings.hints.deleteBlocked : undefined
+          }
           className={dangerButtonClass}
         >
-          {deletePending ? "삭제 중..." : "삭제"}
+          {deletePending ? d.settings.pending.deleting : d.common.actions.delete}
         </button>
       </form>
       <div className="w-full space-y-1">
@@ -505,6 +530,7 @@ function CategoryRow({ category }: { category: CategoryView }) {
 }
 
 function CategorySection({ categories }: { categories: CategoryView[] }) {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<ExpenseCategoryState, FormData>(
     createExpenseCategory,
     undefined,
@@ -512,33 +538,33 @@ function CategorySection({ categories }: { categories: CategoryView[] }) {
 
   return (
     <Section
-      title="경비 분류"
-      description="경비 신청에서 사용할 분류입니다. 사용 중인 분류는 삭제 대신 비활성화합니다."
-      count={`${categories.length}개`}
+      title={d.settings.sections.category.title}
+      description={d.settings.sections.category.description}
+      count={interpolate(d.settings.counts.items, { n: categories.length })}
     >
       <form action={action} className="flex flex-col gap-3 sm:flex-row sm:items-end">
         <div className="flex flex-1 flex-col gap-1">
           <label htmlFor="category-name" className="text-xs font-medium text-zinc-500">
-            새 분류명
+            {d.settings.labels.newCategoryName}
           </label>
           <input
             id="category-name"
             name="name"
             type="text"
             required
-            placeholder="예: 교육비"
+            placeholder={d.settings.placeholders.categoryName}
             className={inputClass}
           />
           <FieldError state={state} name="name" />
         </div>
         <button type="submit" disabled={pending} className={primaryButtonClass}>
-          {pending ? "추가 중..." : "분류 추가"}
+          {pending ? d.settings.pending.addingCategory : d.settings.actions.addCategory}
         </button>
         <Message state={state} />
       </form>
 
       {categories.length === 0 ? (
-        <p className="text-sm text-zinc-500">등록된 분류가 없습니다.</p>
+        <p className="text-sm text-zinc-500">{d.settings.empty.categories}</p>
       ) : (
         <ul>
           {categories.map((category) => (

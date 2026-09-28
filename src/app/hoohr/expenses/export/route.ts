@@ -3,13 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/dal";
 import { monthBounds } from "@/lib/attendance";
 import { teamEmployeeWhere } from "@/lib/team";
-
-const STATUS_LABELS: Record<string, string> = {
-  SUBMITTED: "승인 대기",
-  APPROVED: "승인됨",
-  PAID: "지급 완료",
-  REJECTED: "반려",
-};
+import { getDict } from "@/i18n/server";
 
 function formatDateNoPad(d: Date): string {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
@@ -25,6 +19,8 @@ export async function GET(request: Request) {
   if (!user) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
+
+  const { common, expenses } = await getDict();
 
   const url = new URL(request.url);
   const monthParam = url.searchParams.get("month");
@@ -84,12 +80,15 @@ export async function GET(request: Request) {
   });
 
   const rows: string[][] = [];
+  const columns = expenses.export.columns;
+  const statusLabel = (s: string) =>
+    common.expenseStatus[s as keyof typeof common.expenseStatus] ?? s;
   if (isReviewer) {
     rows.push([
-      "date", "category", "employee", "title", "status", "amount", "currency", "description", "receipts",
+      columns.date, columns.category, columns.employee, columns.title, columns.status, columns.amount, columns.currency, columns.description, columns.receipts,
     ]);
   } else {
-    rows.push(["date", "category", "title", "status", "amount", "currency", "description", "receipts"]);
+    rows.push([columns.date, columns.category, columns.title, columns.status, columns.amount, columns.currency, columns.description, columns.receipts]);
   }
   for (const it of items) {
     const base = [
@@ -97,11 +96,11 @@ export async function GET(request: Request) {
       it.category.name,
       ...(isReviewer ? [it.report.employee.name] : []),
       it.report.title,
-      STATUS_LABELS[it.report.status] ?? it.report.status,
+      statusLabel(it.report.status),
       (it.amountCents / 100).toFixed(2),
       it.report.currency,
       it.description ?? "",
-      it.receipts.map((r) => r.filename).join(" | ") ?? "",
+      it.receipts.map((r) => r.filename).join(" | "),
     ];
     rows.push(base.map(csvEscape));
   }

@@ -3,8 +3,10 @@
 import { useActionState } from "react";
 import { importBalances } from "@/app/actions/leave";
 import type { BalanceImportState } from "@/lib/leave-validation";
+import { useI18n } from "@/i18n/client";
 
 export function BalanceImportForm() {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<BalanceImportState, FormData>(
     importBalances,
     undefined,
@@ -14,7 +16,7 @@ export function BalanceImportForm() {
     <form action={action} className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <label htmlFor="csv-file" className="text-sm font-medium text-zinc-700">
-          CSV 파일
+          {d.admin.balances.csvFile}
         </label>
         <input
           id="csv-file"
@@ -41,7 +43,7 @@ export function BalanceImportForm() {
         disabled={pending}
         className="self-start rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
       >
-        {pending ? "가져오는 중..." : "가져오기"}
+        {pending ? d.admin.balances.importing : d.admin.balances.import}
       </button>
     </form>
   );

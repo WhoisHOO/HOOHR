@@ -13,11 +13,12 @@ import {
   canReviewEmployee,
 } from "@/lib/team";
 import {
-  AttendanceCorrectionFormSchema,
+  attendanceCorrectionFormSchema,
   type AttendanceCorrectionState,
   type CheckInOutState,
   type CorrectionDecideState,
 } from "@/lib/attendance-validation";
+import { getDict, interpolate } from "@/i18n/server";
 
 // ============ 출근 / 퇴근 ============
 
@@ -26,8 +27,9 @@ export async function checkIn(
   _formData: FormData,
 ): Promise<CheckInOutState> {
   const user = await requireUser();
+  const { common, attendance } = await getDict();
   if (!user.employeeId) {
-    return { message: "직원 정보가 없습니다. 관리자에게 문의하세요." };
+    return { message: common.decide.noEmployee };
   }
   const employeeId = user.employeeId;
 
@@ -78,11 +80,11 @@ export async function checkIn(
   });
 
   if (result.alreadyOpen) {
-    return { message: "이미 출근 상태입니다. 퇴근 후 다시 출근하실 수 있습니다." };
+    return { message: attendance.messages.checkInAlready };
   }
 
   revalidatePath("/hoohr/attendance");
-  return { message: "출근 처리되었습니다.", ok: true };
+  return { message: attendance.messages.checkInDone, ok: true };
 }
 
 export async function checkOut(
@@ -90,8 +92,9 @@ export async function checkOut(
   _formData: FormData,
 ): Promise<CheckInOutState> {
   const user = await requireUser();
+  const { common, attendance } = await getDict();
   if (!user.employeeId) {
-    return { message: "직원 정보가 없습니다. 관리자에게 문의하세요." };
+    return { message: common.decide.noEmployee };
   }
   const employeeId = user.employeeId;
 
@@ -125,11 +128,11 @@ export async function checkOut(
   });
 
   if (result.notOpen) {
-    return { message: "출근 상태가 아닙니다. 먼저 출근해주세요." };
+    return { message: attendance.messages.checkOutNotOpen };
   }
 
   revalidatePath("/hoohr/attendance");
-  return { message: "퇴근 처리되었습니다.", ok: true };
+  return { message: attendance.messages.checkOutDone, ok: true };
 }
 
 // ============ 근태 정정 (신청 → 매니저 승인) ============
@@ -139,11 +142,12 @@ export async function submitCorrection(
   formData: FormData,
 ): Promise<AttendanceCorrectionState> {
   const user = await requireUser();
+  const { common, attendance } = await getDict();
   if (!user.employeeId) {
-    return { message: "직원 정보가 없습니다. 관리자에게 문의하세요." };
+    return { message: common.decide.noEmployee };
   }
 
-  const parsed = AttendanceCorrectionFormSchema.safeParse({
+  const parsed = attendanceCorrectionFormSchema(attendance).safeParse({
     date: formData.get("date"),
     requestType: formData.get("requestType"),
     note: formData.get("note"),
@@ -156,7 +160,7 @@ export async function submitCorrection(
   const today = zonedToday(tz);
   const date = parseIsoDate(parsed.data.date);
   if (date.getTime() > today.getTime()) {
-    return { message: "미래 날짜로는 정정을 신청할 수 없습니다." };
+    return { message: attendance.messages.futureDateNotAllowed };
   }
 
   const target = await prisma.attendanceRecord.findUnique({
@@ -164,10 +168,14 @@ export async function submitCorrection(
   });
 
   if (parsed.data.requestType !== "ADD" && !target) {
-    return { message: "해당 날짜의 출근 기록이 없습니다. '기록 누락' 유형을 이용하세요." };
+    return {
+      message: interpolate(attendance.messages.noRecordForCorrection, {
+        type: attendance.requestType.ADD,
+      }),
+    };
   }
   if (parsed.data.requestType === "ADD" && target) {
-    return { message: "해당 날짜에 이미 출근 기록이 있습니다." };
+    return { message: attendance.messages.alreadyHasRecord };
   }
 
   await prisma.attendanceCorrection.create({
@@ -182,7 +190,7 @@ export async function submitCorrection(
   });
 
   revalidatePath("/hoohr/attendance");
-  return { message: "정정 요청이 접수되었습니다.", ok: true };
+  return { message: attendance.messages.correctionSubmitted, ok: true };
 }
 
 // ============ 근태 정정 승인/반려 (MANAGER / ADMIN) ============
@@ -192,21 +200,22 @@ export async function decideCorrection(
   formData: FormData,
 ): Promise<CorrectionDecideState> {
   const user = await requireUser();
+  const { common, attendance } = await getDict();
   if (user.role !== "MANAGER" && user.role !== "ADMIN") {
-    return { message: "승인 권한이 없습니다." };
+    return { message: common.decide.noPermission };
   }
 
   const id = String(formData.get("id") ?? "");
   const decision = String(formData.get("decision") ?? "");
   const comment = String(formData.get("comment") ?? "").trim();
-  const unavailableMessage = "요청을 처리할 수 없습니다. 최신 목록을 확인해주세요.";
+  const unavailableMessage = common.decide.unavailable;
 
-  if (!id) return { message: "요청 정보가 올바르지 않습니다." };
+  if (!id) return { message: attendance.messages.invalidRequest };
   if (decision !== "APPROVE" && decision !== "REJECT") {
-    return { message: "결정 값이 올바르지 않습니다." };
+    return { message: attendance.messages.invalidDecision };
   }
   if (decision === "REJECT" && comment.length < 2) {
-    return { message: "반려 시 사유를 입력해주세요." };
+    return { message: common.decide.rejectReasonRequired };
   }
 
   const correction = await prisma.attendanceCorrection.findFirst({
@@ -253,7 +262,8 @@ export async function decideCorrection(
 
   revalidatePath("/hoohr/attendance");
   return {
-    message: decision === "APPROVE" ? "승인 처리되었습니다." : "반려 처리되었습니다.",
+    message:
+      decision === "APPROVE" ? common.decide.approveDone : common.decide.rejectDone,
     ok: true,
   };
 }

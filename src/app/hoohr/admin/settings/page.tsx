@@ -4,17 +4,13 @@ import { requireAdmin } from "@/lib/dal";
 import { getCompanyTimezone } from "@/lib/company";
 import { zonedToday } from "@/lib/attendance";
 import { formatLeaveDay } from "@/lib/leave";
+import { getDict, getLocale, interpolate, INTL_LOCALES } from "@/i18n/server";
 import { SettingsClient, type PolicyView, type CategoryView, type HolidayView } from "./settings-client";
 
-export const metadata: Metadata = {
-  title: "회사 설정",
-};
-
-const LEAVE_KIND_LABELS: Record<string, string> = {
-  PTO: "연차",
-  SICK: "병가",
-  UNPAID: "무급휴직",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { settings } = await getDict();
+  return { title: settings.page.title };
+}
 
 function toDateInput(date: Date): string {
   return date.toISOString().slice(0, 10);
@@ -26,6 +22,9 @@ export default async function SettingsPage({
   searchParams: Promise<{ year?: string }>;
 }) {
   const admin = await requireAdmin();
+  const { common, settings } = await getDict();
+  const locale = await getLocale();
+  const intl = INTL_LOCALES[locale];
   const tz = await getCompanyTimezone(admin.companyId);
   const currentYear = zonedToday(tz).getUTCFullYear();
 
@@ -62,7 +61,7 @@ export default async function SettingsPage({
     id: policy.id,
     name: policy.name,
     kind: policy.kind,
-    kindLabel: LEAVE_KIND_LABELS[policy.kind] ?? policy.kind,
+    kindLabel: common.leaveKind[policy.kind] ?? policy.kind,
     annualDays: policy.annualDays,
     maxCarryOverDays: policy.maxCarryOverDays,
     isPaid: policy.isPaid,
@@ -74,7 +73,10 @@ export default async function SettingsPage({
   const holidayViews: HolidayView[] = holidays.map((holiday) => ({
     id: holiday.id,
     date: toDateInput(holiday.date),
-    label: `${formatLeaveDay(holiday.date)} ${holiday.name}`,
+    label: interpolate(settings.item.holidayLabel, {
+      date: formatLeaveDay(holiday.date, intl),
+      name: holiday.name,
+    }),
     year: holiday.date.getUTCFullYear(),
     name: holiday.name,
   }));
@@ -92,10 +94,8 @@ export default async function SettingsPage({
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-900">회사 설정</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          회사 기본 정보, 휴가 정책, 공휴일, 경비 분류를 관리합니다.
-        </p>
+        <h1 className="text-2xl font-semibold text-zinc-900">{settings.page.title}</h1>
+        <p className="mt-1 text-sm text-zinc-500">{settings.page.subtitle}</p>
       </div>
 
       <SettingsClient

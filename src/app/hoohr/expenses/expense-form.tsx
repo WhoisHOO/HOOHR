@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { createExpenseReport } from "@/app/actions/expense";
 import { parseAmountToCents } from "@/lib/expense";
 import type { ExpenseCreateState } from "@/lib/expense-validation";
+import { useI18n, INTL_LOCALES } from "@/i18n/client";
 
 export type ExpenseCategoryOption = {
   id: string;
@@ -31,6 +32,7 @@ export function NewExpenseForm({
 }: {
   categories: ExpenseCategoryOption[];
 }) {
+  const { d, locale } = useI18n();
   const [state, action, pending] = useActionState<ExpenseCreateState, FormData>(
     createExpenseReport,
     undefined,
@@ -56,7 +58,7 @@ export function NewExpenseForm({
   );
   const totalLabel =
     totalCents > 0
-      ? (totalCents / 100).toLocaleString("en-US", {
+      ? (totalCents / 100).toLocaleString(INTL_LOCALES[locale], {
           minimumFractionDigits: 2,
         })
       : "-";
@@ -91,7 +93,7 @@ export function NewExpenseForm({
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="flex flex-col gap-1">
           <label htmlFor="ex-title" className="text-sm font-medium text-zinc-700">
-            제목
+            {d.expenses.form.title}
           </label>
           <input
             id="ex-title"
@@ -100,7 +102,7 @@ export function NewExpenseForm({
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="예: 9월 교통비 정산"
+            placeholder={d.expenses.form.titlePlaceholder}
             className={inputCls}
           />
           {state?.fieldErrors?.title && (
@@ -109,7 +111,7 @@ export function NewExpenseForm({
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor="ex-start" className="text-sm font-medium text-zinc-700">
-            기간 시작
+            {d.expenses.form.periodStart}
           </label>
           <input
             id="ex-start"
@@ -123,7 +125,7 @@ export function NewExpenseForm({
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor="ex-end" className="text-sm font-medium text-zinc-700">
-            기간 종료
+            {d.expenses.form.periodEnd}
           </label>
           <input
             id="ex-end"
@@ -156,7 +158,7 @@ export function NewExpenseForm({
                   htmlFor={`ex-item-date-${row.key}`}
                   className="text-xs font-medium text-zinc-500"
                 >
-                  날짜
+                  {d.common.fields.date}
                 </label>
                 <input
                   id={`ex-item-date-${row.key}`}
@@ -173,7 +175,7 @@ export function NewExpenseForm({
                   htmlFor={`ex-item-cat-${row.key}`}
                   className="text-xs font-medium text-zinc-500"
                 >
-                  카테고리
+                  {d.expenses.form.category}
                 </label>
                 <select
                   id={`ex-item-cat-${row.key}`}
@@ -194,7 +196,7 @@ export function NewExpenseForm({
                   htmlFor={`ex-item-amount-${row.key}`}
                   className="text-xs font-medium text-zinc-500"
                 >
-                  금액 (USD)
+                  {d.expenses.form.amountLabel}
                 </label>
                 <input
                   id={`ex-item-amount-${row.key}`}
@@ -213,13 +215,13 @@ export function NewExpenseForm({
                   htmlFor={`ex-item-desc-${row.key}`}
                   className="text-xs font-medium text-zinc-500"
                 >
-                  설명
+                  {d.expenses.form.description}
                 </label>
                 <input
                   id={`ex-item-desc-${row.key}`}
                   name="item_description"
                   type="text"
-                  placeholder="예: 서울 강남 → 판교 택시"
+                  placeholder={d.expenses.form.descriptionPlaceholder}
                   value={row.description}
                   onChange={(e) =>
                     updateRow(row.key, { description: e.target.value })
@@ -232,7 +234,7 @@ export function NewExpenseForm({
                   htmlFor={`ex-item-file-${row.key}`}
                   className="text-xs font-medium text-zinc-500"
                 >
-                  영수증 (선택)
+                  {d.expenses.form.receiptOptional}
                 </label>
                 <input
                   id={`ex-item-file-${row.key}`}
@@ -257,7 +259,7 @@ export function NewExpenseForm({
                   disabled={rows.length <= 1}
                   className="rounded-md px-3 py-2 text-sm text-zinc-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  삭제
+                  {d.common.actions.delete}
                 </button>
               </div>
             </div>
@@ -268,20 +270,21 @@ export function NewExpenseForm({
           onClick={addRow}
           className="rounded-md border border-dashed border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-600 hover:border-blue-400 hover:text-blue-600"
         >
-          + 항목 추가
+          {d.expenses.form.addItem}
         </button>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-zinc-600">
-          총액: <span className="font-semibold text-zinc-900">${totalLabel}</span>
+          {d.common.fields.total}:{" "}
+          <span className="font-semibold text-zinc-900">${totalLabel}</span>
         </p>
         <button
           type="submit"
           disabled={pending}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {pending ? "저장 중..." : "신청서 작성"}
+          {pending ? d.common.buttons.saving : d.expenses.form.createReport}
         </button>
       </div>
 

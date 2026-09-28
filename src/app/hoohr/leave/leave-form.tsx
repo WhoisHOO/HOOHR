@@ -5,6 +5,7 @@ import { requestLeave } from "@/app/actions/leave";
 import { countWorkdays } from "@/lib/leave";
 import { isWorkday } from "@/lib/holidays";
 import type { LeaveRequestState } from "@/lib/leave-validation";
+import { useI18n, interpolate } from "@/i18n/client";
 
 export type LeavePolicyOption = {
   id: string;
@@ -27,6 +28,7 @@ export function LeaveRequestForm({
   today: string;
   holidays: string[];
 }) {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<LeaveRequestState, FormData>(
     requestLeave,
     undefined,
@@ -59,7 +61,7 @@ export function LeaveRequestForm({
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="flex flex-col gap-1">
           <label htmlFor="lv-policy" className="text-sm font-medium text-zinc-700">
-            휴가 유형
+            {d.leave.form.type}
           </label>
           <select
             id="lv-policy"
@@ -71,7 +73,9 @@ export function LeaveRequestForm({
             {policies.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
-                {p.remaining !== null ? ` (잔여 ${p.remaining}일)` : ""}
+                {p.remaining !== null
+                  ? ` ${interpolate(d.leave.form.optionRemaining, { n: p.remaining })}`
+                  : ""}
               </option>
             ))}
           </select>
@@ -82,7 +86,7 @@ export function LeaveRequestForm({
 
         <div className="flex flex-col gap-1">
           <label htmlFor="lv-start" className="text-sm font-medium text-zinc-700">
-            시작일
+            {d.leave.form.startDate}
           </label>
           <input
             id="lv-start"
@@ -101,7 +105,7 @@ export function LeaveRequestForm({
 
         <div className="flex flex-col gap-1">
           <label htmlFor="lv-end" className="text-sm font-medium text-zinc-700">
-            종료일
+            {d.leave.form.endDate}
           </label>
           <input
             id="lv-end"
@@ -129,18 +133,18 @@ export function LeaveRequestForm({
           }}
           className="h-4 w-4 rounded border-zinc-300 text-blue-600"
         />
-        반차 (0.5일) — 하루만 신청
+        {d.leave.form.halfDay}
       </label>
 
       <div className="flex flex-col gap-1">
         <label htmlFor="lv-reason" className="text-sm font-medium text-zinc-700">
-          사유 (선택)
+          {d.common.fields.reason} ({d.common.buttons.optional})
         </label>
         <textarea
           id="lv-reason"
           name="reason"
           rows={2}
-          placeholder="예: 의사 예약 (오후 반차)"
+          placeholder={d.leave.form.reasonPlaceholder}
           className="rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
         {state?.fieldErrors?.reason && (
@@ -150,13 +154,15 @@ export function LeaveRequestForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-zinc-600">
-          선택: <span className="font-semibold text-zinc-900">{days}일</span>
+          {d.leave.form.selected}{" "}
+          <span className="font-semibold text-zinc-900">
+            {interpolate(d.common.units.days, { n: days })}
+          </span>
           {remaining !== null && (
             <>
-              {" "}
-              · 잔여{" "}
+              {" · "}
               <span className={`font-semibold ${over ? "text-red-600" : "text-zinc-900"}`}>
-                {remainingAfter}일
+                {interpolate(d.leave.form.remaining, { n: remainingAfter ?? 0 })}
               </span>
             </>
           )}
@@ -166,19 +172,19 @@ export function LeaveRequestForm({
           disabled={pending || blocked}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {pending ? "신청 중..." : "휴가 신청"}
+          {pending ? d.leave.form.submitting : d.leave.form.submit}
         </button>
       </div>
 
       {halfDayBlocked && (
         <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700">
-          선택한 날짜는 주말 또는 공휴일이므로 반차를 신청할 수 없습니다.
+          {d.leave.form.halfDayBlocked}
         </p>
       )}
 
       {over && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-          잔여 일수를 초과했습니다 ({days}일 {">"} 잔여 {remaining}일).
+          {interpolate(d.leave.form.overBalance, { days, remaining: remaining ?? 0 })}
         </p>
       )}
 

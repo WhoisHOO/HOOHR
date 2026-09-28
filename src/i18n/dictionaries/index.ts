@@ -1,13 +1,39 @@
 import type { Locale } from "../config";
 import { commonKo, commonEn } from "./common";
-import { authKo, authEn } from "./auth";
 import { navKo, navEn } from "./nav";
+import { authKo, authEn } from "./auth";
+import { dashboardKo, dashboardEn } from "./dashboard";
+import { attendanceKo, attendanceEn } from "./attendance";
+import { leaveKo, leaveEn } from "./leave";
+import { expensesKo, expensesEn } from "./expenses";
+import { adminKo, adminEn } from "./admin";
+import { settingsKo, settingsEn } from "./settings";
 
-const dictKo = { common: commonKo, auth: authKo, nav: navKo };
+const dictKo = {
+  common: commonKo,
+  nav: navKo,
+  auth: authKo,
+  dashboard: dashboardKo,
+  attendance: attendanceKo,
+  leave: leaveKo,
+  expenses: expensesKo,
+  admin: adminKo,
+  settings: settingsKo,
+};
 
 // Typing the English composition against the Korean shape makes the compiler
 // enforce full key parity across the two languages.
-const dictEn: typeof dictKo = { common: commonEn, auth: authEn, nav: navEn };
+const dictEn: typeof dictKo = {
+  common: commonEn,
+  nav: navEn,
+  auth: authEn,
+  dashboard: dashboardEn,
+  attendance: attendanceEn,
+  leave: leaveEn,
+  expenses: expensesEn,
+  admin: adminEn,
+  settings: settingsEn,
+};
 
 export type Dict = typeof dictKo;
 

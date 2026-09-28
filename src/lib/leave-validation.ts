@@ -1,21 +1,42 @@
 import { z } from "zod";
 import type { FieldErrors } from "@/lib/auth-validation";
+import type { LeaveValidationMessages } from "@/i18n/dictionaries/leave";
 
-export const LeaveRequestFormSchema = z.object({
-  policyId: z.string().min(1, { error: "휴가 유형을 선택하세요" }),
-  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
-    error: "시작 날짜를 선택하세요",
-  }),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
-    error: "종료 날짜를 선택하세요",
-  }),
-  isHalfDay: z.enum(["true", "1", "on"], { error: "반차 여부가 올바르지 않습니다" }).optional(),
-  reason: z
-    .string()
-    .trim()
-    .max(500, { error: "사유는 500자 이내로 입력하세요" })
-    .optional(),
-});
+/**
+ * Schemas are locale-aware factories: the messages come from the active
+ * dictionary, so validation errors render in the language the user picked.
+ * Actions build them with `(await getDict())`.
+ */
+export function leaveRequestFormSchema(v: LeaveValidationMessages) {
+  return z.object({
+    policyId: z.string().min(1, { error: v.validation.policyRequired }),
+    startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+      error: v.validation.startDateRequired,
+    }),
+    endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
+      error: v.validation.endDateRequired,
+    }),
+    isHalfDay: z
+      .enum(["true", "1", "on"], { error: v.validation.invalidHalfDay })
+      .optional(),
+    reason: z
+      .string()
+      .trim()
+      .max(500, { error: v.validation.reasonTooLong })
+      .optional(),
+  });
+}
+
+export function balanceRowSchema(v: LeaveValidationMessages) {
+  return z.object({
+    email: z.string().trim().email({ error: v.balanceImport.emailFormat }),
+    kind: z.enum(["PTO", "SICK", "UNPAID"]),
+    year: z.coerce.number().int().min(2000).max(2100),
+    grantedDays: z.coerce.number().min(0).max(1000),
+    usedDays: z.coerce.number().min(0).max(1000).default(0),
+    adjustDays: z.coerce.number().min(-1000).max(1000).default(0),
+  });
+}
 
 export type LeaveRequestState = {
   fieldErrors?: FieldErrors;

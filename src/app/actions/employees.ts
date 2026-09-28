@@ -6,12 +6,12 @@ import { parseIsoDate } from "@/lib/attendance";
 import { requireAdmin } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
 import {
-  DepartmentCreateSchema,
-  DepartmentDeleteSchema,
-  DepartmentUpdateSchema,
-  EmployeeIdSchema,
-  EmployeeProfileSchema,
-  EmployeeStatusSchema,
+  departmentCreateSchema,
+  departmentDeleteSchema,
+  departmentUpdateSchema,
+  employeeIdSchema,
+  employeeProfileSchema,
+  employeeStatusSchema,
   type DepartmentCreateState,
   type DepartmentDeleteState,
   type DepartmentUpdateState,
@@ -19,6 +19,8 @@ import {
   type EmployeeStatusState,
 } from "@/lib/employee-validation";
 import { prisma } from "@/lib/prisma";
+import { getDict } from "@/i18n/server";
+import type { AdminMessages } from "@/i18n/dictionaries/admin";
 
 type AdminContext = {
   companyId: string;
@@ -110,7 +112,8 @@ export async function createDepartment(
   formData: FormData,
 ): Promise<DepartmentCreateState> {
   const admin = await requireAdmin();
-  const parsed = DepartmentCreateSchema.safeParse({
+  const { admin: adminDict } = await getDict();
+  const parsed = departmentCreateSchema(adminDict).safeParse({
     name: formText(formData, "name"),
   });
   if (!parsed.success) {
@@ -123,7 +126,7 @@ export async function createDepartment(
     select: { id: true },
   });
   if (duplicate) {
-    return { message: "이미 존재하는 부서명입니다.", ok: false };
+    return { message: adminDict.messages.departmentExists, ok: false };
   }
 
   try {
@@ -132,13 +135,13 @@ export async function createDepartment(
     });
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      return { message: "이미 존재하는 부서명입니다.", ok: false };
+      return { message: adminDict.messages.departmentExists, ok: false };
     }
     throw error;
   }
 
   revalidateEmployeePages();
-  return { message: "부서가 생성되었습니다.", ok: true };
+  return { message: adminDict.messages.departmentCreated, ok: true };
 }
 
 export async function updateDepartment(
@@ -146,7 +149,8 @@ export async function updateDepartment(
   formData: FormData,
 ): Promise<DepartmentUpdateState> {
   const admin = await requireAdmin();
-  const parsed = DepartmentUpdateSchema.safeParse({
+  const { admin: adminDict } = await getDict();
+  const parsed = departmentUpdateSchema(adminDict).safeParse({
     id: formText(formData, "id"),
     name: formText(formData, "name"),
     managerId: formText(formData, "managerId"),
@@ -162,7 +166,7 @@ export async function updateDepartment(
     select: { id: true },
   });
   if (!department) {
-    return { message: "부서를 찾을 수 없습니다.", ok: false };
+    return { message: adminDict.messages.departmentNotFound, ok: false };
   }
 
   if (managerId) {
@@ -170,7 +174,7 @@ export async function updateDepartment(
     if (!manager) {
       return {
         fieldErrors: {
-          managerId: ["활성화된 관리자 또는 매니저만 부서장으로 지정할 수 있습니다."],
+          managerId: [adminDict.fieldErrors.managerInvalid],
         },
       };
     }
@@ -185,7 +189,7 @@ export async function updateDepartment(
     select: { id: true },
   });
   if (duplicate) {
-    return { message: "이미 존재하는 부서명입니다.", ok: false };
+    return { message: adminDict.messages.departmentExists, ok: false };
   }
 
   try {
@@ -195,13 +199,13 @@ export async function updateDepartment(
     });
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      return { message: "이미 존재하는 부서명입니다.", ok: false };
+      return { message: adminDict.messages.departmentExists, ok: false };
     }
     throw error;
   }
 
   revalidateEmployeePages();
-  return { message: "부서 정보가 저장되었습니다.", ok: true };
+  return { message: adminDict.messages.departmentSaved, ok: true };
 }
 
 export async function deleteDepartment(
@@ -209,7 +213,8 @@ export async function deleteDepartment(
   formData: FormData,
 ): Promise<DepartmentDeleteState> {
   const admin = await requireAdmin();
-  const parsed = DepartmentDeleteSchema.safeParse({
+  const { admin: adminDict } = await getDict();
+  const parsed = departmentDeleteSchema(adminDict).safeParse({
     id: formText(formData, "id"),
   });
   if (!parsed.success) {
@@ -229,14 +234,14 @@ export async function deleteDepartment(
   });
 
   if (result.kind === "not_found") {
-    return { message: "부서를 찾을 수 없습니다.", ok: false };
+    return { message: adminDict.messages.departmentNotFound, ok: false };
   }
   if (result.kind === "not_empty") {
-    return { message: "직원이 있는 부서는 삭제할 수 없습니다.", ok: false };
+    return { message: adminDict.messages.departmentNotEmpty, ok: false };
   }
 
   revalidateEmployeePages();
-  return { message: "부서가 삭제되었습니다.", ok: true };
+  return { message: adminDict.messages.departmentDeleted, ok: true };
 }
 
 export async function updateEmployeeProfile(
@@ -244,7 +249,8 @@ export async function updateEmployeeProfile(
   formData: FormData,
 ): Promise<EmployeeProfileState> {
   const admin = await requireAdmin();
-  const parsed = EmployeeProfileSchema.safeParse({
+  const { admin: adminDict } = await getDict();
+  const parsed = employeeProfileSchema(adminDict).safeParse({
     id: formText(formData, "id"),
     departmentId: formText(formData, "departmentId"),
     position: formText(formData, "position"),
@@ -263,18 +269,18 @@ export async function updateEmployeeProfile(
     select: { id: true },
   });
   if (!employee) {
-    return { message: "직원을 찾을 수 없습니다.", ok: false };
+    return { message: adminDict.messages.employeeNotFound, ok: false };
   }
 
   if (departmentId && !(await departmentBelongsToCompany(prisma, departmentId, admin.companyId))) {
     return {
-      fieldErrors: { departmentId: ["선택한 부서를 사용할 수 없습니다."] },
+      fieldErrors: { departmentId: [adminDict.fieldErrors.departmentUnavailable] },
     };
   }
 
   if (leaveApproverId === employee.id) {
     return {
-      fieldErrors: { leaveApproverId: ["본인을 승인자로 지정할 수 없습니다."] },
+      fieldErrors: { leaveApproverId: [adminDict.fieldErrors.cannotSelfApprove] },
     };
   }
 
@@ -284,9 +290,7 @@ export async function updateEmployeeProfile(
   ) {
     return {
       fieldErrors: {
-        leaveApproverId: [
-          "활성화된 관리자 또는 매니저만 승인자로 지정할 수 있습니다.",
-        ],
+        leaveApproverId: [adminDict.fieldErrors.approverInvalid],
       },
     };
   }
@@ -303,17 +307,18 @@ export async function updateEmployeeProfile(
   });
 
   revalidateEmployeePages();
-  return { message: "직원 프로필이 저장되었습니다.", ok: true };
+  return { message: adminDict.messages.employeeProfileSaved, ok: true };
 }
 
 async function changeEmployeeStatus(
   admin: AdminContext,
+  adminDict: AdminMessages,
   employeeId: string,
   status: "ACTIVE" | "INACTIVE",
 ): Promise<EmployeeStatusState> {
   if (status === "INACTIVE" && admin.employeeId === employeeId) {
     return {
-      message: "본인의 직원 계정은 비활성화할 수 없습니다.",
+      message: adminDict.messages.cannotDeactivateSelf,
       ok: false,
     };
   }
@@ -333,25 +338,31 @@ async function changeEmployeeStatus(
     if (status === "ACTIVE" && employee.status === "INVITED") {
       return {
         kind: "message" as const,
-        message: "초대 대기 직원은 활성화할 수 없습니다. 초대를 다시 보내주세요.",
+        message: adminDict.messages.cannotActivateInvited,
       };
     }
     if (status === "ACTIVE" && !employee.userId) {
       return {
         kind: "message" as const,
-        message: "연결된 계정이 없어 재활성화할 수 없습니다.",
+        message: adminDict.messages.cannotReactivateNoAccount,
       };
     }
     if (status === "INACTIVE" && employee.status !== "ACTIVE") {
-      return { kind: "message" as const, message: "이미 비활성 상태이거나 전환할 수 없습니다." };
+      return {
+        kind: "message" as const,
+        message: adminDict.messages.alreadyInactive,
+      };
     }
     if (status === "ACTIVE" && employee.status !== "INACTIVE") {
-      return { kind: "message" as const, message: "이미 활성 상태이거나 전환할 수 없습니다." };
+      return {
+        kind: "message" as const,
+        message: adminDict.messages.alreadyActive,
+      };
     }
     if (employee.userId && (!employee.user || employee.user.companyId !== admin.companyId)) {
       return {
         kind: "message" as const,
-        message: "연결된 계정 정보가 올바르지 않습니다.",
+        message: adminDict.messages.linkedAccountInvalid,
       };
     }
 
@@ -369,12 +380,18 @@ async function changeEmployeeStatus(
   });
 
   if (result.kind !== "ok") {
-    return { message: result.message || "직원 상태를 변경할 수 없습니다.", ok: false };
+    return {
+      message: result.message || adminDict.messages.statusChangeFailed,
+      ok: false,
+    };
   }
 
   revalidateEmployeePages();
   return {
-    message: status === "ACTIVE" ? "직원이 재활성화되었습니다." : "직원이 비활성화되었습니다.",
+    message:
+      status === "ACTIVE"
+        ? adminDict.messages.employeeReactivated
+        : adminDict.messages.employeeDeactivated,
     ok: true,
   };
 }
@@ -384,11 +401,14 @@ export async function deactivateEmployee(
   formData: FormData,
 ): Promise<EmployeeStatusState> {
   const admin = await requireAdmin();
-  const parsed = EmployeeIdSchema.safeParse({ id: formText(formData, "id") });
+  const { admin: adminDict } = await getDict();
+  const parsed = employeeIdSchema(adminDict).safeParse({
+    id: formText(formData, "id"),
+  });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
   }
-  return changeEmployeeStatus(admin, parsed.data.id, "INACTIVE");
+  return changeEmployeeStatus(admin, adminDict, parsed.data.id, "INACTIVE");
 }
 
 export async function reactivateEmployee(
@@ -396,11 +416,14 @@ export async function reactivateEmployee(
   formData: FormData,
 ): Promise<EmployeeStatusState> {
   const admin = await requireAdmin();
-  const parsed = EmployeeIdSchema.safeParse({ id: formText(formData, "id") });
+  const { admin: adminDict } = await getDict();
+  const parsed = employeeIdSchema(adminDict).safeParse({
+    id: formText(formData, "id"),
+  });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
   }
-  return changeEmployeeStatus(admin, parsed.data.id, "ACTIVE");
+  return changeEmployeeStatus(admin, adminDict, parsed.data.id, "ACTIVE");
 }
 
 export async function updateEmployeeStatus(
@@ -408,12 +431,13 @@ export async function updateEmployeeStatus(
   formData: FormData,
 ): Promise<EmployeeStatusState> {
   const admin = await requireAdmin();
-  const parsed = EmployeeStatusSchema.safeParse({
+  const { admin: adminDict } = await getDict();
+  const parsed = employeeStatusSchema(adminDict).safeParse({
     id: formText(formData, "id"),
     status: formText(formData, "status"),
   });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
   }
-  return changeEmployeeStatus(admin, parsed.data.id, parsed.data.status);
+  return changeEmployeeStatus(admin, adminDict, parsed.data.id, parsed.data.status);
 }

@@ -9,13 +9,13 @@
 >   3. After finishing, append `## Session N+1: <title>` with the next number.
 >   4. Only refresh the `📍 Current Status` summary at the top (past details stay in the session log).
 > - Sessions are appended chronologically.
-> - All written artifacts (docs, comments, commits, GitHub) are **English**. UI copy is Korean (i18n planned for v0.2).
+> - All written artifacts (docs, comments, commits, GitHub) are **English**. UI copy lives in the dictionaries under `src/i18n/dictionaries/` (never inline) in Korean and English.
 
 ---
 
-## 📍 Current Status (as of 2026-09-28, end of Session 11)
+## 📍 Current Status (as of 2026-09-28, end of Session 12)
 
-**Progress: The whole MVP feature set is implemented — Auth + Attendance + Leave + Expense, employee/org admin, team-scoped approvals, expense CSV export, and the settings module with holiday-aware leave counting. The project is branded HOOHR, public on GitHub, and clone-and-run: real `Dockerfile`, working `docker-compose.yml`, `.env.example`, and a rewritten README. Remaining MVP item: email notifications (NOT-1/2), which needs SMTP credentials.**
+**Progress: The whole MVP feature set is implemented ✅ Auth + Attendance + Leave + Expense, employee/org admin, team-scoped approvals, expense CSV export, and the settings module with holiday-aware leave counting. The project is branded HOOHR, public on GitHub, and clone-and-run: real `Dockerfile`, working `docker-compose.yml`, `.env.example`, and a rewritten README. The UI is now bilingual: Korean and English, switchable at runtime from the sidebar, with no external i18n library. Remaining MVP item: email notifications (NOT-1/2), which needs SMTP credentials.**
 
 > **Session 6 note**: Session 5 ended five minutes before the Leave module files were produced. The DB logic round-trip (`_test-leave.ts`), lint/tsc, and GET checks were done in Session 6. Server-action E2E (browser) of leave forms remains, same as attendance.
 
@@ -52,6 +52,9 @@
 | Root `Dockerfile` (referenced by compose, never written) | ✅ Done (Session 11) — multi-stage on `node:24-alpine`; compose `app` verified end to end |
 | README for a public repo | ✅ Done (Session 11) — real project docs + `.env.example` |
 | Brand-rename + Dockerfile + README final commit | ✅ `3091263` (pushed to `main`, Session 11) |
+| **i18n: Korean / English, runtime switch** | ✅ **Done (Session 12)** ✅ dependency-free; `locale` cookie (ko default), 9 dictionary namespaces, locale-aware dates/numbers/CSV |
+| i18n infrastructure commit (auth + nav) | ✅ `b036e2b` (pushed to `main`, Session 12) |
+| i18n full-module extraction + verification | ✅ verified in Session 12 🔄 awaiting commit |
 
 > **Key notes:**
 > - **The repo is live: https://github.com/WhoisHOO/HOOHR** (public, `main`, renamed in Session 11). `gh` is authenticated as `WhoisHOO`, so `git push` works without any further setup. App routes live under `/hoohr`.
@@ -59,6 +62,7 @@
 > - Quick-tunnel URL persists only while the same `cloudflared` process is alive; restart/reboot generates a **new random URL**. Unrelated to dev-server restarts.
 > - This PC's router DNS (192.168.1.254) fails to resolve some trycloudflare hostnames → verify via `--resolve` or 8.8.8.8. Other devices are fine.
 > - **GET checks with a session cookie: use `curl.exe`, not `Invoke-WebRequest`** — PowerShell silently drops a manual `Cookie` header, which looks like a redirect loop to /login. Mint a cookie with `npx tsx _mint-cookie.ts [email]`.
+> - **i18n (Session 12):** locale is a `locale` cookie (`ko` default, `en` available), read server-side in `src/i18n/server.ts`; a URL prefix was rejected on purpose. Copy lives in `src/i18n/dictionaries/`; the English dictionary is typed as `typeof` the Korean one, so a missing/extra key is a **compile error**. Do NOT put `as const` on the Korean objects ✅ it pins literal types and breaks the English assignment. Zod user-facing messages became locale-aware factories (`loginFormSchema(v)`). `src/lib/storage.ts` is a pure layer and now returns `ReceiptError` codes instead of UI strings. **User-entered data is never translated** (employee names, departments, leave policy names, expense category names) ✅ it stays as the company typed it, editable in Settings.
 
 > **Common commands (use at start of each session):**
 > ```bash
@@ -469,6 +473,70 @@ C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchang
   - **Secret audit on the staged diff**: no `Admin1234`, no `dev-only-secret`, no long hex literals, no GitHub/`sk-` tokens, no base64 blobs. The only two connection strings are the public dev password in `.env.example` and the build placeholder — both safe. `.env` confirmed **absent from the index** via `git ls-files`.
 - **Commit + push**: `3091263` `feat(docker): add missing root Dockerfile and rewrite README` pushed to `origin/main` (https://github.com/WhoisHOO/HOOHR). Note for the future: the first commit attempt **failed** because PowerShell mangled the message — parentheses and quotes in an inline `-m` argument reach git as separate args. Write the message to a file and use `git commit -F <file>`.
 - **Result/next**: the repo is now genuinely clone-and-run. A fresh `git clone` of https://github.com/WhoisHOO/HOOHR has a real `Dockerfile`, a real `docker-compose.yml` that builds, a `.env.example` to copy, and a README that tells the truth. Remaining, in rough priority order: ① **email notifications (NOT-1/2)** — the only MVP feature left, blocked on SMTP credentials ② **browser E2E sweep** of every form (still impossible via curl — known Next.js server-action restriction) ③ **stable domain** via a free subdomain (is-a.dev / eu.org) + named tunnel, since the quick-tunnel URL dies with its process ④ **pipelines/deploy runtime validation** — `pipelines/Dockerfile` and the DAG are drafted but never executed ⑤ grant-on-hire / leave carry-over automation, i18n, and OCR, all v0.2.
+
+### Session 12 (2026-09-28): i18n — runtime Korean/English switching for the whole UI
+
+- **Goal**: make every screen bilingual instead of hardcoded Korean. Originally the queue had **email notifications
+  (NOT-1/2)** as the next MVP item, but the user chose i18n first; email is still blocked on SMTP credentials.
+- **Decisions made**:
+  - **Cookie-based locale, not a URL prefix.** `getLocale()` in `src/i18n/server.ts` reads a `locale` cookie
+    (`ko` default, `en` available, one year, `httpOnly`, `secure` in production, `sameSite: lax`, `path: /`).
+    A switch calls the `setLocale` server action and then `router.refresh()`.
+  - **No external i18n library.** `interpolate()` handles `{name}`-style placeholders. This keeps the dependency
+    count unchanged and the whole mechanism is readable in one screen.
+  - **Compile-time key parity.** `dictEn: typeof dictKo` means a missing or extra English key fails `tsc`
+    instead of rendering `undefined` at runtime.
+  - **Preserve the original Korean copy.** Statuses are `승인 대기` / `작성 중` / `무급휴직` / `반려`, not a
+    re-worded English-first phrasing.
+  - **User-entered data is never translated** ✅ employee names, department names, leave policy names, expense
+    category names and the company name stay exactly as entered, so the English UI can show Korean only where
+    the data itself is Korean. Confirmed correct in Session 12, not an oversight.
+- **Built**:
+  - `src/i18n/`: `config.ts` (`Locale`, `LOCALES`, `INTL_LOCALES`), `format.ts` (`interpolate`), `server.ts`,
+    `client.tsx` (`LocaleProvider` + `useI18n`), `actions.ts`, `LocaleSwitcher.tsx`.
+  - `src/i18n/dictionaries/`: 9 namespaces ✅ `common`, `nav`, `auth`, `dashboard`, `attendance`, `leave`,
+    `expenses`, `admin`, `settings`, each with `ko` + `en`.
+  - Root layout is `async`, resolves the locale and injects the provider; `<html lang>` is now dynamic.
+  - Zod schemas became locale-aware factories: `loginFormSchema(v)`, `leaveFormSchema(v)`,
+    `attendanceCorrectionSchema(v)`, `expenseFormSchema(v)`, `employeeSchema(v)`, `settingsSchema(v)`. Exported
+    state types are unchanged, so no call site had to be retyped.
+  - `src/lib/storage.ts` no longer returns UI strings; it returns `ReceiptError` codes
+    (`EMPTY` | `TOO_LARGE` | `UNSUPPORTED_TYPE`) and `expense.ts` maps them to the active locale.
+  - Locale-aware formatting: `formatDuration`, `formatLeaveRange`, money/date/time helpers in
+    `src/lib/attendance.ts`, `src/lib/leave.ts`, `src/lib/expense.ts` take an optional trailing `intl`
+    parameter (default `ko-KR`), so existing call sites and tests stay valid. 25 call sites updated.
+- **Fixes found along the way**:
+  - `common.leaveKind` was not actually wired in ✅ the leave page rendered raw `policy.name`; verified the
+    badge/select/filter all now use the dictionary.
+  - Removed a duplicated `expenses.status` block; the CSV export route uses `common.expenseStatus`.
+  - Restored the leave page's original `commentOnly` branch (`의견: {comment}` plus the requester name) that
+    an earlier refactor had inverted.
+  - `src/app/hoohr/admin/invite/page.tsx` had 4 strings missed by the first pass.
+- **Verification**:
+  - `npm run lint` clean, `npx tsc --noEmit` **0 errors**.
+  - All 8 authenticated pages return **200 in both locales** (`/hoohr`, attendance, leave, expenses,
+    admin/employees, admin/invite, admin/balances, admin/settings), plus `/login` and `/invite/*`.
+  - Unauthenticated guards intact: `/hoohr`, `/hoohr/leave`, `/` all 307 to `/login`; legacy `/app/leave`
+    still 307s to `/hoohr/leave`.
+  - **Hangul audit of the English HTML:** 50 Korean lines remained, and every one is explained ✅ seeded
+    employee/position/department names, leave policy names, expense category names, and the `한국어`
+    endonym in the language switcher (a language picker should label each language in its own script). No
+    untranslated UI copy. The Korean pages render 29-102 Korean lines each, as expected.
+  - CSV export translates its header row and keeps the UTF-8 BOM (Excel-safe):
+    `날짜,카테고리,...` for ko, `Date,Category,...` for en.
+  - DB regression tests all pass with **0 leftovers**: `_test-team` 27/27, `_test-settings` 23/23,
+    `_test-leave` and `_test-expense` full step traces green.
+- **Not verified**: clicking the switcher in a real browser. The locale *read* path is proven (a `locale=en`
+  cookie changes every page), and the switcher renders with both options, but the server-action *write*
+  path cannot be exercised over curl ✅ same known Next.js restriction as the other forms.
+- **Gotchas worth remembering**:
+  - `Get-Content` without `-Encoding UTF8` renders the emoji in this file as CP949 garbage on the console.
+    The file is fine; verify with Python `io.open(..., encoding="utf-8")` before believing any mojibake here.
+  - PowerShell 5.1 has **no ternary operator** (`? :`) — it is a parse error, not a syntax to work around.
+  - Do not bulk-kill `node` processes to restart the dev server (Docker Desktop side effects).
+- **Result/next**: the UI is bilingual end to end. Next, in rough priority order — commit + push the
+  full-module i18n diff (it is still uncommitted working tree after `b036e2b`), then browser E2E of the
+  locale switcher, then email notifications once SMTP credentials exist, then a stable domain for the tunnel.
 
 <!-- ====== Template for next sessions (copy & use) ======
 ### Session 5 (2026-09-24): <title>

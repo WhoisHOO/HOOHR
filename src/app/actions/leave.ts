@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireUser } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
@@ -17,12 +16,14 @@ import {
   canReviewEmployee,
 } from "@/lib/team";
 import {
-  LeaveRequestFormSchema,
+  balanceRowSchema,
+  leaveRequestFormSchema,
   type BalanceImportState,
   type LeaveCancelState,
   type LeaveDecideState,
   type LeaveRequestState,
 } from "@/lib/leave-validation";
+import { getDict, interpolate } from "@/i18n/server";
 
 // ============ 휴가 신청 (EMPLOYEE) ============
 
@@ -31,11 +32,12 @@ export async function requestLeave(
   formData: FormData,
 ): Promise<LeaveRequestState> {
   const user = await requireUser();
+  const { common, leave } = await getDict();
   if (!user.employeeId) {
-    return { message: "직원 정보가 없습니다. 관리자에게 문의하세요." };
+    return { message: common.decide.noEmployee };
   }
 
-  const parsed = LeaveRequestFormSchema.safeParse({
+  const parsed = leaveRequestFormSchema(leave).safeParse({
     policyId: formData.get("policyId"),
     startDate: formData.get("startDate"),
     endDate: formData.get("endDate"),
@@ -53,33 +55,40 @@ export async function requestLeave(
   const tz = await getCompanyTimezone(user.companyId);
   const today = zonedToday(tz);
   if (start.getTime() < today.getTime()) {
-    return { message: "과거 날짜로는 휴가를 신청할 수 없습니다." };
+    return { message: leave.messages.pastDatesNotAllowed };
   }
   if (start.getTime() > end.getTime()) {
-    return { message: "종료일은 시작일보다 빠를 수 없습니다." };
+    return { message: leave.messages.endBeforeStart };
   }
   if (isHalfDay && start.getTime() !== end.getTime()) {
-    return { message: "반차는 하루만 신청할 수 있습니다." };
+    return { message: leave.messages.halfDaySingleDayOnly };
   }
 
   const policy = await prisma.leavePolicy.findFirst({
     where: { companyId: user.companyId, id: parsed.data.policyId, active: true },
   });
   if (!policy) {
-    return { message: "선택한 휴가 유형(정책)이 존재하지 않습니다." };
+    return { message: leave.messages.policyNotFound };
   }
 
   const holidays = await getCompanyHolidays(user.companyId);
   const days = computeLeaveDays(start, end, isHalfDay, holidays);
   if (days <= 0) {
-    return { message: "선택 기간에 근무일이 없습니다 (주말 또는 공휴일만 포함됨)." };
+    return { message: leave.messages.noWorkdays };
   }
   if (isHalfDay && !isWorkday(start, holidays)) {
     const name = await getCompanyHolidayName(user.companyId, start);
     return {
       message: name
-        ? `${name}(${start.getUTCMonth() + 1}월 ${start.getUTCDate()}일)는 공휴일이므로 반차를 신청할 수 없습니다.`
-        : `${start.getUTCMonth() + 1}월 ${start.getUTCDate()}일은 주말이므로 반차를 신청할 수 없습니다.`,
+        ? interpolate(leave.messages.halfDayOnHoliday, {
+            name,
+            m: start.getUTCMonth() + 1,
+            d: start.getUTCDate(),
+          })
+        : interpolate(leave.messages.halfDayOnWeekend, {
+            m: start.getUTCMonth() + 1,
+            d: start.getUTCDate(),
+          }),
     };
   }
 
@@ -97,7 +106,11 @@ export async function requestLeave(
     const available = bal ? remainingDays(bal) : 0;
     if (days > available) {
       return {
-        message: `${policy.name} 잔여가 부족합니다 (잔여 ${available}일 / 신청 ${days}일).`,
+        message: interpolate(leave.messages.insufficientBalance, {
+          policy: policy.name,
+          available,
+          days,
+        }),
       };
     }
   }
@@ -117,7 +130,7 @@ export async function requestLeave(
   });
 
   revalidatePath("/hoohr/leave");
-  return { message: "휴가 신청이 접수되었습니다.", ok: true };
+  return { message: leave.messages.requestSubmitted, ok: true };
 }
 
 // ============ 휴가 승인/반려 (MANAGER / ADMIN) ============
@@ -127,31 +140,32 @@ export async function decideLeave(
   formData: FormData,
 ): Promise<LeaveDecideState> {
   const user = await requireUser();
+  const { common, leave } = await getDict();
   if (user.role !== "MANAGER" && user.role !== "ADMIN") {
-    return { message: "승인 권한이 없습니다." };
+    return { message: common.decide.noPermission };
   }
 
   const id = String(formData.get("id") ?? "");
   const decision = String(formData.get("decision") ?? "");
   const comment = String(formData.get("comment") ?? "").trim();
-  const unavailableMessage = "요청을 처리할 수 없습니다. 최신 목록을 확인해주세요.";
+  const unavailableMessage = common.decide.unavailable;
 
-  if (!id) return { message: "요청 정보가 올바르지 않습니다." };
+  if (!id) return { message: leave.messages.invalidRequest };
   if (decision !== "APPROVE" && decision !== "REJECT") {
-    return { message: "결정 값이 올바르지 않습니다." };
+    return { message: leave.messages.invalidDecision };
   }
   if (decision === "REJECT" && comment.length < 2) {
-    return { message: "반려 시 사유를 입력해주세요." };
+    return { message: common.decide.rejectReasonRequired };
   }
 
-  const leave = await prisma.leaveRequest.findFirst({
+  const request = await prisma.leaveRequest.findFirst({
     where: { id, companyId: user.companyId, status: "PENDING" },
     include: { policy: true, ...approvalTargetInclude },
   });
   if (
-    !leave ||
-    leave.policy.companyId !== user.companyId ||
-    !canReviewEmployee(user, leave)
+    !request ||
+    request.policy.companyId !== user.companyId ||
+    !canReviewEmployee(user, request)
   ) {
     return { message: unavailableMessage };
   }
@@ -219,7 +233,8 @@ export async function decideLeave(
   revalidatePath("/hoohr/leave");
   revalidatePath("/hoohr");
   return {
-    message: decision === "APPROVE" ? "승인 처리되었습니다." : "반려 처리되었습니다.",
+    message:
+      decision === "APPROVE" ? common.decide.approveDone : common.decide.rejectDone,
     ok: true,
   };
 }
@@ -231,18 +246,19 @@ export async function cancelLeave(
   formData: FormData,
 ): Promise<LeaveCancelState> {
   const user = await requireUser();
+  const { common, leave } = await getDict();
   if (!user.employeeId) {
-    return { message: "직원 정보가 없습니다. 관리자에게 문의하세요." };
+    return { message: common.decide.noEmployee };
   }
   const employeeId = user.employeeId;
   const id = String(formData.get("id") ?? "");
-  if (!id) return { message: "요청 정보가 올바르지 않습니다." };
+  if (!id) return { message: leave.messages.invalidRequest };
 
-  const leave = await prisma.leaveRequest.findFirst({
+  const request = await prisma.leaveRequest.findFirst({
     where: { id, employeeId, status: "PENDING" },
   });
-  if (!leave) {
-    return { message: "취소할 수 없는 요청입니다 (승인 이후에는 취소 불가)." };
+  if (!request) {
+    return { message: leave.messages.cannotCancel };
   }
 
   await prisma.leaveRequest.update({
@@ -251,32 +267,24 @@ export async function cancelLeave(
   });
 
   revalidatePath("/hoohr/leave");
-  return { message: "휴가 신청이 취소되었습니다.", ok: true };
+  return { message: leave.messages.cancelDone, ok: true };
 }
 
 // ============ 연차 잔여 CSV 가져오기 (ADMIN) ============
-
-const BalanceRowSchema = z.object({
-  email: z.string().trim().email({ error: "이메일 형식 오류" }),
-  kind: z.enum(["PTO", "SICK", "UNPAID"]),
-  year: z.coerce.number().int().min(2000).max(2100),
-  grantedDays: z.coerce.number().min(0).max(1000),
-  usedDays: z.coerce.number().min(0).max(1000).default(0),
-  adjustDays: z.coerce.number().min(-1000).max(1000).default(0),
-});
 
 export async function importBalances(
   _state: BalanceImportState,
   formData: FormData,
 ): Promise<BalanceImportState> {
   const admin = await requireAdmin();
+  const { leave } = await getDict();
 
   const file = formData.get("file");
   if (!(file instanceof File)) {
-    return { message: "CSV 파일을 선택해주세요." };
+    return { message: leave.balanceImport.csvRequired };
   }
   if (file.size === 0) {
-    return { message: "파일이 비어 있습니다." };
+    return { message: leave.balanceImport.fileEmpty };
   }
 
   const text = await file.text();
@@ -285,7 +293,7 @@ export async function importBalances(
     .map((l) => l.trim())
     .filter(Boolean);
   if (lines.length === 0) {
-    return { message: "파일에 내용이 없습니다." };
+    return { message: leave.balanceImport.fileNoContent };
   }
   if (lines[0].toLowerCase().startsWith("email")) {
     lines.shift(); // 헤더 제거
@@ -305,7 +313,7 @@ export async function importBalances(
   for (let i = 0; i < lines.length; i++) {
     const cols = lines[i].split(",").map((c) => c.trim());
     const lineNo = i + 1;
-    const parsed = BalanceRowSchema.safeParse({
+    const parsed = balanceRowSchema(leave).safeParse({
       email: cols[0],
       kind: cols[1],
       year: cols[2],
@@ -314,13 +322,17 @@ export async function importBalances(
       adjustDays: cols[5] ?? "0",
     });
     if (!parsed.success || cols.length < 4) {
-      errors.push(`line ${lineNo}: 형식 오류 (email,kind,year,grantedDays[,usedDays,adjustDays])`);
+      errors.push(
+        interpolate(leave.balanceImport.lineFormatError, { line: lineNo }),
+      );
       continue;
     }
     const { email, kind, year, grantedDays, usedDays, adjustDays } = parsed.data;
     const policyId = policyByKind.get(kind);
     if (!policyId) {
-      errors.push(`line ${lineNo}: 정책 없음 (${kind})`);
+      errors.push(
+        interpolate(leave.balanceImport.lineNoPolicy, { line: lineNo, kind }),
+      );
       continue;
     }
     const employee = await prisma.employee.findFirst({
@@ -328,7 +340,9 @@ export async function importBalances(
       select: { id: true },
     });
     if (!employee) {
-      errors.push(`line ${lineNo}: 직원 없음 (${email})`);
+      errors.push(
+        interpolate(leave.balanceImport.lineNoEmployee, { line: lineNo, email }),
+      );
       continue;
     }
 
@@ -355,8 +369,16 @@ export async function importBalances(
 
   revalidatePath("/hoohr/admin/balances");
   revalidatePath("/hoohr/leave");
+  const message =
+    errors.length > 0
+      ? interpolate(leave.balanceImport.importedWithErrors, {
+          count: imported,
+          errors: errors.length,
+          example: errors[0],
+        })
+      : interpolate(leave.balanceImport.imported, { count: imported });
   return {
-    message: `${imported}건 가져왔습니다${errors.length > 0 ? `, 오류 ${errors.length}건 (예: ${errors[0]})` : ""}.`,
+    message,
     ok: errors.length === 0,
   };
 }

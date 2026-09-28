@@ -7,19 +7,20 @@ import { fieldErrors } from "@/lib/form-utils";
 import { parseIsoDate, zonedToday } from "@/lib/attendance";
 import { getCompanyTimezone } from "@/lib/company";
 import {
-  CompanySettingsSchema,
-  ExpenseCategoryCreateSchema,
-  ExpenseCategoryDeleteSchema,
-  ExpenseCategoryUpdateSchema,
-  HolidayCreateSchema,
-  HolidayDeleteSchema,
-  LeavePolicyIdSchema,
-  LeavePolicyUpdateSchema,
+  companySettingsSchema,
+  expenseCategoryCreateSchema,
+  expenseCategoryDeleteSchema,
+  expenseCategoryUpdateSchema,
+  holidayCreateSchema,
+  holidayDeleteSchema,
+  leavePolicyIdSchema,
+  leavePolicyUpdateSchema,
   type CompanySettingsState,
   type ExpenseCategoryState,
   type HolidayState,
   type LeavePolicyState,
 } from "@/lib/settings-validation";
+import { getDict, interpolate } from "@/i18n/server";
 
 type AdminContext = { companyId: string };
 
@@ -69,7 +70,12 @@ export async function updateCompanySettings(
   formData: FormData,
 ): Promise<CompanySettingsState> {
   const admin = await requireAdmin();
-  const parsed = CompanySettingsSchema.safeParse({
+  const { common, settings } = await getDict();
+  const schema = companySettingsSchema({
+    ...settings,
+    required: common.validation.required,
+  });
+  const parsed = schema.safeParse({
     name: formText(formData, "name"),
     timezone: formText(formData, "timezone"),
   });
@@ -78,7 +84,9 @@ export async function updateCompanySettings(
   }
 
   if (!isValidTimezone(parsed.data.timezone)) {
-    return { fieldErrors: { timezone: ["알 수 없는 시간대입니다."] } };
+    return {
+      fieldErrors: { timezone: [settings.validation.unknownTimezone] },
+    };
   }
 
   await prisma.company.update({
@@ -87,7 +95,7 @@ export async function updateCompanySettings(
   });
 
   revalidateSettingsPages();
-  return { message: "회사 설정이 저장되었습니다.", ok: true };
+  return { message: settings.messages.companySaved, ok: true };
 }
 
 // ============ SET-2: 휴가 정책 ============
@@ -97,7 +105,12 @@ export async function updateLeavePolicy(
   formData: FormData,
 ): Promise<LeavePolicyState> {
   const admin = await requireAdmin();
-  const parsed = LeavePolicyUpdateSchema.safeParse({
+  const { common, settings } = await getDict();
+  const schema = leavePolicyUpdateSchema({
+    ...settings,
+    required: common.validation.required,
+  });
+  const parsed = schema.safeParse({
     id: formText(formData, "id"),
     name: formText(formData, "name"),
     annualDays: formData.get("annualDays"),
@@ -115,7 +128,7 @@ export async function updateLeavePolicy(
     select: { id: true, name: true },
   });
   if (!policy) {
-    return { message: "휴가 정책을 찾을 수 없습니다.", ok: false };
+    return { message: settings.messages.policyNotFound, ok: false };
   }
 
   try {
@@ -132,13 +145,16 @@ export async function updateLeavePolicy(
     });
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      return { message: "같은 이름의 휴가 정책이 이미 있습니다.", ok: false };
+      return { message: settings.messages.policyNameTaken, ok: false };
     }
     throw error;
   }
 
   revalidateSettingsPages();
-  return { message: `휴가 정책이 저장되었습니다. (${policy.name})`, ok: true };
+  return {
+    message: interpolate(settings.messages.policySaved, { name: policy.name }),
+    ok: true,
+  };
 }
 
 /**
@@ -150,7 +166,12 @@ export async function applyPolicyToCurrentYear(
   formData: FormData,
 ): Promise<LeavePolicyState> {
   const admin = await requireAdmin();
-  const parsed = LeavePolicyIdSchema.safeParse({ id: formText(formData, "id") });
+  const { common, settings } = await getDict();
+  const schema = leavePolicyIdSchema({
+    ...settings,
+    required: common.validation.required,
+  });
+  const parsed = schema.safeParse({ id: formText(formData, "id") });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
   }
@@ -160,7 +181,7 @@ export async function applyPolicyToCurrentYear(
     select: { id: true, name: true, annualDays: true },
   });
   if (!policy) {
-    return { message: "휴가 정책을 찾을 수 없습니다.", ok: false };
+    return { message: settings.messages.policyNotFound, ok: false };
   }
 
   const year = await getCompanyYear(admin);
@@ -173,8 +194,12 @@ export async function applyPolicyToCurrentYear(
   return {
     message:
       result.count === 0
-        ? `${year}년 잔액 행이 없어 반영하지 않았습니다. (CSV 임포트 또는 정책 적용 대상 없음)`
-        : `${year}년 잔액 ${result.count}건에 ${policy.annualDays}일을 부여했습니다.`,
+        ? interpolate(settings.messages.policyApplySkipped, { year })
+        : interpolate(settings.messages.policyApplied, {
+            year,
+            rows: interpolate(common.units.count, { n: result.count }),
+            days: interpolate(common.units.days, { n: policy.annualDays }),
+          }),
     ok: true,
   };
 }
@@ -191,7 +216,12 @@ export async function createHoliday(
   formData: FormData,
 ): Promise<HolidayState> {
   const admin = await requireAdmin();
-  const parsed = HolidayCreateSchema.safeParse({
+  const { common, settings } = await getDict();
+  const schema = holidayCreateSchema({
+    ...settings,
+    required: common.validation.required,
+  });
+  const parsed = schema.safeParse({
     date: formText(formData, "date"),
     name: formText(formData, "name"),
   });
@@ -206,13 +236,13 @@ export async function createHoliday(
     });
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      return { message: "이미 등록된 공휴일입니다.", ok: false };
+      return { message: settings.messages.holidayExists, ok: false };
     }
     throw error;
   }
 
   revalidateSettingsPages();
-  return { message: "공휴일이 등록되었습니다.", ok: true };
+  return { message: settings.messages.holidayCreated, ok: true };
 }
 
 export async function deleteHoliday(
@@ -220,7 +250,12 @@ export async function deleteHoliday(
   formData: FormData,
 ): Promise<HolidayState> {
   const admin = await requireAdmin();
-  const parsed = HolidayDeleteSchema.safeParse({ id: formText(formData, "id") });
+  const { common, settings } = await getDict();
+  const schema = holidayDeleteSchema({
+    ...settings,
+    required: common.validation.required,
+  });
+  const parsed = schema.safeParse({ id: formText(formData, "id") });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
   }
@@ -229,11 +264,11 @@ export async function deleteHoliday(
     where: { id: parsed.data.id, companyId: admin.companyId },
   });
   if (result.count === 0) {
-    return { message: "공휴일을 찾을 수 없습니다.", ok: false };
+    return { message: settings.messages.holidayNotFound, ok: false };
   }
 
   revalidateSettingsPages();
-  return { message: "공휴일이 삭제되었습니다.", ok: true };
+  return { message: settings.messages.holidayDeleted, ok: true };
 }
 
 // ============ SET-4: 경비 분류 ============
@@ -243,7 +278,12 @@ export async function createExpenseCategory(
   formData: FormData,
 ): Promise<ExpenseCategoryState> {
   const admin = await requireAdmin();
-  const parsed = ExpenseCategoryCreateSchema.safeParse({
+  const { common, settings } = await getDict();
+  const schema = expenseCategoryCreateSchema({
+    ...settings,
+    required: common.validation.required,
+  });
+  const parsed = schema.safeParse({
     name: formText(formData, "name"),
   });
   if (!parsed.success) {
@@ -256,13 +296,13 @@ export async function createExpenseCategory(
     });
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      return { message: "이미 존재하는 분류명입니다.", ok: false };
+      return { message: settings.messages.categoryNameTaken, ok: false };
     }
     throw error;
   }
 
   revalidateSettingsPages();
-  return { message: "경비 분류가 추가되었습니다.", ok: true };
+  return { message: settings.messages.categoryCreated, ok: true };
 }
 
 export async function updateExpenseCategory(
@@ -270,7 +310,12 @@ export async function updateExpenseCategory(
   formData: FormData,
 ): Promise<ExpenseCategoryState> {
   const admin = await requireAdmin();
-  const parsed = ExpenseCategoryUpdateSchema.safeParse({
+  const { common, settings } = await getDict();
+  const schema = expenseCategoryUpdateSchema({
+    ...settings,
+    required: common.validation.required,
+  });
+  const parsed = schema.safeParse({
     id: formText(formData, "id"),
     name: formText(formData, "name"),
     active: formCheckbox(formData, "active"),
@@ -284,7 +329,7 @@ export async function updateExpenseCategory(
     select: { id: true },
   });
   if (!category) {
-    return { message: "분류를 찾을 수 없습니다.", ok: false };
+    return { message: settings.messages.categoryNotFound, ok: false };
   }
 
   try {
@@ -294,13 +339,13 @@ export async function updateExpenseCategory(
     });
   } catch (error) {
     if (isUniqueConstraintError(error)) {
-      return { message: "이미 존재하는 분류명입니다.", ok: false };
+      return { message: settings.messages.categoryNameTaken, ok: false };
     }
     throw error;
   }
 
   revalidateSettingsPages();
-  return { message: "경비 분류가 저장되었습니다.", ok: true };
+  return { message: settings.messages.categorySaved, ok: true };
 }
 
 /** 사용 중인 분류(항목이 존재)는 삭제하지 않고 비활성화만 허용. */
@@ -309,7 +354,12 @@ export async function deleteExpenseCategory(
   formData: FormData,
 ): Promise<ExpenseCategoryState> {
   const admin = await requireAdmin();
-  const parsed = ExpenseCategoryDeleteSchema.safeParse({ id: formText(formData, "id") });
+  const { common, settings } = await getDict();
+  const schema = expenseCategoryDeleteSchema({
+    ...settings,
+    required: common.validation.required,
+  });
+  const parsed = schema.safeParse({ id: formText(formData, "id") });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
   }
@@ -329,15 +379,17 @@ export async function deleteExpenseCategory(
   });
 
   if (result.kind === "not_found") {
-    return { message: "분류를 찾을 수 없습니다.", ok: false };
+    return { message: settings.messages.categoryNotFound, ok: false };
   }
   if (result.kind === "in_use") {
     return {
-      message: `사용 중인 분류(${result.name})는 삭제할 수 없습니다. 비활성화하세요.`,
+      message: interpolate(settings.messages.categoryInUse, {
+        name: result.name,
+      }),
       ok: false,
     };
   }
 
   revalidateSettingsPages();
-  return { message: "경비 분류가 삭제되었습니다.", ok: true };
+  return { message: settings.messages.categoryDeleted, ok: true };
 }

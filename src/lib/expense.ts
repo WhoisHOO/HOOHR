@@ -1,8 +1,14 @@
 // 경비 도메인의 순수 유틸 — 표시/계산 전용 (DB 접근 없음).
 
+import { DEFAULT_INTL_LOCALE, type InltLocale } from "@/i18n/config";
+
 /** cents → 통화 표시 (기본 USD). */
-export function formatMoney(cents: number, currency = "USD"): string {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
+export function formatMoney(
+  cents: number,
+  currency = "USD",
+  intl: InltLocale = DEFAULT_INTL_LOCALE,
+): string {
+  return new Intl.NumberFormat(intl, { style: "currency", currency }).format(
     cents / 100,
   );
 }

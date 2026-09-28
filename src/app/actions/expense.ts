@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
 import { parseIsoDate } from "@/lib/attendance";
 import { parseAmountToCents } from "@/lib/expense";
-import { removeReceipt, saveReceipt } from "@/lib/storage";
+import { removeReceipt, saveReceipt, type ReceiptError } from "@/lib/storage";
 import {
   approvalReviewerFromUser,
   approvalReviewerSelect,
@@ -15,14 +15,16 @@ import {
   canReviewEmployee,
 } from "@/lib/team";
 import {
-  ExpenseItemFormSchema,
-  ExpenseReportCreateSchema,
+  expenseItemFormSchema,
+  expenseReportCreateSchema,
   MAX_EXPENSE_ITEMS,
   type ExpenseCreateState,
   type ExpenseDecideState,
   type ExpenseDeleteState,
   type ExpenseSubmitState,
 } from "@/lib/expense-validation";
+import { getDict, interpolate } from "@/i18n/server";
+import type { ExpenseMessages } from "@/i18n/dictionaries/expenses";
 
 type ItemInput = {
   date: Date;
@@ -32,7 +34,26 @@ type ItemInput = {
   file: File | null;
 };
 
-function parseItemRows(formData: FormData): ItemInput[] | string {
+// src/lib/storage.ts reports machine-readable error codes; the caller owns
+// the localized wording.
+function receiptErrorToMessage(
+  error: ReceiptError,
+  expenses: ExpenseMessages,
+): string {
+  switch (error) {
+    case "EMPTY":
+      return expenses.receiptErrors.empty;
+    case "TOO_LARGE":
+      return expenses.receiptErrors.tooLarge;
+    case "UNSUPPORTED_TYPE":
+      return expenses.receiptErrors.unsupportedType;
+  }
+}
+
+function parseItemRows(
+  formData: FormData,
+  expenses: ExpenseMessages,
+): ItemInput[] | string {
   const dates = formData.getAll("item_date") as string[];
   const categoryIds = formData.getAll("item_categoryId") as string[];
   const amounts = formData.getAll("item_amount") as string[];
@@ -40,14 +61,14 @@ function parseItemRows(formData: FormData): ItemInput[] | string {
   const files = formData.getAll("item_file") as unknown as File[];
 
   const count = dates.length;
-  if (count === 0) return "항목을 하나 이상 추가하세요.";
+  if (count === 0) return expenses.messages.noItems;
   if (count > MAX_EXPENSE_ITEMS) {
-    return `항목은 최대 ${MAX_EXPENSE_ITEMS}개까지 입력할 수 있습니다.`;
+    return interpolate(expenses.messages.maxItems, { max: MAX_EXPENSE_ITEMS });
   }
 
   const items: ItemInput[] = [];
   for (let i = 0; i < count; i++) {
-    const parsed = ExpenseItemFormSchema.safeParse({
+    const parsed = expenseItemFormSchema(expenses).safeParse({
       date: dates[i],
       categoryId: categoryIds[i],
       amountLabel: amounts[i],
@@ -55,11 +76,14 @@ function parseItemRows(formData: FormData): ItemInput[] | string {
     });
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
-      return `항목 ${i + 1} 오류: ${issue?.message ?? "값을 확인하세요"}`;
+      return interpolate(expenses.messages.itemError, {
+        n: i + 1,
+        error: issue?.message ?? expenses.messages.checkValue,
+      });
     }
     const amountCents = parseAmountToCents(parsed.data.amountLabel);
     if (amountCents <= 0) {
-      return `항목 ${i + 1} 오류: 금액은 0보다 커야 합니다`;
+      return interpolate(expenses.messages.itemAmountPositive, { n: i + 1 });
     }
     items.push({
       date: parseIsoDate(parsed.data.date),
@@ -79,11 +103,12 @@ export async function createExpenseReport(
   formData: FormData,
 ): Promise<ExpenseCreateState> {
   const user = await requireUser();
+  const { common, expenses } = await getDict();
   if (!user.employeeId) {
-    return { message: "직원 정보가 없습니다. 관리자에게 문의하세요." };
+    return { message: common.decide.noEmployee };
   }
 
-  const meta = ExpenseReportCreateSchema.safeParse({
+  const meta = expenseReportCreateSchema(expenses).safeParse({
     title: formData.get("title"),
     periodStart: formData.get("periodStart"),
     periodEnd: formData.get("periodEnd"),
@@ -95,10 +120,10 @@ export async function createExpenseReport(
   const start = parseIsoDate(meta.data.periodStart);
   const end = parseIsoDate(meta.data.periodEnd);
   if (start.getTime() > end.getTime()) {
-    return { message: "기간이 올바르지 않습니다." };
+    return { message: expenses.messages.periodInvalid };
   }
 
-  const parsedItems = parseItemRows(formData);
+  const parsedItems = parseItemRows(formData, expenses);
   if (typeof parsedItems === "string") {
     return { message: parsedItems };
   }
@@ -113,7 +138,7 @@ export async function createExpenseReport(
     select: { id: true },
   });
   if (categories.length !== categoryIds.length) {
-    return { message: "유효하지 않은 카테고리가 포함되어 있습니다." };
+    return { message: expenses.messages.invalidCategory };
   }
 
   const totalCents = parsedItems.reduce((sum, it) => sum + it.amountCents, 0);
@@ -125,7 +150,7 @@ export async function createExpenseReport(
       const receipts = [];
       if (it.file) {
         const saved = await saveReceipt(it.file);
-        if (!saved.ok) return { message: saved.error };
+        if (!saved.ok) return { message: receiptErrorToMessage(saved.error, expenses) };
         savedFiles.push(saved.stored.storedName);
         receipts.push({
           filename: saved.stored.filename,
@@ -156,11 +181,11 @@ export async function createExpenseReport(
     });
   } catch {
     for (const name of savedFiles) await removeReceipt(name);
-    return { message: "저장 중 오류가 발생했습니다. 다시 시도해주세요." };
+    return { message: expenses.messages.saveError };
   }
 
   revalidatePath("/hoohr/expenses");
-  return { message: "경비 신청서가 작성되었습니다.", ok: true };
+  return { message: expenses.messages.reportCreated, ok: true };
 }
 
 // ============ 제출 (EMPLOYEE, DRAFT → SUBMITTED) ============
@@ -170,21 +195,22 @@ export async function submitExpenseReport(
   formData: FormData,
 ): Promise<ExpenseSubmitState> {
   const user = await requireUser();
+  const { common, expenses } = await getDict();
   if (!user.employeeId) {
-    return { message: "직원 정보가 없습니다. 관리자에게 문의하세요." };
+    return { message: common.decide.noEmployee };
   }
 
   const id = String(formData.get("id") ?? "");
-  if (!id) return { message: "보고서 정보가 올바르지 않습니다." };
+  if (!id) return { message: expenses.messages.reportInvalid };
 
   const report = await prisma.expenseReport.findFirst({
     where: { id, employeeId: user.employeeId, status: "DRAFT" },
   });
-  if (!report) return { message: "제출할 수 없는 보고서입니다." };
+  if (!report) return { message: expenses.messages.cannotSubmit };
 
   const itemCount = await prisma.expenseItem.count({ where: { reportId: id } });
   if (itemCount === 0) {
-    return { message: "항목이 없는 보고서는 제출할 수 없습니다." };
+    return { message: expenses.messages.noItemsToSubmit };
   }
 
   await prisma.expenseReport.update({
@@ -193,7 +219,7 @@ export async function submitExpenseReport(
   });
 
   revalidatePath("/hoohr/expenses");
-  return { message: "승인 요청이 제출되었습니다.", ok: true };
+  return { message: expenses.messages.requestSubmitted, ok: true };
 }
 
 // ============ 삭제 (EMPLOYEE, DRAFT만) ============
@@ -203,17 +229,18 @@ export async function deleteExpenseReport(
   formData: FormData,
 ): Promise<ExpenseDeleteState> {
   const user = await requireUser();
+  const { common, expenses } = await getDict();
   if (!user.employeeId) {
-    return { message: "직원 정보가 없습니다. 관리자에게 문의하세요." };
+    return { message: common.decide.noEmployee };
   }
 
   const id = String(formData.get("id") ?? "");
-  if (!id) return { message: "보고서 정보가 올바르지 않습니다." };
+  if (!id) return { message: expenses.messages.reportInvalid };
 
   const report = await prisma.expenseReport.findFirst({
     where: { id, employeeId: user.employeeId, status: "DRAFT" },
   });
-  if (!report) return { message: "삭제할 수 없는 보고서입니다." };
+  if (!report) return { message: expenses.messages.cannotDelete };
 
   const receipts = await prisma.receiptFile.findMany({
     where: { item: { reportId: id } },
@@ -223,7 +250,7 @@ export async function deleteExpenseReport(
   for (const r of receipts) await removeReceipt(r.storedPath);
 
   revalidatePath("/hoohr/expenses");
-  return { message: "보고서가 삭제되었습니다.", ok: true };
+  return { message: expenses.messages.reportDeleted, ok: true };
 }
 
 // ============ 승인/반려/결제 확정 (MANAGER / ADMIN) ============
@@ -233,24 +260,25 @@ export async function decideExpense(
   formData: FormData,
 ): Promise<ExpenseDecideState> {
   const user = await requireUser();
+  const { common, expenses } = await getDict();
   if (user.role !== "MANAGER" && user.role !== "ADMIN") {
-    return { message: "승인 권한이 없습니다." };
+    return { message: common.decide.noPermission };
   }
 
   const id = String(formData.get("id") ?? "");
   const decision = String(formData.get("decision") ?? "");
   const comment = String(formData.get("comment") ?? "").trim();
-  const unavailableMessage = "요청을 처리할 수 없습니다. 최신 목록을 확인해주세요.";
+  const unavailableMessage = common.decide.unavailable;
 
-  if (!id) return { message: "보고서 정보가 올바르지 않습니다." };
+  if (!id) return { message: expenses.messages.reportInvalid };
   if (!["APPROVE", "REJECT", "PAY"].includes(decision)) {
-    return { message: "결정 값이 올바르지 않습니다." };
+    return { message: expenses.messages.invalidDecision };
   }
   if (decision === "REJECT" && comment.length < 2) {
-    return { message: "반려 시 사유를 입력해주세요." };
+    return { message: common.decide.rejectReasonRequired };
   }
   if (decision === "PAY" && user.role !== "ADMIN") {
-    return { message: "결제 확정은 관리자만 할 수 있습니다." };
+    return { message: expenses.messages.payAdminOnly };
   }
 
   const expected = decision === "PAY" ? "APPROVED" : "SUBMITTED";
@@ -313,9 +341,9 @@ export async function decideExpense(
   revalidatePath("/hoohr/expenses");
   const label =
     decision === "APPROVE"
-      ? "승인 처리되었습니다."
+      ? common.decide.approveDone
       : decision === "PAY"
-        ? "결제가 확정되었습니다."
-        : "반려 처리되었습니다.";
+        ? expenses.messages.payConfirmed
+        : common.decide.rejectDone;
   return { message: label, ok: true };
 }

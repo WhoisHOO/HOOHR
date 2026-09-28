@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { submitExpenseReport } from "@/app/actions/expense";
 import type { ExpenseSubmitState } from "@/lib/expense-validation";
+import { useI18n } from "@/i18n/client";
 
 export function SubmitExpenseButton({
   reportId,
@@ -11,6 +12,7 @@ export function SubmitExpenseButton({
   reportId: string;
   disabled: boolean;
 }) {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<ExpenseSubmitState, FormData>(
     submitExpenseReport,
     undefined,
@@ -31,7 +33,7 @@ export function SubmitExpenseButton({
         disabled={pending || disabled}
         className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {pending ? "제출 중..." : "승인 요청"}
+        {pending ? d.common.buttons.submitting : d.expenses.form.submitForApproval}
       </button>
     </form>
   );

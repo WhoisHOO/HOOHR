@@ -3,8 +3,10 @@
 import { useActionState } from "react";
 import { decideLeave } from "@/app/actions/leave";
 import type { LeaveDecideState } from "@/lib/leave-validation";
+import { useI18n } from "@/i18n/client";
 
 export function DecideLeaveForm({ leaveId }: { leaveId: string }) {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<LeaveDecideState, FormData>(
     decideLeave,
     undefined,
@@ -17,7 +19,7 @@ export function DecideLeaveForm({ leaveId }: { leaveId: string }) {
         <input
           name="comment"
           type="text"
-          placeholder="승인/반려 의견 (반려 시 필수)"
+          placeholder={d.leave.decide.commentPlaceholder}
           className="rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
       </div>
@@ -38,7 +40,7 @@ export function DecideLeaveForm({ leaveId }: { leaveId: string }) {
           disabled={pending}
           className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
         >
-          승인
+          {d.common.actions.approve}
         </button>
         <button
           type="submit"
@@ -47,7 +49,7 @@ export function DecideLeaveForm({ leaveId }: { leaveId: string }) {
           disabled={pending}
           className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
         >
-          반려
+          {d.common.actions.reject}
         </button>
       </div>
     </form>

@@ -20,27 +20,21 @@ import {
   zonedDateString,
   zonedToday,
 } from "@/lib/attendance";
+import type { CommonMessages } from "@/i18n/dictionaries/common";
+import { getDict, getLocale, interpolate, INTL_LOCALES } from "@/i18n/server";
 import { TodayPanel, type AttendanceEventItem } from "./today-panel";
 import { CorrectionForm } from "./correction-form";
 import { DecideForm } from "./decide-form";
 
-export const metadata: Metadata = {
-  title: "근태",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { attendance } = await getDict();
+  return { title: attendance.page.title };
+}
 
-const CORRECTION_TYPE_LABELS: Record<string, string> = {
-  ADD: "기록 누락",
-  EDIT: "시간 수정",
-  FIX: "기록 오류",
-};
-
-const CORRECTION_STATUS_LABELS: Record<string, string> = {
-  PENDING: "승인 대기",
-  APPROVED: "승인됨",
-  REJECTED: "반려",
-};
-
-function statusBadge(status: string) {
+function statusBadge(
+  status: string,
+  labels: CommonMessages["correctionStatus"],
+) {
   const color =
     status === "APPROVED"
       ? "bg-green-100 text-green-700"
@@ -49,7 +43,7 @@ function statusBadge(status: string) {
         : "bg-amber-100 text-amber-700";
   return (
     <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${color}`}>
-      {CORRECTION_STATUS_LABELS[status]}
+      {labels[status as keyof CommonMessages["correctionStatus"]] ?? status}
     </span>
   );
 }
@@ -60,6 +54,9 @@ export default async function AttendancePage({
   searchParams: Promise<{ month?: string }>;
 }) {
   const user = await requireUser();
+  const { common, attendance } = await getDict();
+  const locale = await getLocale();
+  const intl = INTL_LOCALES[locale];
   const company = await prisma.company.findUnique({
     where: { id: user.companyId },
     select: { timezone: true },
@@ -69,11 +66,14 @@ export default async function AttendancePage({
   const today = zonedToday(tz);
   const now = new Date();
   const todayStr = zonedDateString(now, tz);
-  const todayWeekday = new Intl.DateTimeFormat("ko-KR", {
+  const todayWeekday = new Intl.DateTimeFormat(INTL_LOCALES[locale], {
     weekday: "short",
     timeZone: tz,
   }).format(now);
-  const todayLabel = `${todayStr} (${todayWeekday})`;
+  const todayLabel = interpolate(attendance.today.dateLabel, {
+    date: todayStr,
+    weekday: todayWeekday,
+  });
 
   const params = await searchParams;
   const monthMatch = /^(\d{4})-(\d{2})$/.exec(params.month ?? "");
@@ -185,7 +185,7 @@ export default async function AttendancePage({
 
   const myEvents: AttendanceEventItem[] = (myToday?.events ?? []).map((e) => ({
     kind: e.kind,
-    time: formatTime(e.at, tz),
+    time: formatTime(e.at, tz, intl),
   }));
   const myWorked = workedMs(myToday?.events ?? []);
   const myOpen = isOpenSegment(myToday?.events ?? []);
@@ -198,7 +198,9 @@ export default async function AttendancePage({
     <div className="mx-auto max-w-4xl space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold text-zinc-900">근태</h1>
+          <h1 className="text-2xl font-semibold text-zinc-900">
+            {attendance.page.title}
+          </h1>
           <p className="mt-1 text-sm text-zinc-500">
             {myEmployee?.department?.name ?? "-"} · {myEmployee?.position ?? "-"}
           </p>
@@ -208,7 +210,7 @@ export default async function AttendancePage({
             href={prevHref}
             className="rounded-md border border-zinc-300 px-3 py-1.5 text-zinc-600 hover:bg-zinc-100"
           >
-            이전달
+            {attendance.sections.prevMonth}
           </Link>
           <span className="px-3 font-medium text-zinc-800">
             {monthLabel(monthDate)}
@@ -217,7 +219,7 @@ export default async function AttendancePage({
             href={nextHref}
             className="rounded-md border border-zinc-300 px-3 py-1.5 text-zinc-600 hover:bg-zinc-100"
           >
-            다음달
+            {attendance.sections.nextMonth}
           </Link>
         </nav>
       </div>
@@ -226,9 +228,9 @@ export default async function AttendancePage({
         <TodayPanel
           todayLabel={todayLabel}
           open={myOpen}
-          checkInAt={formatTime(myToday?.checkInAt ?? null, tz)}
-          checkOutAt={formatTime(myToday?.checkOutAt ?? null, tz)}
-          worked={formatDuration(myWorked)}
+          checkInAt={formatTime(myToday?.checkInAt ?? null, tz, intl)}
+          checkOutAt={formatTime(myToday?.checkOutAt ?? null, tz, intl)}
+          worked={formatDuration(myWorked, intl)}
           events={myEvents}
         />
       )}
@@ -236,41 +238,43 @@ export default async function AttendancePage({
       {user.employeeId && (
         <section className="rounded-xl border border-zinc-200 bg-white p-6">
           <h2 className="text-sm font-semibold text-zinc-900">
-            {monthLabel(monthDate)} 출근 기록
+            {interpolate(attendance.records.heading, {
+              month: monthLabel(monthDate),
+            })}
           </h2>
           {monthRecords.length === 0 ? (
             <p className="mt-4 text-sm text-zinc-500">
-              이번 달 기록이 없습니다.
+              {attendance.records.empty}
             </p>
           ) : (
             <table className="mt-4 w-full text-sm">
               <thead>
                 <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
-                  <th className="pb-2 font-medium">날짜</th>
-                  <th className="pb-2 font-medium">출근</th>
-                  <th className="pb-2 font-medium">퇴근</th>
-                  <th className="pb-2 font-medium">근무</th>
-                  <th className="pb-2 font-medium">정정</th>
+                  <th className="pb-2 font-medium">{common.fields.date}</th>
+                  <th className="pb-2 font-medium">{attendance.today.checkIn}</th>
+                  <th className="pb-2 font-medium">{attendance.today.checkOut}</th>
+                  <th className="pb-2 font-medium">{attendance.today.worked}</th>
+                  <th className="pb-2 font-medium">{attendance.records.colCorrection}</th>
                 </tr>
               </thead>
               <tbody>
                 {monthRecords.map((r) => (
                   <tr key={r.id} className="border-b border-zinc-100">
                     <td className="py-2.5 text-zinc-700">
-                      {formatDayWithWeekday(r.date)}
+                      {formatDayWithWeekday(r.date, intl)}
                     </td>
                     <td className="py-2.5 tabular-nums text-zinc-700">
-                      {formatTime(r.checkInAt, tz)}
+                      {formatTime(r.checkInAt, tz, intl)}
                     </td>
                     <td className="py-2.5 tabular-nums text-zinc-700">
-                      {formatTime(r.checkOutAt, tz)}
+                      {formatTime(r.checkOutAt, tz, intl)}
                     </td>
                     <td className="py-2.5 text-zinc-700">
-                      {formatDuration(workedMs(r.events))}
+                      {formatDuration(workedMs(r.events), intl)}
                     </td>
                     <td className="py-2.5">
                       {r.corrections[0]
-                        ? statusBadge(r.corrections[0].status)
+                        ? statusBadge(r.corrections[0].status, common.correctionStatus)
                         : "-"}
                     </td>
                   </tr>
@@ -284,16 +288,16 @@ export default async function AttendancePage({
       {isReviewer && (
         <section className="rounded-xl border border-zinc-200 bg-white p-6">
           <h2 className="text-sm font-semibold text-zinc-900">
-            팀 근태 현황 · 오늘
+            {attendance.team.heading}
           </h2>
           <table className="mt-4 w-full text-sm">
             <thead>
               <tr className="border-b border-zinc-200 text-left text-xs text-zinc-500">
-                <th className="pb-2 font-medium">이름</th>
-                <th className="pb-2 font-medium">부서</th>
-                <th className="pb-2 font-medium">상태</th>
-                <th className="pb-2 font-medium">출근</th>
-                <th className="pb-2 font-medium">퇴근</th>
+                <th className="pb-2 font-medium">{common.fields.name}</th>
+                <th className="pb-2 font-medium">{common.fields.department}</th>
+                <th className="pb-2 font-medium">{common.fields.status}</th>
+                <th className="pb-2 font-medium">{attendance.today.checkIn}</th>
+                <th className="pb-2 font-medium">{attendance.today.checkOut}</th>
               </tr>
             </thead>
             <tbody>
@@ -309,23 +313,23 @@ export default async function AttendancePage({
                     <td className="py-2.5">
                       {!rec ? (
                         <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-500">
-                          미기록
+                          {attendance.team.notRecorded}
                         </span>
                       ) : recOpen ? (
                         <span className="rounded bg-green-100 px-1.5 py-0.5 text-xs text-green-700">
-                          근무 중
+                          {attendance.today.onWork}
                         </span>
                       ) : (
                         <span className="rounded bg-blue-100 px-1.5 py-0.5 text-xs text-blue-700">
-                          퇴근
+                          {attendance.today.checkOut}
                         </span>
                       )}
                     </td>
                     <td className="py-2.5 tabular-nums text-zinc-700">
-                      {formatTime(rec?.checkInAt ?? null, tz)}
+                      {formatTime(rec?.checkInAt ?? null, tz, intl)}
                     </td>
                     <td className="py-2.5 tabular-nums text-zinc-700">
-                      {formatTime(rec?.checkOutAt ?? null, tz)}
+                      {formatTime(rec?.checkOutAt ?? null, tz, intl)}
                     </td>
                   </tr>
                 );
@@ -339,9 +343,11 @@ export default async function AttendancePage({
         <section className="rounded-xl border border-zinc-200 bg-white p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-sm font-semibold text-zinc-900">근태 정정 신청</h2>
+              <h2 className="text-sm font-semibold text-zinc-900">
+                {attendance.corrections.heading}
+              </h2>
               <p className="mt-1 text-xs text-zinc-500">
-                기록 누락/오류 시 신청하고 관리자 승인을 받습니다.
+                {attendance.corrections.subtitle}
               </p>
             </div>
           </div>
@@ -350,9 +356,13 @@ export default async function AttendancePage({
           </div>
 
           <div className="mt-6 border-t border-zinc-100 pt-4">
-            <p className="mb-3 text-sm font-semibold text-zinc-700">내 정정 요청</p>
+            <p className="mb-3 text-sm font-semibold text-zinc-700">
+              {attendance.corrections.myRequests}
+            </p>
             {myCorrections.length === 0 ? (
-              <p className="text-sm text-zinc-500">정정 요청 내역이 없습니다.</p>
+              <p className="text-sm text-zinc-500">
+                {attendance.corrections.noRequests}
+              </p>
             ) : (
               <ul className="space-y-2">
                 {myCorrections.map((c) => (
@@ -361,17 +371,25 @@ export default async function AttendancePage({
                     className="flex flex-wrap items-center gap-2 rounded-lg border border-zinc-100 px-4 py-3 text-sm"
                   >
                     <span className="font-medium text-zinc-800">
-                      {formatDate(c.date)}
+                      {formatDate(c.date, intl)}
                     </span>
                     <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-600">
-                      {CORRECTION_TYPE_LABELS[c.requestType] ?? c.requestType}
+                      {attendance.requestType[
+                        c.requestType as keyof typeof attendance.requestType
+                      ] ?? c.requestType}
                     </span>
-                    {statusBadge(c.status)}
+                    {statusBadge(c.status, common.correctionStatus)}
                     <span className="flex-1 text-zinc-500">{c.note}</span>
                     {c.comment && (
                       <span className="w-full text-xs text-zinc-400">
-                        의견: {c.comment}
-                        {c.decidedBy ? ` (${c.decidedBy.name})` : ""}
+                        {c.decidedBy
+                          ? interpolate(
+                              attendance.corrections.commentWithAuthor,
+                              { comment: c.comment, name: c.decidedBy.name },
+                            )
+                          : interpolate(attendance.corrections.comment, {
+                              comment: c.comment,
+                            })}
                       </span>
                     )}
                   </li>
@@ -385,7 +403,9 @@ export default async function AttendancePage({
       {isReviewer && inbox.length > 0 && (
         <section className="rounded-xl border border-zinc-200 bg-white p-6">
           <h2 className="text-sm font-semibold text-zinc-900">
-            승인 대기 정정 요청 ({inbox.length})
+            {interpolate(attendance.corrections.inbox, {
+              count: inbox.length,
+            })}
           </h2>
           <ul className="mt-4 space-y-3">
             {inbox.map((c) => (
@@ -401,9 +421,11 @@ export default async function AttendancePage({
                     {c.employee.department?.name ?? "-"}
                   </span>
                   <span className="text-zinc-500">·</span>
-                  <span className="font-medium">{formatDate(c.date)}</span>
+                  <span className="font-medium">{formatDate(c.date, intl)}</span>
                   <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-600">
-                    {CORRECTION_TYPE_LABELS[c.requestType] ?? c.requestType}
+                    {attendance.requestType[
+                        c.requestType as keyof typeof attendance.requestType
+                      ] ?? c.requestType}
                   </span>
                 </div>
                 <p className="mt-1 text-sm text-zinc-600">{c.note}</p>

@@ -7,10 +7,12 @@ import {
   type DepartmentView,
   type EmployeeView,
 } from "./employee-admin";
+import { getDict } from "@/i18n/server";
 
-export const metadata: Metadata = {
-  title: "직원·조직",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { admin } = await getDict();
+  return { title: admin.employees.title };
+}
 
 function toDateInput(date: Date | null): string {
   return date ? date.toISOString().slice(0, 10) : "";
@@ -18,6 +20,7 @@ function toDateInput(date: Date | null): string {
 
 export default async function EmployeesAdminPage() {
   const admin = await requireAdmin();
+  const { admin: adminDict } = await getDict();
   const [departments, employees] = await Promise.all([
     prisma.department.findMany({
       where: { companyId: admin.companyId },
@@ -92,9 +95,9 @@ export default async function EmployeesAdminPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-900">직원·조직</h1>
+        <h1 className="text-2xl font-semibold text-zinc-900">{adminDict.employees.title}</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          부서와 직원 프로필, 승인자, 계정 상태를 관리합니다.
+          {adminDict.employees.subtitle}
         </p>
       </div>
 

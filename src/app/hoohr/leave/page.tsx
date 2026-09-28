@@ -6,6 +6,7 @@ import { getCompanyTimezone } from "@/lib/company";
 import { addMonths, monthBounds, monthLabel, parseIsoDate, zonedToday } from "@/lib/attendance";
 import { formatLeaveDay, formatLeaveRange, remainingDays } from "@/lib/leave";
 import { isoDateKey } from "@/lib/holidays";
+import { getDict, getLocale, interpolate, INTL_LOCALES } from "@/i18n/server";
 import { getCompanyHolidayNames } from "@/lib/holiday-store";
 import {
   approvalInboxEmployeeWhere,
@@ -16,18 +17,12 @@ import { LeaveRequestForm, type LeavePolicyOption } from "./leave-form";
 import { DecideLeaveForm } from "./decide-form";
 import { CancelLeaveButton } from "./cancel-button";
 
-export const metadata: Metadata = {
-  title: "휴가",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { leave } = await getDict();
+  return { title: leave.page.title };
+}
 
-const LEAVE_STATUS_LABELS: Record<string, string> = {
-  PENDING: "승인 대기",
-  APPROVED: "승인됨",
-  REJECTED: "반려",
-  CANCELED: "취소됨",
-};
-
-function statusBadge(status: string) {
+function statusBadge(status: string, label: string) {
   const color =
     status === "APPROVED"
       ? "bg-green-100 text-green-700"
@@ -38,7 +33,7 @@ function statusBadge(status: string) {
           : "bg-amber-100 text-amber-700";
   return (
     <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${color}`}>
-      {LEAVE_STATUS_LABELS[status]}
+      {label}
     </span>
   );
 }
@@ -49,6 +44,15 @@ export default async function LeavePage({
   searchParams: Promise<{ month?: string }>;
 }) {
   const user = await requireUser();
+  const { common, leave } = await getDict();
+  const locale = await getLocale();
+  const intl = INTL_LOCALES[locale];
+  const statusLabels: Record<string, string> = {
+    PENDING: common.leaveStatus.PENDING,
+    APPROVED: common.leaveStatus.APPROVED,
+    REJECTED: common.leaveStatus.REJECTED,
+    CANCELED: common.leaveStatus.CANCELED,
+  };
   const tz = await getCompanyTimezone(user.companyId);
 
   const today = zonedToday(tz);
@@ -139,7 +143,7 @@ export default async function LeavePage({
   const endKey = isoDateKey(monthEnd);
   const monthHolidayNames = [...holidayNames.entries()]
     .filter(([key]) => key >= startKey && key <= endKey)
-    .map(([key, name]) => `${formatLeaveDay(parseIsoDate(key))} ${name}`);
+    .map(([key, name]) => `${formatLeaveDay(parseIsoDate(key), intl)} ${name}`);
 
   const balanceByPolicy = new Map(balances.map((b) => [b.policyId, b]));
 
@@ -159,10 +163,8 @@ export default async function LeavePage({
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-900">휴가</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          연차 · 병가 · 무급휴직 신청 및 승인
-        </p>
+        <h1 className="text-2xl font-semibold text-zinc-900">{leave.page.title}</h1>
+        <p className="mt-1 text-sm text-zinc-500">{leave.page.subtitle}</p>
       </div>
 
       {user.employeeId && (
@@ -179,15 +181,23 @@ export default async function LeavePage({
                   <p className="mt-1 text-2xl font-semibold text-zinc-900">
                     {p.kind === "UNPAID"
                       ? "-"
-                      : `${bal ? Math.max(0, remainingDays(bal)) : 0}일`}
+                      : interpolate(common.units.days, {
+                          n: bal ? Math.max(0, remainingDays(bal)) : 0,
+                        })}
                   </p>
                   {bal && (
                     <p className="mt-1 text-xs text-zinc-400">
-                      부여 {bal.grantedDays} · 사용 {bal.usedDays} · 조정 {bal.adjustDays}
+                      {interpolate(leave.balance.grantedUsedAdjusted, {
+                        granted: bal.grantedDays,
+                        used: bal.usedDays,
+                        adjusted: bal.adjustDays,
+                      })}
                     </p>
                   )}
                   {!bal && p.kind !== "UNPAID" && (
-                    <p className="mt-1 text-xs text-zinc-400">잔여 없음</p>
+                    <p className="mt-1 text-xs text-zinc-400">
+                      {leave.balance.noRemaining}
+                    </p>
                   )}
                 </div>
               );
@@ -197,16 +207,18 @@ export default async function LeavePage({
           <section className="rounded-xl border border-zinc-200 bg-white p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-zinc-900">휴가 신청</h2>
+                <h2 className="text-sm font-semibold text-zinc-900">
+                  {leave.sections.request}
+                </h2>
                 <p className="mt-1 text-xs text-zinc-500">
-                  주말은 제외하고 일수가 계산됩니다. 반차는 0.5일.
+                  {leave.sections.requestHint}
                 </p>
               </div>
             </div>
             <div className="mt-4">
               {policyOptions.length === 0 ? (
                 <p className="text-sm text-zinc-500">
-                  등록된 휴가 정책이 없습니다. 관리자에게 문의하세요.
+                  {leave.sections.noPolicy}
                 </p>
               ) : (
                 <LeaveRequestForm
@@ -221,14 +233,16 @@ export default async function LeavePage({
           <section className="rounded-xl border border-zinc-200 bg-white p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-sm font-semibold text-zinc-900">내 휴가 신청</h2>
+                <h2 className="text-sm font-semibold text-zinc-900">
+                  {leave.sections.myRequests}
+                </h2>
               </div>
               <nav className="flex items-center gap-1 text-sm">
                 <Link
                   href={prevHref}
                   className="rounded-md border border-zinc-300 px-3 py-1.5 text-zinc-600 hover:bg-zinc-100"
                 >
-                  이전달
+                  {leave.sections.prevMonth}
                 </Link>
                 <span className="px-3 font-medium text-zinc-800">
                   {monthLabel(monthDate)}
@@ -237,13 +251,15 @@ export default async function LeavePage({
                   href={nextHref}
                   className="rounded-md border border-zinc-300 px-3 py-1.5 text-zinc-600 hover:bg-zinc-100"
                 >
-                  다음달
+                  {leave.sections.nextMonth}
                 </Link>
               </nav>
             </div>
 
             {myRequests.length === 0 ? (
-              <p className="mt-4 text-sm text-zinc-500">신청 내역이 없습니다.</p>
+              <p className="mt-4 text-sm text-zinc-500">
+                {leave.sections.noRequests}
+              </p>
             ) : (
               <ul className="mt-4 space-y-2">
                 {myRequests.map((r) => (
@@ -253,20 +269,25 @@ export default async function LeavePage({
                   >
                     <span className="font-medium text-zinc-800">{r.policy.name}</span>
                     <span className="text-zinc-600">
-                      {formatLeaveRange(r.startDate, r.endDate)}
-                      {r.isHalfDay ? " (반차)" : ""}
+                      {formatLeaveRange(r.startDate, r.endDate, intl)}
+                      {r.isHalfDay ? ` ${leave.badge.halfDay}` : ""}
                     </span>
                     <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-600">
-                      {r.days}일
+                      {interpolate(common.units.days, { n: r.days })}
                     </span>
-                    {statusBadge(r.status)}
+                    {statusBadge(r.status, statusLabels[r.status])}
                     <span className="flex-1 truncate text-zinc-500">{r.reason ?? ""}</span>
                     {r.status === "PENDING" && <CancelLeaveButton leaveId={r.id} />}
                     <span className="w-full text-xs text-zinc-400">
                       {r.status !== "PENDING" &&
                         r.status !== "CANCELED" &&
                         r.decisionComment &&
-                        `의견: ${r.decisionComment}${r.decidedBy ? ` (${r.decidedBy.name})` : ""}`}
+                        interpolate(leave.item.comment, {
+                          comment: r.decisionComment,
+                        }) +
+                          (r.decidedBy
+                            ? ` (${r.decidedBy.name})`
+                            : "")}
                     </span>
                   </li>
                 ))}
@@ -278,11 +299,11 @@ export default async function LeavePage({
 
       <section className="rounded-xl border border-zinc-200 bg-white p-6">
         <h2 className="text-sm font-semibold text-zinc-900">
-          {monthLabel(monthDate)} 휴가 일정
+          {interpolate(leave.sections.schedule, { month: monthLabel(monthDate) })}
         </h2>
         {monthLeaves.length === 0 ? (
           <p className="mt-4 text-sm text-zinc-500">
-            이번 달 승인된 휴가가 없습니다.
+            {leave.sections.noSchedule}
           </p>
         ) : (
           <ul className="mt-4 space-y-1">
@@ -300,10 +321,12 @@ export default async function LeavePage({
                   {r.policy.name}
                 </span>
                 <span className="text-zinc-600">
-                  {formatLeaveRange(r.startDate, r.endDate)}
-                  {r.isHalfDay ? " (반차)" : ""}
+                  {formatLeaveRange(r.startDate, r.endDate, intl)}
+                  {r.isHalfDay ? ` ${leave.badge.halfDay}` : ""}
                 </span>
-                <span className="ml-auto text-xs text-zinc-400">{r.days}일</span>
+                <span className="ml-auto text-xs text-zinc-400">
+                  {interpolate(common.units.days, { n: r.days })}
+                </span>
               </li>
             ))}
           </ul>
@@ -311,7 +334,9 @@ export default async function LeavePage({
 
         {monthHolidayNames.length > 0 && (
           <p className="mt-4 text-xs text-zinc-500">
-            공휴일: {monthHolidayNames.join(", ")}
+            {interpolate(leave.sections.holidays, {
+              names: monthHolidayNames.join(", "),
+            })}
           </p>
         )}
       </section>
@@ -319,7 +344,7 @@ export default async function LeavePage({
       {isReviewer && inbox.length > 0 && (
         <section className="rounded-xl border border-zinc-200 bg-white p-6">
           <h2 className="text-sm font-semibold text-zinc-900">
-            승인 대기 휴가 요청 ({inbox.length})
+            {interpolate(leave.sections.inbox, { count: inbox.length })}
           </h2>
           <ul className="mt-4 space-y-3">
             {inbox.map((r) => (
@@ -333,10 +358,12 @@ export default async function LeavePage({
                     {r.policy.name}
                   </span>
                   <span className="text-zinc-600">
-                    {formatLeaveRange(r.startDate, r.endDate)}
-                    {r.isHalfDay ? " (반차)" : ""}
+                    {formatLeaveRange(r.startDate, r.endDate, intl)}
+                    {r.isHalfDay ? ` ${leave.badge.halfDay}` : ""}
                   </span>
-                  <span className="text-xs text-zinc-500">{r.days}일</span>
+                  <span className="text-xs text-zinc-500">
+                    {interpolate(common.units.days, { n: r.days })}
+                  </span>
                 </div>
                 {r.reason && <p className="mt-1 text-sm text-zinc-600">{r.reason}</p>}
                 <DecideLeaveForm leaveId={r.id} />

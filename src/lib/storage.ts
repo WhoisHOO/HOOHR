@@ -23,15 +23,18 @@ export function uploadDir(): string {
   return process.env.UPLOAD_DIR || path.join(process.cwd(), "uploads");
 }
 
+export type ReceiptError = "EMPTY" | "TOO_LARGE" | "UNSUPPORTED_TYPE";
+
 export async function saveReceipt(
   file: File,
-): Promise<{ ok: true; stored: StoredFile } | { ok: false; error: string }> {
-  if (file.size === 0) return { ok: false, error: "빈 파일입니다." };
-  if (file.size > MAX_RECEIPT_BYTES) {
-    return { ok: false, error: "파일은 5MB 이하만 올릴 수 있습니다." };
-  }
+): Promise<
+  | { ok: true; stored: StoredFile }
+  | { ok: false; error: ReceiptError }
+> {
+  if (file.size === 0) return { ok: false, error: "EMPTY" };
+  if (file.size > MAX_RECEIPT_BYTES) return { ok: false, error: "TOO_LARGE" };
   const ext = RECEIPT_TYPES[file.type];
-  if (!ext) return { ok: false, error: "지원 형식: JPEG, PNG, WEBP, PDF" };
+  if (!ext) return { ok: false, error: "UNSUPPORTED_TYPE" };
 
   const storedName = `${randomUUID()}${ext}`;
   const buf = Buffer.from(await file.arrayBuffer());

@@ -1,87 +1,116 @@
 import { z } from "zod";
+import { interpolate } from "@/i18n/format";
 import type { FieldErrors } from "@/lib/auth-validation";
+import type { SettingsValidationMessages } from "@/i18n/dictionaries/settings";
 
-const idSchema = z
-  .string()
-  .trim()
-  .min(1, { error: "필수 정보를 입력하세요" })
-  .max(100, { error: "필수 정보가 올바르지 않습니다" });
-
-const isoDateSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, { error: "날짜를 선택하세요" })
-  .refine(
-    (value) => {
-      const date = new Date(`${value}T00:00:00.000Z`);
-      return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
-    },
-    { error: "날짜가 올바르지 않습니다" },
-  );
-
-const nameSchema = (label: string) =>
+/**
+ * Schemas are locale-aware factories: the messages come from the active
+ * dictionary, so validation errors render in the language the user picked.
+ * Actions build them with `(await getDict())`.
+ *
+ * The `label` argument of the helpers below is the *already localized* field
+ * label read from the dictionary, then interpolated into the message template.
+ */
+const idSchema = (v: SettingsValidationMessages) =>
   z
     .string()
     .trim()
-    .min(1, { error: `${label}을 입력하세요` })
-    .max(100, { error: `${label}은 100자 이내입니다` });
+    .min(1, { error: v.validation.idRequired })
+    .max(100, { error: v.validation.idInvalid });
 
-const daysSchema = (label: string) =>
+const isoDateSchema = (v: SettingsValidationMessages) =>
+  z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { error: v.validation.dateRequired })
+    .refine(
+      (value) => {
+        const date = new Date(`${value}T00:00:00.000Z`);
+        return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+      },
+      { error: v.validation.dateInvalid },
+    );
+
+const nameSchema = (v: SettingsValidationMessages, label: string) =>
+  z
+    .string()
+    .trim()
+    .min(1, { error: v.required })
+    .max(100, { error: interpolate(v.validation.nameTooLong, { label }) });
+
+const daysSchema = (v: SettingsValidationMessages, label: string) =>
   z.coerce
-    .number({ error: `${label}을 입력하세요` })
-    .min(0, { error: `${label}은 0 이상이어야 합니다` })
-    .max(365, { error: `${label}은 365 이하여야 합니다` });
+    .number({ error: v.required })
+    .min(0, { error: interpolate(v.validation.daysNegative, { label }) })
+    .max(365, { error: interpolate(v.validation.daysTooMany, { label }) });
 
-const booleanSchema = z.enum(["true", "false"], {
-  error: "값이 올바르지 않습니다",
-});
+const booleanSchema = (v: SettingsValidationMessages) =>
+  z.enum(["true", "false"], {
+    error: v.validation.valueInvalid,
+  });
 
 // ---- SET-1: 회사 설정 ----
 
-export const CompanySettingsSchema = z.object({
-  name: nameSchema("회사명"),
-  timezone: z
-    .string()
-    .trim()
-    .min(1, { error: "시간대를 선택하세요" })
-    .max(100, { error: "시간대가 올바르지 않습니다" }),
-});
+export function companySettingsSchema(v: SettingsValidationMessages) {
+  return z.object({
+    name: nameSchema(v, v.labels.companyName),
+    timezone: z
+      .string()
+      .trim()
+      .min(1, { error: v.validation.timezoneRequired })
+      .max(100, { error: v.validation.timezoneInvalid }),
+  });
+}
 
 // ---- SET-2: 휴가 정책 ----
 
-export const LeavePolicyUpdateSchema = z.object({
-  id: idSchema,
-  name: nameSchema("정책명"),
-  annualDays: daysSchema("연간 부여 일수"),
-  maxCarryOverDays: daysSchema("이월 한도"),
-  isPaid: booleanSchema,
-  requiresApproval: booleanSchema,
-  active: booleanSchema,
-});
+export function leavePolicyUpdateSchema(v: SettingsValidationMessages) {
+  return z.object({
+    id: idSchema(v),
+    name: nameSchema(v, v.labels.policyName),
+    annualDays: daysSchema(v, v.labels.annualDays),
+    maxCarryOverDays: daysSchema(v, v.labels.maxCarryOver),
+    isPaid: booleanSchema(v),
+    requiresApproval: booleanSchema(v),
+    active: booleanSchema(v),
+  });
+}
 
-export const LeavePolicyIdSchema = z.object({ id: idSchema });
+export function leavePolicyIdSchema(v: SettingsValidationMessages) {
+  return z.object({ id: idSchema(v) });
+}
 
 // ---- SET-3: 공휴일 ----
 
-export const HolidayCreateSchema = z.object({
-  date: isoDateSchema,
-  name: nameSchema("공휴일명"),
-});
+export function holidayCreateSchema(v: SettingsValidationMessages) {
+  return z.object({
+    date: isoDateSchema(v),
+    name: nameSchema(v, v.labels.holidayName),
+  });
+}
 
-export const HolidayDeleteSchema = z.object({ id: idSchema });
+export function holidayDeleteSchema(v: SettingsValidationMessages) {
+  return z.object({ id: idSchema(v) });
+}
 
 // ---- SET-4: 경비 분류 ----
 
-export const ExpenseCategoryCreateSchema = z.object({
-  name: nameSchema("분류명"),
-});
+export function expenseCategoryCreateSchema(v: SettingsValidationMessages) {
+  return z.object({
+    name: nameSchema(v, v.labels.categoryName),
+  });
+}
 
-export const ExpenseCategoryUpdateSchema = z.object({
-  id: idSchema,
-  name: nameSchema("분류명"),
-  active: booleanSchema,
-});
+export function expenseCategoryUpdateSchema(v: SettingsValidationMessages) {
+  return z.object({
+    id: idSchema(v),
+    name: nameSchema(v, v.labels.categoryName),
+    active: booleanSchema(v),
+  });
+}
 
-export const ExpenseCategoryDeleteSchema = z.object({ id: idSchema });
+export function expenseCategoryDeleteSchema(v: SettingsValidationMessages) {
+  return z.object({ id: idSchema(v) });
+}
 
 export type SettingsState = {
   fieldErrors?: FieldErrors;

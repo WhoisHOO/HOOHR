@@ -1,5 +1,9 @@
 // 근태 도메인의 순수 유틸 — 표시/계산 전용 (DB 접근 없음).
 // 시간은 항상 UTC로 저장하고, 표시는 회사 timezone 기준.
+// 표시 함수들은 마지막 인자로 Intl BCP-47 태그를 받는다. 생략하면
+// DEFAULT_INTL_LOCALE(한국어)로 동작하므로 기존 호출부·테스트는 그대로 둔다.
+
+import { DEFAULT_INTL_LOCALE, type InltLocale } from "@/i18n/config";
 
 /** tz 기준으로 주어진 시각의 "달력 날짜" 문자열(YYYY-MM-DD)을 반환한다. */
 export function zonedDateString(d: Date, tz: string): string {
@@ -58,19 +62,30 @@ export function isOpenSegment(events: AttendanceEventLike[]): boolean {
   return events[events.length - 1].kind === "CHECK_IN";
 }
 
-export function formatDuration(ms: number): string {
+export function formatDuration(
+  ms: number,
+  intl: InltLocale = DEFAULT_INTL_LOCALE,
+): string {
   if (ms <= 0) return "-";
   const totalMin = Math.floor(ms / 60000);
-  if (totalMin < 60) return `${totalMin}분`;
+  const unit = (u: "minute" | "hour", n: number) =>
+    new Intl.NumberFormat(intl, { style: "unit", unit: u }).format(n);
+  if (totalMin < 60) return unit("minute", totalMin);
   const h = Math.floor(totalMin / 60);
   const m = totalMin % 60;
-  return m > 0 ? `${h}시간 ${m}분` : `${h}시간`;
+  return m > 0
+    ? `${unit("hour", h)} ${unit("minute", m)}`
+    : unit("hour", h);
 }
 
 /** tz 기준 시각 표시 (HH:MM) */
-export function formatTime(d: Date | null | undefined, tz: string): string {
+export function formatTime(
+  d: Date | null | undefined,
+  tz: string,
+  intl: InltLocale = DEFAULT_INTL_LOCALE,
+): string {
   if (!d) return "-";
-  return new Intl.DateTimeFormat("ko-KR", {
+  return new Intl.DateTimeFormat(intl, {
     hour: "2-digit",
     minute: "2-digit",
     timeZone: tz,
@@ -78,9 +93,12 @@ export function formatTime(d: Date | null | undefined, tz: string): string {
 }
 
 /** 날짜형(@db.Date = UTC 자정) 값을 달력 날짜로 표시 */
-export function formatDate(d: Date | string): string {
+export function formatDate(
+  d: Date | string,
+  intl: InltLocale = DEFAULT_INTL_LOCALE,
+): string {
   const date = typeof d === "string" ? new Date(d) : d;
-  return new Intl.DateTimeFormat("ko-KR", {
+  return new Intl.DateTimeFormat(intl, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -88,8 +106,11 @@ export function formatDate(d: Date | string): string {
   }).format(date);
 }
 
-export function formatDayWithWeekday(d: Date): string {
-  return new Intl.DateTimeFormat("ko-KR", {
+export function formatDayWithWeekday(
+  d: Date,
+  intl: InltLocale = DEFAULT_INTL_LOCALE,
+): string {
+  return new Intl.DateTimeFormat(intl, {
     month: "long",
     day: "numeric",
     weekday: "short",
@@ -97,9 +118,13 @@ export function formatDayWithWeekday(d: Date): string {
   }).format(d);
 }
 
-export function formatDateTime(d: Date | null | undefined, tz: string): string {
+export function formatDateTime(
+  d: Date | null | undefined,
+  tz: string,
+  intl: InltLocale = DEFAULT_INTL_LOCALE,
+): string {
   if (!d) return "-";
-  return new Intl.DateTimeFormat("ko-KR", {
+  return new Intl.DateTimeFormat(intl, {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

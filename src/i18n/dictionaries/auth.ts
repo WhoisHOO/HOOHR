@@ -23,6 +23,8 @@ export const authKo = {
   invite: {
     title: "직원 초대",
     heading: "직원 초대",
+    pageDescription:
+      "이름과 이메일로 초대 링크를 생성합니다. 링크는 7일간 유효하며, 수락 시 계정이 생성됩니다.",
     roleEmployee: "직원 (본인 데이터만)",
     roleManager: "매니저 (팀 승인 권한)",
     submit: "초대 링크 생성",
@@ -64,6 +66,8 @@ export const authEn: AuthMessages = {
   invite: {
     title: "Invite employees",
     heading: "Invite employees",
+    pageDescription:
+      "Create an invite link from a name and email address. The link is valid for 7 days and creates an account when accepted.",
     roleEmployee: "Employee (own data only)",
     roleManager: "Manager (can approve their team)",
     submit: "Create invite link",

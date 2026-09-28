@@ -55,31 +55,27 @@ export const commonKo = {
     INACTIVE: "퇴직",
   },
   leaveStatus: {
-    PENDING: "대기",
+    PENDING: "승인 대기",
     APPROVED: "승인됨",
-    REJECTED: "반려됨",
+    REJECTED: "반려",
     CANCELED: "취소됨",
   },
   expenseStatus: {
-    DRAFT: "임시저장",
-    SUBMITTED: "제출됨",
+    DRAFT: "작성 중",
+    SUBMITTED: "승인 대기",
     APPROVED: "승인됨",
-    PAID: "지급완료",
-    REJECTED: "반려됨",
+    PAID: "지급 완료",
+    REJECTED: "반려",
   },
   correctionStatus: {
-    PENDING: "대기",
+    PENDING: "승인 대기",
     APPROVED: "승인됨",
-    REJECTED: "반려됨",
-  },
-  correctionType: {
-    CHECK_IN: "출근 시간 수정",
-    CHECK_OUT: "퇴근 시간 수정",
+    REJECTED: "반려",
   },
   leaveKind: {
     PTO: "연차",
     SICK: "병가",
-    UNPAID: "무급",
+    UNPAID: "무급휴직",
   },
   units: {
     minutes: "{n}분",
@@ -114,9 +110,6 @@ export const commonKo = {
   },
   empty: {
     noData: "데이터가 없습니다.",
-  },
-  unitsShort: {
-    pending: "준비중",
   },
 };
 
@@ -173,31 +166,27 @@ export const commonEn: CommonMessages = {
     INACTIVE: "Inactive",
   },
   leaveStatus: {
-    PENDING: "Pending",
+    PENDING: "Awaiting approval",
     APPROVED: "Approved",
     REJECTED: "Rejected",
     CANCELED: "Canceled",
   },
   expenseStatus: {
-    DRAFT: "Draft",
-    SUBMITTED: "Submitted",
+    DRAFT: "In progress",
+    SUBMITTED: "Awaiting approval",
     APPROVED: "Approved",
     PAID: "Paid",
     REJECTED: "Rejected",
   },
   correctionStatus: {
-    PENDING: "Pending",
+    PENDING: "Awaiting approval",
     APPROVED: "Approved",
     REJECTED: "Rejected",
-  },
-  correctionType: {
-    CHECK_IN: "Check-in time",
-    CHECK_OUT: "Check-out time",
   },
   leaveKind: {
     PTO: "Annual leave",
     SICK: "Sick leave",
-    UNPAID: "Unpaid",
+    UNPAID: "Unpaid leave",
   },
   units: {
     minutes: "{n} min",
@@ -231,8 +220,5 @@ export const commonEn: CommonMessages = {
   },
   empty: {
     noData: "No data.",
-  },
-  unitsShort: {
-    pending: "Soon",
   },
 };

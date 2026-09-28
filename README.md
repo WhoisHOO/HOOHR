@@ -4,7 +4,7 @@
 
 Built for a team of ~20 people, not for an enterprise HR suite. Open source under [Apache-2.0](./LICENSE).
 
-> UI language is **Korean** (i18n is planned for v0.2). All documentation is in English.
+> UI language is **Korean or English**, switchable at runtime from the sidebar (defaults to Korean). All documentation is in English.
 
 ---
 
@@ -158,6 +158,7 @@ Authenticated routes live under **`/hoohr`**. The pre-rename `/app` prefix still
 - **Pure domain helpers** — day counting, timezone boundaries, money formatting, and approval rules are plain functions in `src/lib/`, unit-testable without a database. The leave form's live preview and the server action deliberately share the same holiday set so they cannot disagree.
 - **Status-guarded writes** — approvals use a status-conditioned `updateMany` inside a transaction, so a lost race cannot double-deduct a leave balance.
 - **Times are stored in UTC** and rendered in the company timezone configured in settings.
+- **i18n without a dependency** (`src/i18n/`) — a `locale` cookie (`ko` default, `en` available) is read server-side, so `<html lang>`, dates, numbers and CSV headers all follow it. Copy lives in `src/i18n/dictionaries/`; the English dictionary is typed as `typeof` the Korean one, so a missing or extra key is a compile error rather than a runtime `undefined`. User-entered data (names, departments, leave policies, expense categories) is deliberately never translated.
 
 ---
 
@@ -193,14 +194,13 @@ npx tsx _test-expense.ts    # expense draft -> submit -> approve -> pay
 The MVP feature set is implemented. Not done yet:
 
 - **Email notifications** — SMTP is configured but no send path exists yet
-- **i18n** — the UI is Korean only
 - **OCR receipt extraction** — deferred to v0.2
 - **Grant-on-hire / leave carry-over automation** — balances are currently granted explicitly
 - **EKS + Airflow + Spark deployment** — see [`pipelines/`](./pipelines) and [`deploy/`](./deploy)
 
 ## Contributing
 
-Issues and pull requests are welcome. Please run `npm run lint` and `npx tsc --noEmit` before opening a PR, and keep written artifacts in English (UI copy stays Korean until i18n lands).
+Issues and pull requests are welcome. Please run `npm run lint` and `npx tsc --noEmit` before opening a PR, and keep written artifacts in English (UI copy must live in the dictionaries under `src/i18n/dictionaries/`, never inline).
 
 ## License
 

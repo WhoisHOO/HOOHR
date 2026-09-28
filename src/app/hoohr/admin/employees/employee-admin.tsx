@@ -18,6 +18,7 @@ import type {
   EmployeeProfileState,
   EmployeeStatusState,
 } from "@/lib/employee-validation";
+import { interpolate, useI18n } from "@/i18n/client";
 
 export type DepartmentView = {
   id: string;
@@ -81,8 +82,13 @@ function FieldError({
 }
 
 function StatusBadge({ status }: { status: string }) {
+  const { d } = useI18n();
   const label =
-    status === "ACTIVE" ? "재직" : status === "INVITED" ? "초대 대기" : "비활성";
+    status === "ACTIVE"
+      ? d.common.employmentStatus.ACTIVE
+      : status === "INVITED"
+        ? d.common.employmentStatus.INVITED
+        : d.admin.status.inactive;
   const color =
     status === "ACTIVE"
       ? "bg-green-100 text-green-700"
@@ -97,6 +103,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 function CreateDepartmentForm() {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<DepartmentCreateState, FormData>(
     createDepartment,
     undefined,
@@ -106,20 +113,20 @@ function CreateDepartmentForm() {
     <form action={action} className="flex flex-col gap-3 sm:flex-row sm:items-end">
       <div className="flex flex-1 flex-col gap-1">
         <label htmlFor="new-department-name" className="text-sm font-medium text-zinc-700">
-          새 부서명
+          {d.admin.departments.newNameField}
         </label>
         <input
           id="new-department-name"
           name="name"
           type="text"
           required
-          placeholder="예:RnD"
+          placeholder={d.admin.departments.namePlaceholder}
           className={inputClass}
         />
         <FieldError state={state} name="name" />
       </div>
       <button type="submit" disabled={pending} className={primaryButtonClass}>
-        {pending ? "생성 중..." : "부서 생성"}
+        {pending ? d.admin.departments.creating : d.admin.departments.create}
       </button>
       <Message state={state} />
     </form>
@@ -133,6 +140,7 @@ function DepartmentRow({
   department: DepartmentView;
   managerOptions: ApproverOption[];
 }) {
+  const { d } = useI18n();
   const [updateState, updateAction, updatePending] = useActionState<
     DepartmentUpdateState,
     FormData
@@ -148,13 +156,16 @@ function DepartmentRow({
         <div>
           <h3 className="font-semibold text-zinc-900">{department.name}</h3>
           <p className="mt-1 text-sm text-zinc-500">
-            부서장: {department.managerName ?? "미지정"} · 직원 {department.employeeCount}명
+            {interpolate(d.admin.departments.managerMeta, {
+              managerName: department.managerName ?? d.admin.unassigned,
+              employeeCount: department.employeeCount,
+            })}
           </p>
         </div>
         <form action={deleteAction}>
           <input type="hidden" name="id" value={department.id} />
           <button type="submit" disabled={deletePending} className={dangerButtonClass}>
-            {deletePending ? "삭제 중..." : "삭제"}
+            {deletePending ? d.admin.departments.deleting : d.common.actions.delete}
           </button>
         </form>
       </div>
@@ -166,7 +177,7 @@ function DepartmentRow({
         <input type="hidden" name="id" value={department.id} />
         <div className="flex flex-col gap-1">
           <label htmlFor={`department-name-${department.id}`} className="text-xs font-medium text-zinc-500">
-            부서명
+            {d.admin.departments.nameField}
           </label>
           <input
             id={`department-name-${department.id}`}
@@ -180,7 +191,7 @@ function DepartmentRow({
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={`department-manager-${department.id}`} className="text-xs font-medium text-zinc-500">
-            부서장
+            {d.admin.departments.managerField}
           </label>
           <select
             id={`department-manager-${department.id}`}
@@ -188,7 +199,7 @@ function DepartmentRow({
             defaultValue={department.managerId ?? ""}
             className={inputClass}
           >
-            <option value="">미지정</option>
+            <option value="">{d.admin.unassigned}</option>
             {managerOptions.map((manager) => (
               <option key={manager.id} value={manager.id}>
                 {manager.name} ({manager.email})
@@ -198,7 +209,7 @@ function DepartmentRow({
           <FieldError state={updateState} name="managerId" />
         </div>
         <button type="submit" disabled={updatePending} className={secondaryButtonClass}>
-          {updatePending ? "저장 중..." : "저장"}
+          {updatePending ? d.common.buttons.saving : d.common.actions.save}
         </button>
       </form>
       <div className="mt-3 space-y-2">
@@ -216,17 +227,18 @@ function DepartmentSection({
   departments: DepartmentView[];
   managerOptions: ApproverOption[];
 }) {
+  const { d } = useI18n();
   return (
     <section className="rounded-xl border border-zinc-200 bg-white p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-900">부서</h2>
+          <h2 className="text-lg font-semibold text-zinc-900">{d.admin.departments.title}</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            부서명과 부서장을 관리합니다. 직원이 있는 부서는 삭제할 수 없습니다.
+            {d.admin.departments.hint}
           </p>
         </div>
         <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600">
-          {departments.length}개
+          {interpolate(d.admin.departments.count, { count: departments.length })}
         </span>
       </div>
 
@@ -236,7 +248,7 @@ function DepartmentSection({
 
       <div className="mt-5 space-y-3">
         {departments.length === 0 ? (
-          <p className="text-sm text-zinc-500">등록된 부서가 없습니다.</p>
+          <p className="text-sm text-zinc-500">{d.admin.departments.empty}</p>
         ) : (
           departments.map((department) => (
             <DepartmentRow
@@ -260,6 +272,7 @@ function EmployeeProfileForm({
   departments: DepartmentView[];
   approverOptions: ApproverOption[];
 }) {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<EmployeeProfileState, FormData>(
     updateEmployeeProfile,
     undefined,
@@ -271,7 +284,7 @@ function EmployeeProfileForm({
       <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
         <div className="flex flex-col gap-1">
           <label htmlFor={`employee-department-${employee.id}`} className="text-xs font-medium text-zinc-500">
-            부서
+            {d.common.fields.department}
           </label>
           <select
             id={`employee-department-${employee.id}`}
@@ -279,7 +292,7 @@ function EmployeeProfileForm({
             defaultValue={employee.departmentId ?? ""}
             className={inputClass}
           >
-            <option value="">미지정</option>
+            <option value="">{d.admin.unassigned}</option>
             {departments.map((department) => (
               <option key={department.id} value={department.id}>
                 {department.name}
@@ -290,21 +303,21 @@ function EmployeeProfileForm({
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={`employee-position-${employee.id}`} className="text-xs font-medium text-zinc-500">
-            직위
+            {d.common.fields.position}
           </label>
           <input
             id={`employee-position-${employee.id}`}
             name="position"
             type="text"
             defaultValue={employee.position ?? ""}
-            placeholder="예: 프로덕트 매니저"
+            placeholder={d.admin.employees.positionPlaceholder}
             className={inputClass}
           />
           <FieldError state={state} name="position" />
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={`employee-hire-date-${employee.id}`} className="text-xs font-medium text-zinc-500">
-            입사일
+            {d.admin.employees.hireDate}
           </label>
           <input
             id={`employee-hire-date-${employee.id}`}
@@ -317,7 +330,7 @@ function EmployeeProfileForm({
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={`employee-approver-${employee.id}`} className="text-xs font-medium text-zinc-500">
-            승인자
+            {d.admin.employees.approver}
           </label>
           <select
             id={`employee-approver-${employee.id}`}
@@ -325,7 +338,7 @@ function EmployeeProfileForm({
             defaultValue={employee.currentApproverId ?? ""}
             className={inputClass}
           >
-            <option value="">미지정</option>
+            <option value="">{d.admin.unassigned}</option>
             {approverOptions.map((approver) => (
               <option key={approver.id} value={approver.id} disabled={approver.id === employee.id}>
                 {approver.name} ({approver.email})
@@ -337,7 +350,7 @@ function EmployeeProfileForm({
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <button type="submit" disabled={pending} className={primaryButtonClass}>
-          {pending ? "저장 중..." : "프로필 저장"}
+          {pending ? d.common.buttons.saving : d.admin.employees.saveProfile}
         </button>
         <Message state={state} />
       </div>
@@ -346,6 +359,7 @@ function EmployeeProfileForm({
 }
 
 function DeactivateEmployeeForm({ employeeId }: { employeeId: string }) {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<EmployeeStatusState, FormData>(
     deactivateEmployee,
     undefined,
@@ -355,7 +369,7 @@ function DeactivateEmployeeForm({ employeeId }: { employeeId: string }) {
     <form action={action} className="flex flex-col gap-2">
       <input type="hidden" name="id" value={employeeId} />
       <button type="submit" disabled={pending} className={dangerButtonClass}>
-        {pending ? "처리 중..." : "비활성화"}
+        {pending ? d.admin.employees.processing : d.admin.employees.deactivate}
       </button>
       <Message state={state} />
     </form>
@@ -363,6 +377,7 @@ function DeactivateEmployeeForm({ employeeId }: { employeeId: string }) {
 }
 
 function ReactivateEmployeeForm({ employeeId }: { employeeId: string }) {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<EmployeeStatusState, FormData>(
     reactivateEmployee,
     undefined,
@@ -372,7 +387,7 @@ function ReactivateEmployeeForm({ employeeId }: { employeeId: string }) {
     <form action={action} className="flex flex-col gap-2">
       <input type="hidden" name="id" value={employeeId} />
       <button type="submit" disabled={pending} className={primaryButtonClass}>
-        {pending ? "처리 중..." : "재활성화"}
+        {pending ? d.admin.employees.processing : d.admin.employees.reactivate}
       </button>
       <Message state={state} />
     </form>
@@ -380,6 +395,7 @@ function ReactivateEmployeeForm({ employeeId }: { employeeId: string }) {
 }
 
 function ReinviteEmployeeForm({ employeeId }: { employeeId: string }) {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<InviteState, FormData>(
     reinviteEmployee,
     undefined,
@@ -390,11 +406,11 @@ function ReinviteEmployeeForm({ employeeId }: { employeeId: string }) {
       <input type="hidden" name="employeeId" value={employeeId} />
       <div className="flex flex-wrap items-center gap-2">
         <select name="role" defaultValue="EMPLOYEE" className={inputClass}>
-          <option value="EMPLOYEE">직원</option>
-          <option value="MANAGER">매니저</option>
+          <option value="EMPLOYEE">{d.admin.employees.reinviteRoleEmployee}</option>
+          <option value="MANAGER">{d.admin.employees.reinviteRoleManager}</option>
         </select>
         <button type="submit" disabled={pending} className={secondaryButtonClass}>
-          {pending ? "링크 생성 중..." : "초대 링크 재생성"}
+          {pending ? d.admin.employees.reinviting : d.admin.employees.reinvite}
         </button>
       </div>
       {state?.message && (
@@ -419,9 +435,10 @@ function ReinviteEmployeeForm({ employeeId }: { employeeId: string }) {
 }
 
 function EmployeeStatusSection({ employee }: { employee: EmployeeView }) {
+  const { d } = useI18n();
   return (
     <div className="mt-4 border-t border-zinc-100 pt-4">
-      <p className="text-xs font-medium text-zinc-500">상태 관리</p>
+      <p className="text-xs font-medium text-zinc-500">{d.admin.employees.statusManagement}</p>
       <div className="mt-2">
         {employee.status === "ACTIVE" ? (
           <DeactivateEmployeeForm employeeId={employee.id} />
@@ -444,6 +461,7 @@ function EmployeeCard({
   departments: DepartmentView[];
   approverOptions: ApproverOption[];
 }) {
+  const { d } = useI18n();
   return (
     <article className="rounded-lg border border-zinc-200 p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -456,20 +474,20 @@ function EmployeeCard({
 
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <dt className="text-xs text-zinc-400">부서</dt>
-          <dd className="mt-1 text-zinc-700">{employee.departmentName ?? "미지정"}</dd>
+          <dt className="text-xs text-zinc-400">{d.common.fields.department}</dt>
+          <dd className="mt-1 text-zinc-700">{employee.departmentName ?? d.admin.unassigned}</dd>
         </div>
         <div>
-          <dt className="text-xs text-zinc-400">직위</dt>
+          <dt className="text-xs text-zinc-400">{d.common.fields.position}</dt>
           <dd className="mt-1 text-zinc-700">{employee.position ?? "-"}</dd>
         </div>
         <div>
-          <dt className="text-xs text-zinc-400">입사일</dt>
+          <dt className="text-xs text-zinc-400">{d.admin.employees.hireDate}</dt>
           <dd className="mt-1 text-zinc-700">{employee.hireDate || "-"}</dd>
         </div>
         <div>
-          <dt className="text-xs text-zinc-400">현재 승인자</dt>
-          <dd className="mt-1 text-zinc-700">{employee.currentApproverName ?? "미지정"}</dd>
+          <dt className="text-xs text-zinc-400">{d.admin.employees.currentApprover}</dt>
+          <dd className="mt-1 text-zinc-700">{employee.currentApproverName ?? d.admin.unassigned}</dd>
         </div>
       </dl>
 
@@ -492,23 +510,24 @@ function EmployeeSection({
   departments: DepartmentView[];
   approverOptions: ApproverOption[];
 }) {
+  const { d } = useI18n();
   return (
     <section className="rounded-xl border border-zinc-200 bg-white p-5 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-zinc-900">직원</h2>
+          <h2 className="text-lg font-semibold text-zinc-900">{d.admin.employees.sectionTitle}</h2>
           <p className="mt-1 text-sm text-zinc-500">
-            프로필을 수정하거나 직원의 계정 상태와 초대 링크를 관리합니다.
+            {d.admin.employees.sectionHint}
           </p>
         </div>
         <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-600">
-          {employees.length}명
+          {interpolate(d.admin.employees.count, { count: employees.length })}
         </span>
       </div>
 
       <div className="mt-5 space-y-4">
         {employees.length === 0 ? (
-          <p className="text-sm text-zinc-500">등록된 직원이 없습니다.</p>
+          <p className="text-sm text-zinc-500">{d.admin.employees.empty}</p>
         ) : (
           employees.map((employee) => (
             <EmployeeCard

@@ -25,3 +25,7 @@ export const INTL_LOCALES: Record<Locale, string> = {
   ko: "ko-KR",
   en: "en-US",
 };
+
+export type InltLocale = string;
+
+export const DEFAULT_INTL_LOCALE = INTL_LOCALES[DEFAULT_LOCALE];

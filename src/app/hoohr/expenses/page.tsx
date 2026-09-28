@@ -11,24 +11,19 @@ import {
   canActAsAdmin,
   isApprovalReviewer,
 } from "@/lib/team";
+import type { CommonMessages } from "@/i18n/dictionaries/common";
+import { getDict, getLocale, interpolate, INTL_LOCALES } from "@/i18n/server";
 import { NewExpenseForm, type ExpenseCategoryOption } from "./expense-form";
 import { SubmitExpenseButton } from "./submit-button";
 import { DeleteExpenseButton } from "./delete-button";
 import { DecideExpenseForm } from "./decide-form";
 
-export const metadata: Metadata = {
-  title: "경비",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { expenses } = await getDict();
+  return { title: expenses.page.title };
+}
 
-const STATUS_LABELS: Record<string, string> = {
-  DRAFT: "작성 중",
-  SUBMITTED: "승인 대기",
-  APPROVED: "승인됨",
-  PAID: "지급 완료",
-  REJECTED: "반려",
-};
-
-function statusBadge(status: string) {
+function statusBadge(status: string, labels: CommonMessages["expenseStatus"]) {
   const color =
     status === "PAID"
       ? "bg-green-100 text-green-700"
@@ -41,7 +36,7 @@ function statusBadge(status: string) {
             : "bg-zinc-200 text-zinc-600";
   return (
     <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${color}`}>
-      {STATUS_LABELS[status]}
+      {labels[status as keyof CommonMessages["expenseStatus"]] ?? status}
     </span>
   );
 }
@@ -49,8 +44,12 @@ function statusBadge(status: string) {
 function ItemRows({
   title,
   items,
+  receiptLink,
+  intl,
 }: {
   title: string;
+  receiptLink: (filename: string) => string;
+  intl: string;
   items: {
     date: Date;
     category: { name: string };
@@ -72,13 +71,13 @@ function ItemRows({
             className="flex flex-wrap items-center gap-2 text-sm"
           >
             <span className="text-xs text-zinc-500">
-              {formatLeaveRange(it.date, it.date)}
+              {formatLeaveRange(it.date, it.date, intl)}
             </span>
             <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-600">
               {it.category.name}
             </span>
             <span className="font-medium text-zinc-800">
-              {formatMoney(it.amountCents, it.currency)}
+              {formatMoney(it.amountCents, it.currency, intl)}
             </span>
             <span className="text-zinc-500">{it.description ?? ""}</span>
             {it.receipts.map((r) => (
@@ -89,7 +88,7 @@ function ItemRows({
                 rel="noreferrer"
                 className="text-xs font-medium text-blue-600 underline hover:text-blue-800"
               >
-                영수증: {r.filename}
+                {receiptLink(r.filename)}
               </a>
             ))}
           </li>
@@ -101,6 +100,9 @@ function ItemRows({
 
 export default async function ExpensesPage() {
   const user = await requireUser();
+  const { common, expenses } = await getDict();
+  const locale = await getLocale();
+  const intl = INTL_LOCALES[locale];
   const isReviewer = isApprovalReviewer(user);
   const canPay = canActAsAdmin(user);
   const tz = await getCompanyTimezone(user.companyId);
@@ -156,25 +158,30 @@ export default async function ExpensesPage() {
     name: c.name,
   }));
 
+  const receiptLink = (filename: string) =>
+    interpolate(expenses.receipt.link, { filename });
+
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-zinc-900">경비</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          비용 신청서 작성 · 승인 · 지급 확인
-        </p>
+        <h1 className="text-2xl font-semibold text-zinc-900">
+          {expenses.page.title}
+        </h1>
+        <p className="mt-1 text-sm text-zinc-500">{expenses.page.subtitle}</p>
         <Link
           href={`/hoohr/expenses/export?month=${currentMonth}`}
           className="mt-3 inline-block rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
         >
-          이번 달 CSV 내보내기
+          {expenses.page.exportCsv}
         </Link>
       </div>
 
       <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-sm font-semibold text-zinc-900">새 경비 신청서</h2>
+        <h2 className="text-sm font-semibold text-zinc-900">
+          {expenses.sections.newReport}
+        </h2>
         <p className="mt-1 text-xs text-zinc-500">
-          제출 전까지 수정·삭제가 가능합니다. 제출 후 승인/반려 처리됩니다.
+          {expenses.sections.newReportHint}
         </p>
         <div className="mt-4">
           <NewExpenseForm categories={categoryOptions} />
@@ -182,27 +189,33 @@ export default async function ExpensesPage() {
       </section>
 
       <section className="rounded-xl border border-zinc-200 bg-white p-6">
-        <h2 className="text-sm font-semibold text-zinc-900">내 경비 신청서</h2>
+        <h2 className="text-sm font-semibold text-zinc-900">
+          {expenses.sections.myReports}
+        </h2>
         {myReports.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500">신청 내역이 없습니다.</p>
+          <p className="mt-4 text-sm text-zinc-500">
+            {expenses.sections.noReports}
+          </p>
         ) : (
           <ul className="mt-4 space-y-3">
             {myReports.map((r) => (
               <li key={r.id} className="rounded-lg border border-zinc-200 px-4 py-3">
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span className="font-medium text-zinc-800">{r.title}</span>
-                  {statusBadge(r.status)}
+                  {statusBadge(r.status, common.expenseStatus)}
                   <span className="text-xs text-zinc-500">
-                    {formatLeaveRange(r.periodStart, r.periodEnd)}
+                    {formatLeaveRange(r.periodStart, r.periodEnd, intl)}
                   </span>
                   <span className="ml-auto font-semibold text-zinc-900">
-                    {formatMoney(r.totalAmountCents, r.currency)}
+                    {formatMoney(r.totalAmountCents, r.currency, intl)}
                   </span>
                 </div>
                 {r.items.length > 0 && (
                   <div className="mt-3 border-t border-zinc-100 pt-3">
                     <ItemRows
-                      title="항목"
+                      title={expenses.sections.items}
+                      receiptLink={receiptLink}
+                    intl={intl}
                       items={r.items.map((it) => ({
                         ...it,
                         currency: r.currency,
@@ -216,16 +229,24 @@ export default async function ExpensesPage() {
                     <DeleteExpenseButton reportId={r.id} />
                     {r.items.length === 0 && (
                       <span className="text-xs text-zinc-400">
-                        항목이 없으면 제출할 수 없습니다.
+                        {expenses.sections.noItemsCannotSubmit}
                       </span>
                     )}
                   </div>
                 )}
                 {r.status === "REJECTED" && r.comment && (
-                  <p className="mt-2 text-xs text-red-600">반려 사유: {r.comment}</p>
+                  <p className="mt-2 text-xs text-red-600">
+                    {interpolate(expenses.sections.rejectReason, {
+                      comment: r.comment,
+                    })}
+                  </p>
                 )}
                 {!["DRAFT", "REJECTED"].includes(r.status) && r.comment && (
-                  <p className="mt-2 text-xs text-zinc-500">의견: {r.comment}</p>
+                  <p className="mt-2 text-xs text-zinc-500">
+                    {interpolate(expenses.sections.comment, {
+                      comment: r.comment,
+                    })}
+                  </p>
                 )}
               </li>
             ))}
@@ -236,7 +257,7 @@ export default async function ExpensesPage() {
       {isReviewer && inbox.length > 0 && (
         <section className="rounded-xl border border-zinc-200 bg-white p-6">
           <h2 className="text-sm font-semibold text-zinc-900">
-            승인 대기 경비 ({inbox.length})
+            {interpolate(expenses.sections.inbox, { count: inbox.length })}
           </h2>
           <ul className="mt-4 space-y-3">
             {inbox.map((r) => (
@@ -245,15 +266,17 @@ export default async function ExpensesPage() {
                   <span className="font-medium text-zinc-800">{r.employee.name}</span>
                   <span className="font-medium text-zinc-800">{r.title}</span>
                   <span className="text-xs text-zinc-500">
-                    {formatLeaveRange(r.periodStart, r.periodEnd)}
+                    {formatLeaveRange(r.periodStart, r.periodEnd, intl)}
                   </span>
                   <span className="ml-auto font-semibold text-zinc-900">
-                    {formatMoney(r.totalAmountCents, r.currency)}
+                    {formatMoney(r.totalAmountCents, r.currency, intl)}
                   </span>
                 </div>
                 <div className="mt-3 border-t border-zinc-100 pt-3">
                   <ItemRows
-                    title="항목"
+                    title={expenses.sections.items}
+                    receiptLink={receiptLink}
+                    intl={intl}
                     items={r.items.map((it) => ({ ...it, currency: r.currency }))}
                   />
                 </div>
@@ -267,7 +290,7 @@ export default async function ExpensesPage() {
       {canPay && payQueue.length > 0 && (
         <section className="rounded-xl border border-zinc-200 bg-white p-6">
           <h2 className="text-sm font-semibold text-zinc-900">
-            지급 대기 (승인됨) ({payQueue.length})
+            {interpolate(expenses.sections.payQueue, { count: payQueue.length })}
           </h2>
           <ul className="mt-4 space-y-3">
             {payQueue.map((r) => (
@@ -276,15 +299,17 @@ export default async function ExpensesPage() {
                   <span className="font-medium text-zinc-800">{r.employee.name}</span>
                   <span className="font-medium text-zinc-800">{r.title}</span>
                   <span className="text-xs text-zinc-500">
-                    {formatLeaveRange(r.periodStart, r.periodEnd)}
+                    {formatLeaveRange(r.periodStart, r.periodEnd, intl)}
                   </span>
                   <span className="ml-auto font-semibold text-zinc-900">
-                    {formatMoney(r.totalAmountCents, r.currency)}
+                    {formatMoney(r.totalAmountCents, r.currency, intl)}
                   </span>
                 </div>
                 <div className="mt-3 border-t border-zinc-100 pt-3">
                   <ItemRows
-                    title="항목"
+                    title={expenses.sections.items}
+                    receiptLink={receiptLink}
+                    intl={intl}
                     items={r.items.map((it) => ({ ...it, currency: r.currency }))}
                   />
                 </div>

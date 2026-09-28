@@ -3,8 +3,10 @@
 import { useActionState } from "react";
 import { cancelLeave } from "@/app/actions/leave";
 import type { LeaveCancelState } from "@/lib/leave-validation";
+import { useI18n } from "@/i18n/client";
 
 export function CancelLeaveButton({ leaveId }: { leaveId: string }) {
+  const { d } = useI18n();
   const [state, action, pending] = useActionState<LeaveCancelState, FormData>(
     cancelLeave,
     undefined,
@@ -25,7 +27,7 @@ export function CancelLeaveButton({ leaveId }: { leaveId: string }) {
         disabled={pending}
         className="text-xs font-medium text-zinc-500 underline hover:text-zinc-900 disabled:opacity-50"
       >
-        취소
+        {d.common.actions.cancel}
       </button>
     </form>
   );
