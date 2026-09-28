@@ -81,7 +81,7 @@ export async function checkIn(
     return { message: "이미 출근 상태입니다. 퇴근 후 다시 출근하실 수 있습니다." };
   }
 
-  revalidatePath("/app/attendance");
+  revalidatePath("/hoohr/attendance");
   return { message: "출근 처리되었습니다.", ok: true };
 }
 
@@ -128,7 +128,7 @@ export async function checkOut(
     return { message: "출근 상태가 아닙니다. 먼저 출근해주세요." };
   }
 
-  revalidatePath("/app/attendance");
+  revalidatePath("/hoohr/attendance");
   return { message: "퇴근 처리되었습니다.", ok: true };
 }
 
@@ -181,7 +181,7 @@ export async function submitCorrection(
     },
   });
 
-  revalidatePath("/app/attendance");
+  revalidatePath("/hoohr/attendance");
   return { message: "정정 요청이 접수되었습니다.", ok: true };
 }
 
@@ -251,7 +251,7 @@ export async function decideCorrection(
 
   if (!updated) return { message: unavailableMessage };
 
-  revalidatePath("/app/attendance");
+  revalidatePath("/hoohr/attendance");
   return {
     message: decision === "APPROVE" ? "승인 처리되었습니다." : "반려 처리되었습니다.",
     ok: true,

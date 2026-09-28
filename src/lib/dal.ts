@@ -75,9 +75,9 @@ export async function requireUser(): Promise<SessionUser> {
   return user;
 }
 
-/** ADMIN 전용 (비관리자 시 /app으로 리다이렉트). */
+/** ADMIN 전용 (비관리자 시 /hoohr으로 리다이렉트). */
 export async function requireAdmin(): Promise<SessionUser> {
   const user = await requireUser();
-  if (user.role !== "ADMIN") redirect("/app");
+  if (user.role !== "ADMIN") redirect("/hoohr");
   return user;
 }

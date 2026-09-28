@@ -84,7 +84,7 @@ function ItemRows({
             {it.receipts.map((r) => (
               <a
                 key={r.id}
-                href={`/app/files/${r.storedPath}`}
+                href={`/hoohr/files/${r.storedPath}`}
                 target="_blank"
                 rel="noreferrer"
                 className="text-xs font-medium text-blue-600 underline hover:text-blue-800"
@@ -164,7 +164,7 @@ export default async function ExpensesPage() {
           비용 신청서 작성 · 승인 · 지급 확인
         </p>
         <Link
-          href={`/app/expenses/export?month=${currentMonth}`}
+          href={`/hoohr/expenses/export?month=${currentMonth}`}
           className="mt-3 inline-block rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
         >
           이번 달 CSV 내보내기

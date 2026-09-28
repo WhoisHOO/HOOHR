@@ -116,7 +116,7 @@ export async function requestLeave(
     },
   });
 
-  revalidatePath("/app/leave");
+  revalidatePath("/hoohr/leave");
   return { message: "휴가 신청이 접수되었습니다.", ok: true };
 }
 
@@ -216,8 +216,8 @@ export async function decideLeave(
 
   if (!updated) return { message: unavailableMessage };
 
-  revalidatePath("/app/leave");
-  revalidatePath("/app");
+  revalidatePath("/hoohr/leave");
+  revalidatePath("/hoohr");
   return {
     message: decision === "APPROVE" ? "승인 처리되었습니다." : "반려 처리되었습니다.",
     ok: true,
@@ -250,7 +250,7 @@ export async function cancelLeave(
     data: { status: "CANCELED" },
   });
 
-  revalidatePath("/app/leave");
+  revalidatePath("/hoohr/leave");
   return { message: "휴가 신청이 취소되었습니다.", ok: true };
 }
 
@@ -353,8 +353,8 @@ export async function importBalances(
     imported += 1;
   }
 
-  revalidatePath("/app/admin/balances");
-  revalidatePath("/app/leave");
+  revalidatePath("/hoohr/admin/balances");
+  revalidatePath("/hoohr/leave");
   return {
     message: `${imported}건 가져왔습니다${errors.length > 0 ? `, 오류 ${errors.length}건 (예: ${errors[0]})` : ""}.`,
     ok: errors.length === 0,

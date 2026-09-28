@@ -47,10 +47,13 @@
 | Holiday-aware leave day counting | ✅ Done (Session 10) |
 | Email notifications (NOT-1/2) | ⬜ Pending — needs SMTP config |
 | Checkpoint commit (Session 5–9) | ✅ `98f7ab8` + `e1cc5b3` |
-| **GitHub public repo (Session 10)** | ✅ **Done — https://github.com/WhoisHOO/hr-app** (`main`, 9 commits pushed) |
+| **GitHub public repo** | ✅ **Done — https://github.com/WhoisHOO/HOOHR** (`main`, renamed in Session 11) |
+| Brand rename `hr-app` → `HOOHR` (routes/DB/containers/docs) | ✅ Done (Session 11) |
+| Root `Dockerfile` (referenced by compose, never written) | 🔄 In progress (Session 11) |
+| README for a public repo | ⬜ Still the `create-next-app` template (Session 11) |
 
 > **Key notes:**
-> - **The repo is live: https://github.com/WhoisHOO/hr-app** (public, `main`, 9 commits pushed in Session 10). `gh` is authenticated as `WhoisHOO`, so `git push` works without any further setup.
+> - **The repo is live: https://github.com/WhoisHOO/HOOHR** (public, `main`, renamed in Session 11). `gh` is authenticated as `WhoisHOO`, so `git push` works without any further setup. App routes live under `/hoohr`.
 > - **500 "Connection closed." when POSTing server actions via curl/fetch is a known Next.js restriction** — not an app bug. Test real flows via browser.
 > - Quick-tunnel URL persists only while the same `cloudflared` process is alive; restart/reboot generates a **new random URL**. Unrelated to dev-server restarts.
 > - This PC's router DNS (192.168.1.254) fails to resolve some trycloudflare hostnames → verify via `--resolve` or 8.8.8.8. Other devices are fine.
@@ -110,7 +113,7 @@
 - "Claim expenses with receipts when on sick leave" — attach proof to leave request, or a separate expense claim? Needs separation
 
 ### 4. Project name/brand
-- **Repo name settled: `hr-app`** (GitHub public repo created in Session 10). The user-facing display/brand name is still open — `README.md`/`package.json`/`LICENSE` all use `hr-app`
+- **Brand settled: `HOOHR`** (decided in Session 11, after the repo had briefly been published as `hr-app`). Applied to the GitHub repo, route prefix (`/hoohr`), DB name, containers, `package.json` (`hoohr`, lowercase because npm rejects uppercase), `LICENSE`, and all docs. The old `hr-app` repo URL and `/app` routes both redirect for safety
 
 ### 5. OCR (receipt auto-extraction) in MVP?
 - UX research ranks OCR as an "Expensify-class core" feature but MVP-later → deferred to v0.2
@@ -120,7 +123,7 @@
 ## 📁 Project Structure
 
 ```
-C:\apps\projects\hr-app\
+C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchanged; brand is HOOHR)
 ├── docs/
 │   ├── REQUIREMENTS.md   → requirements spec (features/data model/roles/MVP)
 │   └── UX_RESEARCH.md    → UX analysis of 9 tools (nav/workflow/10 patterns)
@@ -400,6 +403,38 @@ C:\apps\projects\hr-app\
 - **Checkpoint commit**: `0b4a4db feat(settings): company profile, leave policy management, holiday calendar, expense categories + holiday-aware leave day counting` — covers all Session 10 work.
 - **Pre-push secret audit** (done before the repo went public): 122 tracked files; `.env*`, `/uploads/`, `/dev-server.log` are all ignored and untracked; the only credential-shaped strings in tracked files are the `hr:hr_dev_password` **docker-compose dev defaults** in `docker-compose.yml`, `pipelines/README.md`, `pipelines/dags/`, `pipelines/spark/` — local dev DB bound to localhost, no real secret. `src/generated/prisma` (26 files) is intentionally tracked per Session 4.
 - **Result/next**: Session 10 complete — **every MVP module is implemented and verified** (settings module + holiday-aware leave counting), and the project is **finally on GitHub**. Remaining: ① email notifications (NOT-1/2) once SMTP is configured ② browser E2E sweep of every form (still impossible via curl — known Next.js restriction) ③ stable domain via a free subdomain ④ pipelines/deploy runtime validation ⑤ a README refresh now that the repo is public.
+
+### Session 11 (2026-09-28): Brand rename hr-app → HOOHR + public-repo readiness (missing Dockerfile, real README)
+
+> **Note**: Record updated incrementally while working (sessions keep getting cut).
+
+- **Goal**: the repo went public in Session 10, so make a fresh clone actually work. Three gaps found while auditing for the README:
+  1. **`docker-compose.yml` references `app: build: .` but there is no root `Dockerfile`** — so `docker compose up` for the app service could never build. The compose file was written in Session 1 and never exercised. (`pipelines/Dockerfile` exists, which is why the gap was easy to miss.)
+  2. **`README.md` is still the untouched `create-next-app` template** — it documents `yarn`/`pnpm`/`bun` and Vercel, none of which this project uses.
+  3. **Brand rename `hr-app` → `HOOHR`** (the user decided this right after the push). The user chose the **full** scope, not the minimal one: URL path prefix, DB name, and container names included, not just cosmetic strings.
+- **Plan**: ① rename, with a legacy redirect ② add the root `Dockerfile` + `.dockerignore` and verify the build ③ rewrite `README.md` around the real features, env vars, roles, and dev workflow ④ verify everything, commit, push. Written artifacts stay English per Session 4; UI copy stays Korean.
+- **Correction to an earlier claim**: Session 4's log says code comments were translated to English, but in the tree the comments are actually **Korean** (`src/proxy.ts`, `src/lib/leave.ts`, `src/lib/holidays.ts`, `deploy/README.md`, …) and have stayed that way. Not a functional problem and not swept in this session — recording it so the log reflects the real state.
+
+- **Brand rename `hr-app` → `HOOHR` — done** (full scope: URLs, DB, containers):
+  - **Routes**: `src/app/app/` → `src/app/hoohr/`, and the `/app` prefix → `/hoohr` across **45 references in 11 files** — server actions (`revalidatePath`/`redirect`), `src/lib/dal.ts`, the root `src/app/page.tsx`, the app-shell nav, and the month/year navigation links that were **template literals** (`` `/app/leave?month=…` ``) and therefore invisible to a naive double-quote-only search
+  - **Legacy redirect**: `src/proxy.ts` now 307s `/app` and `/app/*` to `/hoohr/*`, so pre-rename bookmarks do not 404
+  - **DB / infra**: DB name `hr_app` → `hoohr`, dev password → `hoohr_dev_password`, containers `hr_app_db`/`hr_app` → `hoohr_db`/`hoohr` (the DB **role** stays `hr` — not branding). The local database was **recreated** (`docker compose down -v` → `migrate deploy` → `db:seed`); it only ever held seed data plus self-cleaning test fixtures
+  - **Metadata**: `package.json` name is `hoohr` (lowercase — npm rejects uppercase), `LICENSE` copyright "HOOHR contributors", `src/app/layout.tsx` title template, the login and invite-acceptance headings
+  - **Docs**: `docs/REQUIREMENTS.md`, `docs/UX_RESEARCH.md`, `deploy/README.md`, `pipelines/` connection strings
+  - **GitHub**: `gh repo rename HOOHR` → **https://github.com/WhoisHOO/HOOHR**; the local `origin` URL was updated too, and the old `hr-app` URL 301s to the new one
+- **A toolchain trap worth remembering**: doing the bulk renames with inline PowerShell string replacement **corrupted the files** — every `"` was written as `n` and every `'` as `h` (e.g. `"name": "hr-app"` → `nnamen: nhr-appn,`). Recovery was `git checkout -- .`, which kept the staged `git mv` renames and discarded only the bad edits. The redo used **asserted Python scripts written to a file with the `write` tool** (no shell quoting at all), each failing loudly on a missing pattern. Lesson: for bulk text surgery on this repo, write a `.py` file and run it — do not pass replacements inline through the shell. PowerShell's console also *displays* UTF-8 as mojibake, which produced two false "corruption" alarms before a real byte-level read proved the files were fine.
+- **Rename verification** (a throwaway script, five checks):
+  - corruption markers (`hhr-`, `nnname`, …) — **none** in any tracked file
+  - leftover `hr_app` / `hr-app` — only the two intentional lines in the proxy comment/redirect
+  - leftover `/app` route prefix — only the intentional legacy-redirect lines
+  - every changed line in the diff belongs to the rename
+  - the pass caught **3 real misses** that the first, narrower pass had left behind: the app-shell nav + `LayoutProps<"/app">` in `src/app/hoohr/layout.tsx`, the "this year" link in `settings-client.tsx`, and the `hr-app 가입` heading in `src/app/invite/[token]/page.tsx`. Worth remembering that the first pass silently skipped a file because its edit list only contained the brand string, not the route prefix
+  - `tsc` also surfaced a stale-`.next` trap: Next.js generates the typed-routes validator from the route tree, so after moving route folders you must clear `.next` (and restart `next dev`) or `tsc` reports phantom `TS2307` for the old paths and `LayoutProps<"/hoohr">` looks invalid
+  - `npm run lint` + `npx tsc --noEmit` clean
+  - All four DB test scripts re-run against the recreated `hoohr` database: `_test-leave`, `_test-expense`, `_test-team` (27/27), `_test-settings` (23/23), 0 leftovers
+  - Live GETs with a minted admin cookie: all 11 `/hoohr/**` pages 200 (dashboard, attendance, leave, leave?month, expenses, CSV export, admin employees/invite/balances/settings, settings?year); legacy `/app`, `/app/leave`, `/app/admin/settings` → 307 to the `/hoohr` equivalents; unauthenticated `/hoohr/**` → 307 `/login`
+  - Rendered HTML confirms the brand: dashboard title `대시보드 · HOOHR`, login title `로그인 · HOOHR`, all sidebar links pointing at `/hoohr/*`
+- **Ops note**: Docker Desktop was down again (5th occurrence) and, more importantly, **blanket-killing every `node` process to clear `.next` took Docker Desktop down with it** — do not blanket-kill node on this machine. Docker was relaunched and the old container/volume were replaced by the new `hoohr_db`.
 
 <!-- ====== Template for next sessions (copy & use) ======
 ### Session 5 (2026-09-24): <title>

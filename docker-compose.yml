@@ -1,31 +1,31 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: hr_app_db
+    container_name: hoohr_db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-hr}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hr_dev_password}
-      POSTGRES_DB: ${POSTGRES_DB:-hr_app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hoohr_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-hoohr}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hr} -d ${POSTGRES_DB:-hr_app}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hr} -d ${POSTGRES_DB:-hoohr}"]
       interval: 5s
       timeout: 3s
       retries: 10
 
   app:
     build: .
-    container_name: hr_app
+    container_name: hoohr
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-hr}:${POSTGRES_PASSWORD:-hr_dev_password}@db:5432/${POSTGRES_DB:-hr_app}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-hr}:${POSTGRES_PASSWORD:-hoohr_dev_password}@db:5432/${POSTGRES_DB:-hoohr}
       AUTH_SECRET: ${AUTH_SECRET}
       APP_URL: ${APP_URL:-http://localhost:3000}
       SMTP_HOST: ${SMTP_HOST:-}

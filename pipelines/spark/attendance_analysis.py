@@ -14,7 +14,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, date_format, weekofyear
 
 DATABASE_URL = os.environ.get(
-    "DATABASE_URL", "postgresql://hr:hr_dev_password@localhost:5432/hr_app"
+    "DATABASE_URL", "postgresql://hr:hoohr_dev_password@localhost:5432/hoohr"
 )
 OUTPUT_TABLE = "analytics.attendance_pattern_by_dept"
 

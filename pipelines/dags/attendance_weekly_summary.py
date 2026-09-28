@@ -49,7 +49,7 @@ ON CONFLICT (week_start, employee_id) DO UPDATE SET
 def _run_summary(week_start: str) -> None:
     if psycopg2 is None:
         raise RuntimeError("psycopg2 미설치 — pipelines/requirements.txt 참고")
-    conn = psycopg2.connect(Variable.get("DATABASE_URL", default_var="postgresql://hr:hr_dev_password@localhost:5432/hr_app"))
+    conn = psycopg2.connect(Variable.get("DATABASE_URL", default_var="postgresql://hr:hoohr_dev_password@localhost:5432/hoohr"))
     try:
         with conn.cursor() as cur:
             cur.execute('CREATE SCHEMA IF NOT EXISTS analytics')

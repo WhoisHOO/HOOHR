@@ -361,21 +361,21 @@ function HolidaySection({
     >
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <Link
-          href={`/app/admin/settings?year=${prevYear}`}
+          href={`/hoohr/admin/settings?year=${prevYear}`}
           className={secondaryButtonClass}
         >
           ← {prevYear}년
         </Link>
         <span className="font-medium text-zinc-800">{year}년</span>
         <Link
-          href={`/app/admin/settings?year=${nextYear}`}
+          href={`/hoohr/admin/settings?year=${nextYear}`}
           className={secondaryButtonClass}
         >
           {nextYear}년 →
         </Link>
         {year !== currentYear && (
           <Link
-            href="/app/admin/settings"
+            href="/hoohr/admin/settings"
             className="text-xs font-medium text-blue-600 hover:underline"
           >
             올해로

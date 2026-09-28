@@ -3,13 +3,13 @@ import { requireUser } from "@/lib/dal";
 import { logout } from "@/app/actions/auth";
 
 const NAV_ITEMS = [
-  { href: "/app", label: "대시보드", ready: true },
-  { href: "/app/attendance", label: "근태", ready: true },
-  { href: "/app/leave", label: "휴가", ready: true },
-  { href: "/app/expenses", label: "경비", ready: true },
+  { href: "/hoohr", label: "대시보드", ready: true },
+  { href: "/hoohr/attendance", label: "근태", ready: true },
+  { href: "/hoohr/leave", label: "휴가", ready: true },
+  { href: "/hoohr/expenses", label: "경비", ready: true },
 ];
 
-export default async function AppLayout({ children }: LayoutProps<"/app">) {
+export default async function AppLayout({ children }: LayoutProps<"/hoohr">) {
   const user = await requireUser();
 
   return (
@@ -17,8 +17,8 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
       {/* 사이드바 */}
       <aside className="flex w-56 flex-col border-r border-zinc-200 bg-white">
         <div className="border-b border-zinc-200 px-5 py-4">
-          <Link href="/app" className="text-lg font-semibold text-zinc-900">
-            hr-app
+          <Link href="/hoohr" className="text-lg font-semibold text-zinc-900">
+            HOOHR
           </Link>
         </div>
 
@@ -52,25 +52,25 @@ export default async function AppLayout({ children }: LayoutProps<"/app">) {
                 관리자
               </p>
               <Link
-                href="/app/admin/employees"
+                href="/hoohr/admin/employees"
                 className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
               >
                 직원·조직
               </Link>
               <Link
-                href="/app/admin/invite"
+                href="/hoohr/admin/invite"
                 className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
               >
                 직원 초대
               </Link>
               <Link
-                href="/app/admin/balances"
+                href="/hoohr/admin/balances"
                 className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
               >
                 연차 잔여 가져오기
               </Link>
               <Link
-                href="/app/admin/settings"
+                href="/hoohr/admin/settings"
                 className="block rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100"
               >
                 회사 설정

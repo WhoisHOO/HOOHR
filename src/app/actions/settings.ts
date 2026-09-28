@@ -46,11 +46,11 @@ function isUniqueConstraintError(error: unknown): boolean {
 
 /** 관리자 설정 변경 후 재검증 대상 (표시·계산에 반영되는 화면). */
 function revalidateSettingsPages(): void {
-  revalidatePath("/app/admin/settings");
-  revalidatePath("/app");
-  revalidatePath("/app/leave");
-  revalidatePath("/app/attendance");
-  revalidatePath("/app/expenses");
+  revalidatePath("/hoohr/admin/settings");
+  revalidatePath("/hoohr");
+  revalidatePath("/hoohr/leave");
+  revalidatePath("/hoohr/attendance");
+  revalidatePath("/hoohr/expenses");
 }
 
 function isValidTimezone(timezone: string): boolean {

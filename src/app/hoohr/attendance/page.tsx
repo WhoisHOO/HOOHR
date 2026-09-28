@@ -84,8 +84,8 @@ export default async function AttendancePage({
     if (m >= 1 && m <= 12) monthDate = new Date(Date.UTC(y, m - 1, 1));
   }
   const { start, end } = monthBounds(monthDate);
-  const prevHref = `/app/attendance?month=${monthLabel(addMonths(monthDate, -1))}`;
-  const nextHref = `/app/attendance?month=${monthLabel(addMonths(monthDate, 1))}`;
+  const prevHref = `/hoohr/attendance?month=${monthLabel(addMonths(monthDate, -1))}`;
+  const nextHref = `/hoohr/attendance?month=${monthLabel(addMonths(monthDate, 1))}`;
 
   const isReviewer = isApprovalReviewer(user);
   const teamScope = isReviewer

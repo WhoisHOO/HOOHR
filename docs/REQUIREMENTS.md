@@ -1,4 +1,4 @@
-# Requirements Specification — Employee Management Tool (working name: hr-app)
+# Requirements Specification — Employee Management Tool (project name: HOOHR)
 
 ## 1. Project Overview
 

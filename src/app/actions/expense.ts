@@ -159,7 +159,7 @@ export async function createExpenseReport(
     return { message: "저장 중 오류가 발생했습니다. 다시 시도해주세요." };
   }
 
-  revalidatePath("/app/expenses");
+  revalidatePath("/hoohr/expenses");
   return { message: "경비 신청서가 작성되었습니다.", ok: true };
 }
 
@@ -192,7 +192,7 @@ export async function submitExpenseReport(
     data: { status: "SUBMITTED", submittedAt: new Date() },
   });
 
-  revalidatePath("/app/expenses");
+  revalidatePath("/hoohr/expenses");
   return { message: "승인 요청이 제출되었습니다.", ok: true };
 }
 
@@ -222,7 +222,7 @@ export async function deleteExpenseReport(
   await prisma.expenseReport.delete({ where: { id } });
   for (const r of receipts) await removeReceipt(r.storedPath);
 
-  revalidatePath("/app/expenses");
+  revalidatePath("/hoohr/expenses");
   return { message: "보고서가 삭제되었습니다.", ok: true };
 }
 
@@ -310,7 +310,7 @@ export async function decideExpense(
 
   if (!updated) return { message: unavailableMessage };
 
-  revalidatePath("/app/expenses");
+  revalidatePath("/hoohr/expenses");
   const label =
     decision === "APPROVE"
       ? "승인 처리되었습니다."

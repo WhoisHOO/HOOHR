@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "hr-app",
-    template: "%s · hr-app",
+    default: "HOOHR",
+    template: "%s · HOOHR",
   },
   description: "20인 규모 스타트업을 위한 근태·휴가·경비 관리 툴",
 };

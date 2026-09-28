@@ -63,8 +63,8 @@ export default async function LeavePage({
     if (m >= 1 && m <= 12) monthDate = new Date(Date.UTC(y, m - 1, 1));
   }
   const { start: monthStart, end: monthEnd } = monthBounds(monthDate);
-  const prevHref = `/app/leave?month=${monthLabel(addMonths(monthDate, -1))}`;
-  const nextHref = `/app/leave?month=${monthLabel(addMonths(monthDate, 1))}`;
+  const prevHref = `/hoohr/leave?month=${monthLabel(addMonths(monthDate, -1))}`;
+  const nextHref = `/hoohr/leave?month=${monthLabel(addMonths(monthDate, 1))}`;
 
   const isReviewer = isApprovalReviewer(user);
   const teamScope = isReviewer

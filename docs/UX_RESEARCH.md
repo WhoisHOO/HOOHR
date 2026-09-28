@@ -1,6 +1,6 @@
 # UX Pre-Research Report — Menu/Workflow Analysis of Existing Tools
 
-> Purpose: before designing hr-app (attendance + leave + expense tool for ~20 people), collect proven UX patterns as a reference baseline.
+> Purpose: before designing HOOHR (attendance + leave + expense tool for ~20 people), collect proven UX patterns as a reference baseline.
 > Studied: open-source (Frappe HR, OpenHRApp, DutyDuke, Receipt Wrangler, open-expense, CogniClaim) + paid (BambooHR, Gusto, Rippling, Expensify, SAP Concur)
 
 ---
@@ -126,7 +126,7 @@
 
 ## 6. Implications for Our Design
 
-### 6.1. Navigation Draft (hr-app)
+### 6.1. Navigation Draft (HOOHR)
 ```
 [Employee screens]
   Home   : today's clock status, remaining-leave card, my recent requests/decision status
@@ -142,7 +142,7 @@
   Settings      : leave policy / holidays / categories / company info
 ```
 
-### 6.2. Status Pipelines (hr-app)
+### 6.2. Status Pipelines (HOOHR)
 ```
 Leave    : requested → pending → approved/rejected (+ cancelled)
 Expense  : draft → submitted → approved → paid / rejected   [partial approval excluded from MVP]

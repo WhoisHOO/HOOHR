@@ -98,11 +98,11 @@ function isUniqueConstraintError(error: unknown): boolean {
 }
 
 function revalidateEmployeePages(): void {
-  revalidatePath("/app/admin/employees");
-  revalidatePath("/app/attendance");
-  revalidatePath("/app/leave");
-  revalidatePath("/app/expenses");
-  revalidatePath("/app");
+  revalidatePath("/hoohr/admin/employees");
+  revalidatePath("/hoohr/attendance");
+  revalidatePath("/hoohr/leave");
+  revalidatePath("/hoohr/expenses");
+  revalidatePath("/hoohr");
 }
 
 export async function createDepartment(

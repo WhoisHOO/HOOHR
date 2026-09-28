@@ -24,7 +24,7 @@ https://airflow.apache.org/docs/apache-airflow/stable/docker/docker-compose.yaml
 # 1) Airflow 스탠드얼론 (minimal 검증 전용)
 docker run --rm -e AIRFLOW__CORE__LOAD_EXAMPLES=False `
   -v ${PWD}/dags:/opt/airflow/dags `
-  -e DATABASE_URL="postgresql://hr:hr_dev_password@host.docker.internal:5432/hr_app" `
+  -e DATABASE_URL="postgresql://hr:hoohr_dev_password@host.docker.internal:5432/hoohr" `
   -p 8080:8080 -d apache/airflow:2.10.5-python3.11 airflow standalone
 
 # 2) DAG 목록 확인
@@ -37,7 +37,7 @@ docker exec -it <container> airflow dags list
 
 ```powershell
 python -m pip install -r requirements.txt
-$env:DATABASE_URL="postgresql://hr:hr_dev_password@localhost:5432/hr_app"
+$env:DATABASE_URL="postgresql://hr:hoohr_dev_password@localhost:5432/hoohr"
 python spark/attendance_analysis.py
 ```
 

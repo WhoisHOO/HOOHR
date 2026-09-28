@@ -46,7 +46,7 @@ export async function login(_state: LoginState, formData: FormData): Promise<Log
     role: user.role,
   });
 
-  redirect("/app");
+  redirect("/hoohr");
 }
 
 export async function logout(): Promise<void> {
@@ -115,8 +115,8 @@ export async function inviteEmployee(
 
   const baseUrl = process.env.APP_URL || "http://localhost:3000";
   const inviteUrl = `${baseUrl}/invite/${token}`;
-  revalidatePath("/app/admin/employees");
-  revalidatePath("/app/admin/invite");
+  revalidatePath("/hoohr/admin/employees");
+  revalidatePath("/hoohr/admin/invite");
   return {
     inviteUrl,
     message: `${result.employee.name}(${email}) 초대 링크 생성됨 (7일 유효)`,
@@ -192,8 +192,8 @@ export async function reinviteEmployee(
 
   const baseUrl = process.env.APP_URL || "http://localhost:3000";
   const inviteUrl = `${baseUrl}/invite/${token}`;
-  revalidatePath("/app/admin/employees");
-  revalidatePath("/app/admin/invite");
+  revalidatePath("/hoohr/admin/employees");
+  revalidatePath("/hoohr/admin/invite");
   return {
     inviteUrl,
     message: `${result.employee.name}(${result.employee.email}) 초대 링크 생성됨 (7일 유효)`,
@@ -278,5 +278,5 @@ export async function acceptInvitation(
     role: user.role,
   });
 
-  redirect("/app");
+  redirect("/hoohr");
 }
