@@ -1,0 +1,33 @@
+# Dependencies and build output are produced inside the image
+node_modules
+.next
+out
+build
+
+# Local secrets - the image must never bake in a dev .env
+.env
+.env.*
+!.env.example
+
+# Runtime data: receipt images live on a named volume (see docker-compose.yml)
+uploads
+
+# Dev logs and local test helpers
+dev-server.log
+*.tsbuildinfo
+_test-*.ts
+_mint-cookie.ts
+_db-state.ts
+
+# VCS and editor noise
+.git
+.gitignore
+.github
+.vscode
+.idea
+*.md
+!README.md
+
+# OS noise
+.DS_Store
+Thumbs.db

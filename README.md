@@ -1,36 +1,207 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HOOHR
 
-## Getting Started
+**Lightweight HR toolkit for startups and small teams** — attendance, leave, and expense claims in one self-hosted app.
 
-First, run the development server:
+Built for a team of ~20 people, not for an enterprise HR suite. Open source under [Apache-2.0](./LICENSE).
+
+> UI language is **Korean** (i18n is planned for v0.2). All documentation is in English.
+
+---
+
+## What it does
+
+| Module | Features |
+|---|---|
+| **Attendance** (근태) | Check-in / check-out with server time, multiple work segments per day (lunch breaks), live worked-time total, correction requests with manager approval, own daily/monthly history, team view for reviewers |
+| **Leave** (휴가) | PTO / sick / unpaid requests, full or half-day, live balance with over-request blocking, manager approval (reject requires a reason), self-cancel before approval, monthly company schedule, admin CSV balance import, **holiday-aware day counting** |
+| **Expenses** (경비) | Draft reports with multiple line items, per-item receipt upload, submit → approve → pay workflow, protected receipt downloads, **CSV export** for accounting |
+| **Employee & org admin** | Departments with managers, employee profiles, activate/deactivate, re-invite pending employees, **team-scoped approval inboxes** |
+| **Settings** | Company name + timezone, leave policy management (annual days, carry-over, paid/approval flags), holiday calendar, expense categories |
+
+### Roles
+
+| Role | Sees | Can approve |
+|---|---|---|
+| **EMPLOYEE** | Own attendance, leave, expenses | — |
+| **MANAGER** | Own + direct team | Own team's requests only |
+| **ADMIN** | Whole company | Everything, plus invites, settings, CSV import/export |
+
+Approval is scoped to the team: a manager resolves to the employee's explicit approver (`leaveApproverId`) or, failing that, their department manager. Self-approval and cross-company approval are refused at both the page and the action layer.
+
+### Status flows
+
+```
+leave:    requested -> PENDING  -> APPROVED / REJECTED   (CANCELED by owner)
+          balance is deducted only on APPROVED, and never for UNPAID
+
+expense:  DRAFT -> SUBMITTED -> APPROVED -> PAID
+                      |                     ^
+                      +-----> REJECTED      +-- (ADMIN confirms payment)
+attendance event:  CHECK_IN <-> CHECK_OUT  (many segments per day)
+```
+
+---
+
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| Framework | **Next.js 16** (App Router) + React 19 + TypeScript + Tailwind CSS v4 |
+| Database | **PostgreSQL 16** + **Prisma 7** (generated client committed to the repo) |
+| Auth | Email/password + invite links — `jose` session cookie, `bcryptjs` password hashing |
+| Validation | `zod` at every form and server-action boundary |
+| Storage | Receipt images on a local volume (an S3-compatible interface is the planned abstraction) |
+| Runtime | Single server — Docker Compose now, Cloudflare Tunnel for remote access |
+
+---
+
+## Quick start
+
+### Prerequisites
+
+- Node.js 24+ and npm 11+
+- Docker Desktop (for PostgreSQL)
+
+### 1. Configure the environment
+
+```bash
+cp .env.example .env
+```
+
+Generate a session secret and put it in `.env`:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+At minimum set `AUTH_SECRET` (app will refuse to start without it) and
+`BOOTSTRAP_ADMIN_EMAIL` / `BOOTSTRAP_ADMIN_PASSWORD` (used by the seed script).
+
+### 2. Start PostgreSQL
+
+```bash
+docker compose up -d db
+```
+
+### 3. Install, migrate, seed
+
+```bash
+npm ci
+npx prisma migrate deploy   # or: npm run db:migrate
+npm run db:seed
+```
+
+The seed creates the company, the leave policies, and the bootstrap admin.
+
+### 4. Run the app
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000> and log in with the bootstrap admin credentials.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Run it all in Docker
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+docker compose up -d --build
+```
 
-## Learn More
+This builds the app image and starts it alongside PostgreSQL (app on `:3000`, DB on `:5432`).
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Environment variables
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Variable | Required | Default | Purpose |
+|---|---|---|---|
+| `DATABASE_URL` | yes | — | PostgreSQL connection string |
+| `AUTH_SECRET` | yes | — | Session cookie signing key. **The app throws at startup if unset** |
+| `APP_URL` | no | `http://localhost:3000` | Public base URL; used to build invite links |
+| `BOOTSTRAP_ADMIN_EMAIL` | for seed | — | Initial admin account |
+| `BOOTSTRAP_ADMIN_PASSWORD` | for seed | — | Initial admin password |
+| `SMTP_HOST` / `SMTP_PORT` | no | — / `587` | SMTP server (email notifications are not implemented yet) |
+| `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | no | — / — | SMTP credentials and sender |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | no | `hr` / `hoohr_dev_password` / `hoohr` | Used by `docker-compose.yml` |
+| `POSTGRES_PORT` / `APP_PORT` | no | `5432` / `3000` | Host port mappings |
+| `UPLOAD_DIR` | no | `./uploads` | Where receipt images are written |
 
-## Deploy on Vercel
+> `.env` is gitignored. Never commit real credentials.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project layout
+
+```
+├── prisma/               schema, migrations, seed
+├── src/
+│   ├── app/
+│   │   ├── actions/      server actions (auth, attendance, leave, expense, employees, settings)
+│   │   ├── hoohr/        authenticated app shell + all pages
+│   │   ├── invite/       invite acceptance
+│   │   ├── login/
+│   │   └── generated/    Prisma client (committed)
+│   ├── lib/              prisma, session, DAL, validation schemas, pure domain helpers
+│   └── proxy.ts          route protection
+├── pipelines/            Airflow DAG + PySpark job (later phases)
+├── deploy/               EKS / external-access notes
+├── docs/                 REQUIREMENTS.md, UX_RESEARCH.md
+├── docker-compose.yml
+└── Dockerfile
+```
+
+Authenticated routes live under **`/hoohr`**. The pre-rename `/app` prefix still redirects there.
+
+### Notable design points
+
+- **DAL layer** (`src/lib/dal.ts`) — every page and action resolves the current user through one cached helper, so authorization cannot be forgotten at a call site.
+- **Pure domain helpers** — day counting, timezone boundaries, money formatting, and approval rules are plain functions in `src/lib/`, unit-testable without a database. The leave form's live preview and the server action deliberately share the same holiday set so they cannot disagree.
+- **Status-guarded writes** — approvals use a status-conditioned `updateMany` inside a transaction, so a lost race cannot double-deduct a leave balance.
+- **Times are stored in UTC** and rendered in the company timezone configured in settings.
+
+---
+
+## Scripts
+
+| Command | Description |
+|---|---|
+| `npm run dev` | Dev server on `:3000` |
+| `npm run build` / `npm start` | Production build / serve |
+| `npm run lint` | ESLint |
+| `npx tsc --noEmit` | Type check |
+| `npm run db:migrate` | Create/apply a development migration |
+| `npm run db:seed` | Seed the bootstrap company, policies, and admin |
+| `npm run db:studio` | Prisma Studio |
+
+### DB test scripts
+
+Four self-cleaning scripts exercise the domain logic directly against PostgreSQL and remove their own fixtures:
+
+```bash
+npx tsx _test-team.ts       # 27 checks - approval scoping and authorization
+npx tsx _test-settings.ts   # 23 checks - holiday-aware counting, policies, categories
+npx tsx _test-leave.ts      # leave request -> approve -> deduct -> cancel
+npx tsx _test-expense.ts    # expense draft -> submit -> approve -> pay
+```
+
+`_mint-cookie.ts <email>` prints a session cookie, handy for `curl` checks against a running dev server.
+
+---
+
+## Status and roadmap
+
+The MVP feature set is implemented. Not done yet:
+
+- **Email notifications** — SMTP is configured but no send path exists yet
+- **i18n** — the UI is Korean only
+- **OCR receipt extraction** — deferred to v0.2
+- **Grant-on-hire / leave carry-over automation** — balances are currently granted explicitly
+- **EKS + Airflow + Spark deployment** — see [`pipelines/`](./pipelines) and [`deploy/`](./deploy)
+
+## Contributing
+
+Issues and pull requests are welcome. Please run `npm run lint` and `npx tsc --noEmit` before opening a PR, and keep written artifacts in English (UI copy stays Korean until i18n lands).
+
+## License
+
+[Apache-2.0](./LICENSE) — see the file for the full text.
