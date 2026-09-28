@@ -13,9 +13,9 @@
 
 ---
 
-## 📍 Current Status (as of 2026-09-28, end of Session 10)
+## 📍 Current Status (as of 2026-09-28, end of Session 11)
 
-**Progress: The whole MVP feature set is implemented — Auth + Attendance + Leave + Expense, employee/org admin, team-scoped approvals, expense CSV export, and the settings module with holiday-aware leave counting. Remaining MVP items: email notifications (NOT-1/2) and GitHub push (`gh auth login`).**
+**Progress: The whole MVP feature set is implemented — Auth + Attendance + Leave + Expense, employee/org admin, team-scoped approvals, expense CSV export, and the settings module with holiday-aware leave counting. The project is branded HOOHR, public on GitHub, and clone-and-run: real `Dockerfile`, working `docker-compose.yml`, `.env.example`, and a rewritten README. Remaining MVP item: email notifications (NOT-1/2), which needs SMTP credentials.**
 
 > **Session 6 note**: Session 5 ended five minutes before the Leave module files were produced. The DB logic round-trip (`_test-leave.ts`), lint/tsc, and GET checks were done in Session 6. Server-action E2E (browser) of leave forms remains, same as attendance.
 
@@ -45,12 +45,13 @@
 | Team-scoped approval inboxes (attendance/leave/expense) | ✅ Done (Session 9) |
 | Settings module (company profile, policies, holidays, categories) | ✅ Done (Session 10) |
 | Holiday-aware leave day counting | ✅ Done (Session 10) |
-| Email notifications (NOT-1/2) | ⬜ Pending — needs SMTP config |
+| Email notifications (NOT-1/2) | ⬜ Pending — needs SMTP credentials |
 | Checkpoint commit (Session 5–9) | ✅ `98f7ab8` + `e1cc5b3` |
 | **GitHub public repo** | ✅ **Done — https://github.com/WhoisHOO/HOOHR** (`main`, renamed in Session 11) |
 | Brand rename `hr-app` → `HOOHR` (routes/DB/containers/docs) | ✅ Done (Session 11) |
-| Root `Dockerfile` (referenced by compose, never written) | 🔄 In progress (Session 11) |
-| README for a public repo | ⬜ Still the `create-next-app` template (Session 11) |
+| Root `Dockerfile` (referenced by compose, never written) | ✅ Done (Session 11) — multi-stage on `node:24-alpine`; compose `app` verified end to end |
+| README for a public repo | ✅ Done (Session 11) — real project docs + `.env.example` |
+| Brand-rename + Dockerfile + README final commit | ✅ `3091263` (pushed to `main`, Session 11) |
 
 > **Key notes:**
 > - **The repo is live: https://github.com/WhoisHOO/HOOHR** (public, `main`, renamed in Session 11). `gh` is authenticated as `WhoisHOO`, so `git push` works without any further setup. App routes live under `/hoohr`.
@@ -435,6 +436,39 @@ C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchang
   - Live GETs with a minted admin cookie: all 11 `/hoohr/**` pages 200 (dashboard, attendance, leave, leave?month, expenses, CSV export, admin employees/invite/balances/settings, settings?year); legacy `/app`, `/app/leave`, `/app/admin/settings` → 307 to the `/hoohr` equivalents; unauthenticated `/hoohr/**` → 307 `/login`
   - Rendered HTML confirms the brand: dashboard title `대시보드 · HOOHR`, login title `로그인 · HOOHR`, all sidebar links pointing at `/hoohr/*`
 - **Ops note**: Docker Desktop was down again (5th occurrence) and, more importantly, **blanket-killing every `node` process to clear `.next` took Docker Desktop down with it** — do not blanket-kill node on this machine. Docker was relaunched and the old container/volume were replaced by the new `hoohr_db`.
+
+- **Root `Dockerfile` — done** (closes gap ①). Multi-stage on `node:24-alpine`: `deps` → `builder` → `runner`, plus `openssl` (Prisma's query engine needs it on Alpine) and a non-root `nextjs` user in the runner.
+  - **Two build-time placeholders were required, both traced to real source behaviour rather than guessed:**
+    - `prisma.config.ts` calls `env("DATABASE_URL")`, which **throws during `prisma generate`** — so the builder stage needs a `DATABASE_URL` placeholder (`postgresql://build:build@localhost:5432/build`).
+    - `src/lib/session.ts` reads `AUTH_SECRET` at **module scope** and throws if missing, so `next build` fails without it — the builder stage needs an `AUTH_SECRET` placeholder.
+  - **Neither placeholder is carried into the runner stage.** Both are commented in the Dockerfile so nobody mistakes them for configuration. A `SecretsUsedInArgOrEnv` build warning fires for `AUTH_SECRET`; it is a build-time literal, not a leak, and is safe to ignore.
+  - `.dockerignore` added: excludes `node_modules`, `.next`, `.env`, `uploads`, `dev-server.log`, the `_test-*.ts` helpers and `*.md` (keeping `README.md`), while deliberately **keeping** `src/app/generated` and `prisma/migrations` — the generated Prisma client is committed to this repo and the build genuinely needs it.
+- **Docker Compose verification — done** (this is the part that was never done in Session 1):
+  - `docker compose up -d --build` → image `hoohr:local` built, containers `hoohr` + `hoohr_db` started, `hoohr_db` reported **healthy**, app mapped to a spare host port (`:3100`, because the dev server already held `:3000`).
+  - Container logs clean: `Next.js 16.3.6`, `✓ Ready in 173ms`.
+  - Unauthenticated: `/login` **200**, `/hoohr` **307 → /login**, `/` **307 → /login**, and the legacy `/app` **307 → /hoohr** (the rename redirect works in the container, not just in dev).
+  - Authenticated (minted admin cookie against the same DB and secret): `/hoohr`, `/hoohr/attendance`, `/hoohr/leave`, `/hoohr/expenses`, `/hoohr/admin/settings` all **200**; `/hoohr/expenses/export?month=2026-09` **200 `text/csv; charset=utf-8`**.
+  - Torn down afterwards and the local `hoohr_db` was brought back up so the dev environment was left as found. The data volume was deliberately **kept** (`docker compose down`, not `-v`).
+  - Ops note: a temp env file was generated from `.env` with blank values and comments stripped, so `docker compose` could not choke on the file's comment header. The real `.env` was not modified (re-read afterwards to confirm).
+
+- **README rewrite — done** (closes gap ②). Replaced the 36-line `create-next-app` template (which advertised yarn/pnpm/bun and Vercel — none used here) with:
+  - what it does — a per-module feature table (attendance / leave / expenses / employee admin / settings), the **role and permission matrix**, and the actual status-flow diagrams (`DRAFT→SUBMITTED→APPROVED→PAID`, `requested→PENDING→APPROVED/REJECTED|CANCELED`, with the note that leave balances are deducted **only on APPROVED and never for UNPAID**)
+  - the **tech stack** table, honestly reflecting the real choices (Next 16 / React 19 / Tailwind v4, Postgres 16 + Prisma 7 with the client committed, `jose` + `bcryptjs`, `zod`, local receipt storage with S3 as a planned abstraction)
+  - a **quick start** with real prerequisites (Node 24+, npm 11+, Docker Desktop) and four ordered steps, plus the all-in-Docker path
+  - a full **environment variable table** (required vs optional, defaults, and the warning that the app throws at startup without `AUTH_SECRET`)
+  - **project layout** plus a "notable design points" section that explains the things a newcomer would otherwise have to reverse-engineer: the DAL layer, the pure domain helpers shared between the leave form's live preview and the server action, the status-guarded `updateMany`-in-a-transaction writes, and UTC storage with company-timezone rendering
+  - the **script list** including the four self-cleaning DB test scripts, and a note that `_mint-cookie.ts` prints a session cookie for `curl` checks
+  - an honest **status/roadmap** listing what is not done: email notifications (SMTP configured but no send path), i18n (Korean only), OCR receipt extraction, grant-on-hire/carry-over automation, and the EKS+Airflow+Spark deployment
+  - a **Contributing** section, and the Apache-2.0 license reference
+- **`.env.example` added** to back the quick start, with every value either blank or a public dev default. `.gitignore` already had a blanket `.env*` rule, which would have swallowed the new template file, so a `!.env.example` negation was added — confirmed via `git check-ignore` and by the file appearing in `git status`.
+
+- **Final verification before push**:
+  - `npm run lint` clean, `npx tsc --noEmit` clean
+  - `_test-team` **27/27**, `_test-settings` **23/23**, `_test-leave` and `_test-expense` full step traces green, **0 leftovers** in all four
+  - dev server `/login` 200
+  - **Secret audit on the staged diff**: no `Admin1234`, no `dev-only-secret`, no long hex literals, no GitHub/`sk-` tokens, no base64 blobs. The only two connection strings are the public dev password in `.env.example` and the build placeholder — both safe. `.env` confirmed **absent from the index** via `git ls-files`.
+- **Commit + push**: `3091263` `feat(docker): add missing root Dockerfile and rewrite README` pushed to `origin/main` (https://github.com/WhoisHOO/HOOHR). Note for the future: the first commit attempt **failed** because PowerShell mangled the message — parentheses and quotes in an inline `-m` argument reach git as separate args. Write the message to a file and use `git commit -F <file>`.
+- **Result/next**: the repo is now genuinely clone-and-run. A fresh `git clone` of https://github.com/WhoisHOO/HOOHR has a real `Dockerfile`, a real `docker-compose.yml` that builds, a `.env.example` to copy, and a README that tells the truth. Remaining, in rough priority order: ① **email notifications (NOT-1/2)** — the only MVP feature left, blocked on SMTP credentials ② **browser E2E sweep** of every form (still impossible via curl — known Next.js server-action restriction) ③ **stable domain** via a free subdomain (is-a.dev / eu.org) + named tunnel, since the quick-tunnel URL dies with its process ④ **pipelines/deploy runtime validation** — `pipelines/Dockerfile` and the DAG are drafted but never executed ⑤ grant-on-hire / leave carry-over automation, i18n, and OCR, all v0.2.
 
 <!-- ====== Template for next sessions (copy & use) ======
 ### Session 5 (2026-09-24): <title>
