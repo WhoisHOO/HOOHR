@@ -55,10 +55,11 @@
 | **i18n: Korean / English, runtime switch** | ✅ **Done (Session 12)** ✅ dependency-free; `locale` cookie (ko default), 9 dictionary namespaces, locale-aware dates/numbers/CSV |
 | i18n infrastructure commit (auth + nav) | ✅ `b036e2b` (pushed to `main`, Session 12) |
 | i18n full-module extraction + verification | ✅ `930ac5c` (pushed to `main`, Session 12) |
+| Browser E2E harness (CDP, zero dependencies) | ✅ `0b96554` — locale switcher 20/20 in a real browser |
 
 > **Key notes:**
 > - **The repo is live: https://github.com/WhoisHOO/HOOHR** (public, `main`, renamed in Session 11). `gh` is authenticated as `WhoisHOO`, so `git push` works without any further setup. App routes live under `/hoohr`.
-> - **500 "Connection closed." when POSTing server actions via curl/fetch is a known Next.js restriction** — not an app bug. Test real flows via browser.
+> - **500 "Connection closed." when POSTing server actions via curl/fetch is a known Next.js restriction** — not an app bug. **Do not fight it with curl:** `npm run test:e2e` drives a real browser over CDP with no new dependencies (Session 12), and `_e2e/README.md` shows how to add a case.
 > - Quick-tunnel URL persists only while the same `cloudflared` process is alive; restart/reboot generates a **new random URL**. Unrelated to dev-server restarts.
 > - This PC's router DNS (192.168.1.254) fails to resolve some trycloudflare hostnames → verify via `--resolve` or 8.8.8.8. Other devices are fine.
 > - **GET checks with a session cookie: use `curl.exe`, not `Invoke-WebRequest`** — PowerShell silently drops a manual `Cookie` header, which looks like a redirect loop to /login. Mint a cookie with `npx tsx _mint-cookie.ts [email]`.
@@ -488,13 +489,13 @@ C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchang
     instead of rendering `undefined` at runtime.
   - **Preserve the original Korean copy.** Statuses are `승인 대기` / `작성 중` / `무급휴직` / `반려`, not a
     re-worded English-first phrasing.
-  - **User-entered data is never translated** ✅ employee names, department names, leave policy names, expense
+  - **User-entered data is never translated** — employee names, department names, leave policy names, expense
     category names and the company name stay exactly as entered, so the English UI can show Korean only where
     the data itself is Korean. Confirmed correct in Session 12, not an oversight.
 - **Built**:
   - `src/i18n/`: `config.ts` (`Locale`, `LOCALES`, `INTL_LOCALES`), `format.ts` (`interpolate`), `server.ts`,
     `client.tsx` (`LocaleProvider` + `useI18n`), `actions.ts`, `LocaleSwitcher.tsx`.
-  - `src/i18n/dictionaries/`: 9 namespaces ✅ `common`, `nav`, `auth`, `dashboard`, `attendance`, `leave`,
+  - `src/i18n/dictionaries/`: 9 namespaces — `common`, `nav`, `auth`, `dashboard`, `attendance`, `leave`,
     `expenses`, `admin`, `settings`, each with `ko` + `en`.
   - Root layout is `async`, resolves the locale and injects the provider; `<html lang>` is now dynamic.
   - Zod schemas became locale-aware factories: `loginFormSchema(v)`, `leaveFormSchema(v)`,
@@ -506,7 +507,7 @@ C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchang
     `src/lib/attendance.ts`, `src/lib/leave.ts`, `src/lib/expense.ts` take an optional trailing `intl`
     parameter (default `ko-KR`), so existing call sites and tests stay valid. 25 call sites updated.
 - **Fixes found along the way**:
-  - `common.leaveKind` was not actually wired in ✅ the leave page rendered raw `policy.name`; verified the
+  - `common.leaveKind` was not actually wired in — the leave page rendered raw `policy.name`; verified the
     badge/select/filter all now use the dictionary.
   - Removed a duplicated `expenses.status` block; the CSV export route uses `common.expenseStatus`.
   - Restored the leave page's original `commentOnly` branch (`의견: {comment}` plus the requester name) that
@@ -518,7 +519,7 @@ C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchang
     admin/employees, admin/invite, admin/balances, admin/settings), plus `/login` and `/invite/*`.
   - Unauthenticated guards intact: `/hoohr`, `/hoohr/leave`, `/` all 307 to `/login`; legacy `/app/leave`
     still 307s to `/hoohr/leave`.
-  - **Hangul audit of the English HTML:** 50 Korean lines remained, and every one is explained ✅ seeded
+  - **Hangul audit of the English HTML:** 50 Korean lines remained, and every one is explained — seeded
     employee/position/department names, leave policy names, expense category names, and the `한국어`
     endonym in the language switcher (a language picker should label each language in its own script). No
     untranslated UI copy. The Korean pages render 29-102 Korean lines each, as expected.
@@ -537,9 +538,40 @@ C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchang
   server output. It predates i18n (only the `ReceiptError` return codes changed here) and is a deployment-size
   concern, not a correctness one. Left alone deliberately; the fix is a static `path.join(process.cwd(), ...)`
   plus `outputFileTracingExcludes`.
-- **Not verified**: clicking the switcher in a real browser. The locale *read* path is proven (a `locale=en`
-  cookie changes every page), and the switcher renders with both options, but the server-action *write*
-  path cannot be exercised over curl ✅ same known Next.js restriction as the other forms.
+- **Not verified at this point**: clicking the switcher in a real browser. The locale *read* path was proven (a
+  `locale=en` cookie changes every page), and the switcher rendered with both options, but the server-action
+  *write* path cannot be exercised over curl — same known Next.js restriction as the other forms.
+  **This was then resolved later the same session — see “Browser E2E harness” below.**
+- **Browser E2E harness (`_e2e/`) — resolves the blocker that had been open since Session 5**:
+  - **The gap, stated precisely**: a Next.js **server action** cannot be invoked with a plain `POST`; a hand-rolled
+    one returns `500 Connection closed.` That is a framework restriction, not an app bug, and it had blocked every
+    form's real interaction test since Session 5/6. For i18n it was worse than untested — every HTTP check passed
+    a `locale=en` cookie by hand, so they only exercised the **read** path. The `setLocale` **write** path could have
+    been entirely broken and all 20+ checks would still have been green.
+  - **No new dependencies.** Rather than adding Playwright, `_e2e/cdp.mjs` speaks the **Chrome DevTools Protocol**
+    directly, reusing the Chrome/Edge already installed on the machine plus the `WebSocket` and `fetch` globals built
+    into Node 22+. Nothing was added to `dependencies` or `devDependencies`, and there is no `npx playwright install`
+    browser download to manage. Verified Node v24.19.0 exposes `WebSocket` as `function`, and both `msedge.exe` 154
+    and `chrome.exe` 153 are present.
+  - **How it works**: spawn the browser with `--remote-debugging-port` on a throwaway profile, read the debugger
+    endpoint from `/json/version`, then `Target.createTarget` + `Target.attachToTarget` with `flatten: true`, and
+    drive `Page.navigate`, `Runtime.evaluate` and `Network.getAllCookies`.
+  - **20/20 assertions passing** via `npm run test:e2e`: login through a real typed-in form (native prototype value
+    setter + `input` event, because React ignores a plain `el.value = x` on a controlled input) → Korean by
+    default with **no `locale` cookie set at all** → click **English** → `setLocale` wrote `locale=en` as
+    `httpOnly` with `path=/` → the UI actually switched → English survives a **hard reload** and carries across
+    `/hoohr/leave` and `/hoohr/expenses` → click **한국어** and the cookie flips to `ko` → `<html lang>` follows the
+    locale (`lang=en`) → sign-out lands on `/login`.
+  - The `httpOnly` `locale` cookie is asserted through `Network.getAllCookies`, since `document.cookie` cannot see it.
+  - Exits non-zero on failure and exits early with a clear message when the dev server is not up, so it is CI-ready.
+    Overridable with `E2E_BASE`, `E2E_EMAIL`, `E2E_PASSWORD`, `E2E_PORT`, `E2E_HEADFUL=1` (watch it run).
+  - **Commit + push**: `0b96554` `test(e2e): verify the locale switcher in a real browser with a zero-dependency CDP
+    harness` pushed to `origin/main` (5 files, +503). Secret audit clean apart from the **public seed password**
+    `Admin1234!`, which is already documented in `README.md` and `.env.example`; it is kept as the default so the suite
+    runs with no setup. `npm run lint` exit 0 and `npx tsc --noEmit` 0 errors after adding the folder (ESLint does not
+    pick up the `.mjs` files and `tsconfig` does not include them).
+  - **Next use for the harness**: the forms themselves — leave request, attendance check-in, expense submission —
+    are the last flows never exercised through a real server action. The harness now makes them reachable.
 - **Gotchas worth remembering**:
   - `Get-Content` without `-Encoding UTF8` renders the emoji in this file as CP949 garbage on the console.
     The file is fine; verify with Python `io.open(..., encoding="utf-8")` before believing any mojibake here.
@@ -551,10 +583,11 @@ C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchang
   tokens, no private key. The 16 long `[A-Za-z0-9+/]{32,}` matches were all git diff file headers
   (`+++ b/src/...`). `.env` confirmed **absent from the index** via `git ls-files`. Committed with
   `git commit -F <file>` per the Session 11 lesson that PowerShell mangles parentheses and quotes in inline `-m`.
-- **Result/next**: the UI is bilingual end to end, committed and pushed. Remaining, in rough priority order —
-  **browser E2E of the locale switcher** (the one thing curl cannot prove) — **email notifications (NOT-1/2)** once
-  SMTP credentials exist — the `storage.ts` tracing warning — **stable domain** via a free subdomain + named tunnel
-  — `pipelines/deploy` runtime validation.
+- **Result/next**: the UI is bilingual end to end, committed and pushed, and the locale switcher is now proven
+  in a real browser. Remaining, in rough priority order — **browser E2E of the forms themselves** (leave
+  request, attendance check-in, expense submission) — unreachable until this session, now unblocked by the
+  `_e2e/` harness — **email notifications (NOT-1/2)** once SMTP credentials exist — the `storage.ts` tracing
+  warning — **stable domain** via a free subdomain + named tunnel — `pipelines/deploy` runtime validation.
 
 <!-- ====== Template for next sessions (copy & use) ======
 ### Session 5 (2026-09-24): <title>
