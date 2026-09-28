@@ -222,3 +222,31 @@ export class Page {
 }
 
 export { sleep };
+
+/**
+ * Waits until React has actually hydrated the given element.
+ *
+ * This matters more than it looks. Before hydration, writing a value into a
+ * controlled input leaves the DOM looking correct: the native setter succeeds
+ * and no re-render follows to overwrite it, so a naive round-trip check
+ * reports success. A form filled in that window silently submits the server's
+ * default values instead of what the test typed, which reads as an app bug.
+ *
+ * React tags every host instance it hydrates with `__reactFiber$` /
+ * `__reactProps$` expando keys, so their presence is a direct signal rather
+ * than an inference from behaviour.
+ */
+export async function waitForReact(page, selector, { tries = 60, delay = 100 } = {}) {
+  for (let i = 0; i < tries; i++) {
+    const ready = await page
+      .eval(`
+        const el = document.querySelector(${JSON.stringify(selector)});
+        if (!el) return false;
+        return Object.keys(el).some((k) => k.startsWith("__reactFiber$") || k.startsWith("__reactProps$"));
+      `)
+      .catch(() => false);
+    if (ready) return true;
+    await sleep(delay);
+  }
+  throw new Error(`React never hydrated ${selector} (waited ${tries * delay}ms)`);
+}

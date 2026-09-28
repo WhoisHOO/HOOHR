@@ -13,11 +13,11 @@
 
 ---
 
-## 📍 Current Status (as of 2026-09-28, end of Session 12)
+## 📍 Current Status (as of 2026-09-28, end of Session 13)
 
-**Progress: The whole MVP feature set is implemented ✅ Auth + Attendance + Leave + Expense, employee/org admin, team-scoped approvals, expense CSV export, and the settings module with holiday-aware leave counting. The project is branded HOOHR, public on GitHub, and clone-and-run: real `Dockerfile`, working `docker-compose.yml`, `.env.example`, and a rewritten README. The UI is now bilingual: Korean and English, switchable at runtime from the sidebar, with no external i18n library. Remaining MVP item: email notifications (NOT-1/2), which needs SMTP credentials.**
+**Progress: The whole MVP feature set is implemented ✅ Auth + Attendance + Leave + Expense, employee/org admin, team-scoped approvals, expense CSV export, and the settings module with holiday-aware leave counting. The project is branded HOOHR, public on GitHub, and clone-and-run: real `Dockerfile`, working `docker-compose.yml`, `.env.example`, and a rewritten README. The UI is bilingual: Korean and English, switchable at runtime from the sidebar, with no external i18n library. The UI is now covered by real-browser E2E with zero added dependencies, and that harness immediately caught a bug that had made the leave request form completely unusable since Session 6. Remaining MVP item: email notifications (NOT-1/2), which needs SMTP credentials.**
 
-> **Session 6 note**: Session 5 ended five minutes before the Leave module files were produced. The DB logic round-trip (`_test-leave.ts`), lint/tsc, and GET checks were done in Session 6. Server-action E2E (browser) of leave forms remains, same as attendance.
+> **Session 6 note**: Session 5 ended five minutes before the Leave module files were produced. The DB logic round-trip (`_test-leave.ts`), lint/tsc, and GET checks were done in Session 6. Server-action E2E (browser) of leave forms remained impossible for sessions after that, and Session 13 finally closed that gap — and found the leave form had been broken that whole time.
 
 | Step | Status |
 |---|---|
@@ -56,6 +56,9 @@
 | i18n infrastructure commit (auth + nav) | ✅ `b036e2b` (pushed to `main`, Session 12) |
 | i18n full-module extraction + verification | ✅ `930ac5c` (pushed to `main`, Session 12) |
 | Browser E2E harness (CDP, zero dependencies) | ✅ `0b96554` — locale switcher 20/20 in a real browser |
+| **Leave request form unusable since Session 6** | ✅ **Fixed (Session 13)** — unchecked checkbox sent `""`, which `.optional()` rejects; `isHalfDay` error was also swallowed by the form |
+| Browser E2E of the attendance + leave forms | ✅ **Done (Session 13)** — `_e2e/forms.mjs`, 21/21 |
+| **Remaining MVP item: email notifications (NOT-1/2)** | ⛔ **Blocked — needs SMTP credentials** |
 
 > **Key notes:**
 > - **The repo is live: https://github.com/WhoisHOO/HOOHR** (public, `main`, renamed in Session 11). `gh` is authenticated as `WhoisHOO`, so `git push` works without any further setup. App routes live under `/hoohr`.
@@ -588,6 +591,55 @@ C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchang
   request, attendance check-in, expense submission) — unreachable until this session, now unblocked by the
   `_e2e/` harness — **email notifications (NOT-1/2)** once SMTP credentials exist — the `storage.ts` tracing
   warning — **stable domain** via a free subdomain + named tunnel — `pipelines/deploy` runtime validation.
+
+### Session 13 (2026-09-28): browser E2E of the real forms — found and fixed a leave request bug that had been there since Session 6
+
+- **Goal**: extend the `_e2e/` harness (Session 12) to the forms themselves, which had never been driven through a
+  browser since Session 5.
+- **Found a real, user-facing bug. The leave request form could not be submitted at all.** It looked correct and
+  fully functional: dates validated, the reason field accepted input, the live day-count preview updated.
+  Submitting sent a `POST` that returned 200, the server logged no error, no record appeared in the database, and
+  no error was shown to the user. It silently did nothing.
+  - **Root cause**: an unchecked checkbox is **omitted from `FormData` entirely**, so
+    `src/app/actions/leave.ts` sent `isHalfDay: String(formData.get("isHalfDay") ?? "")`, i.e. `""`. The Zod enum
+    in `src/lib/leave-validation.ts` was `z.enum(["true","1","on"], {...}).optional()`. **`.optional()` tolerates
+    `undefined`, not `""`**, so every leave request failed validation on a field the user never touched.
+  - **Why it hid so well**: `leave-form.tsx` rendered `fieldErrors.policyId` and `fieldErrors.reason` but nothing
+    else, so the `isHalfDay` error was discarded. The action was behaving correctly; the UI was swallowing the
+    complaint. Any field outside that hardcoded pair fails in exactly the same silent way.
+  - **Age**: introduced in **Session 6** (`1809e0c`). The Session 12 i18n pass localized the error *message* and
+    changed no logic, so the bug survived it untouched.
+  - **Fix**: accept the empty string in the enum (`z.enum(["", "false", "true", "1", "on"], ...)`), and render
+    `fieldErrors` for `startDate`, `endDate`, and `isHalfDay` so no field can fail silently again.
+  - **Consistency check**: the settings forms already handle this correctly via `formCheckbox(formData, key)` in
+    `src/app/actions/settings.ts`, which normalizes to `"true"`/`"false"`. Only `requestLeave` was missing it, so
+    the divergence was per-call-site rather than systemic.
+- **New suite `_e2e/forms.mjs`, 21 checks, all passing.** Attendance check-in/check-out and the full leave
+  request → awaiting approval → cancel → canceled round trip. Note the attendance assertions check `disabled`
+  state rather than button presence: both buttons are always in the DOM. It switches the UI to English right after
+  login and asserts only English copy, which cross-checks the non-default locale and keeps Korean literals out of
+  the file.
+- **Two harness gotchas worth remembering**:
+  - **Waiting for React hydration is mandatory, not defensive.** Before hydration, writing a value into a
+    controlled input leaves the DOM looking correct — the native setter succeeds and no re-render follows to
+    overwrite it — so a naive set/read round-trip reports success while the server receives the *default* value.
+    My first date assertion failed with the start date silently reset to today, which reads exactly like an app
+    bug. `waitForReact()` in `cdp.mjs` now polls for React's `__reactFiber$` expando keys, a direct signal rather
+    than an inference from behaviour.
+  - **The pre-run cleanup sweep matters.** A leftover attendance row leaves the check-in button disabled and a
+    leftover leave request double-spends the balance, so an interrupted run would poison the next one.
+    `cleanup.ts` runs before and after the suite, and also removed the rows created while debugging this bug.
+- **Encoding trap, hit a second time**: a `Get-Content`/`WriteAllText` round-trip corrupted every Korean string in
+  `_e2e/forms.mjs` to mojibake. Rewrote it with the editor tool. Now documented in `_e2e/README.md`.
+- **Regression sweep after the schema change** (a validation schema is exactly the kind of edit that breaks
+  callers who *do* send a value): `_test-leave.ts` all 7 checks, `_test-team.ts` 27/27, `_test-settings.ts` 23/23,
+  `_test-expense.ts` all 8, `locale-switcher.mjs` 20/20. `tsc` 0 errors, lint exit 0.
+- **Docs**: `_e2e/README.md` rewritten to cover both suites, the cleanup contract, and the three input pitfalls;
+  `README.md` scripts table now lists `test:e2e`, `test:e2e:forms`, and `test:e2e:all`.
+- **Result/next**: both browser suites green, and the leave form is usable for the first time since Session 6.
+  Remaining, in rough priority order — **expense form E2E** (submit, approve, reject, CSV) now that `_e2e` makes
+  it cheap — **email notifications (NOT-1/2)** once SMTP credentials exist — the `storage.ts` tracing warning —
+  **stable domain** via a free subdomain + named tunnel — `pipelines/deploy` runtime validation.
 
 <!-- ====== Template for next sessions (copy & use) ======
 ### Session 5 (2026-09-24): <title>

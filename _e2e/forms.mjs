@@ -1,0 +1,284 @@
+// End-to-end check of the real forms, driven through a browser.
+//
+// These flows have never been tested interactively. Every earlier round went
+// straight to the database (_test-*.ts) or checked the rendered HTML over curl,
+// so the wiring between a controlled React input and the server action was
+// never exercised. A page can render perfectly and its submit button can still
+// be broken.
+//
+// The test switches the UI to English right after login and asserts only
+// against English copy. That is deliberate: it keeps Korean string literals
+// out of this file, where a stray encoding round-trip can silently corrupt
+// them (a PowerShell Get-Content/WriteAllText pass already did that once), and
+// it cross-checks that the forms work in the non-default locale too.
+//
+// Requires the dev server:
+//   npm run dev               # in one terminal
+//   npm run test:e2e:forms    # in another
+//
+// Self-cleaning: fixtures are removed by _e2e/cleanup.ts, which also runs first
+// to sweep anything an interrupted previous run left behind.
+
+import { launch, connect, sleep, waitForReact } from "./cdp.mjs";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const HERE = dirname(fileURLToPath(import.meta.url));
+const BASE = process.env.E2E_BASE || "http://localhost:3000";
+const EMAIL = process.env.E2E_EMAIL || "admin@example.com";
+const PASSWORD = process.env.E2E_PASSWORD || "Admin1234!";
+const PORT = Number(process.env.E2E_PORT || 9223);
+const HEADLESS = process.env.E2E_HEADFUL !== "1";
+const REASON = "E2E-FORM-HARNESS";
+
+let pass = 0;
+let fail = 0;
+function check(label, ok, detail = "") {
+  if (ok) {
+    pass++;
+    console.log(`  ok    ${label}${detail ? "  " + detail : ""}`);
+  } else {
+    fail++;
+    console.log(`  FAIL  ${label}${detail ? "  " + detail : ""}`);
+  }
+}
+
+function cleanup(label) {
+  // Run tsx through the current node binary rather than shelling out to npx:
+  // on Windows `npx` is a .cmd shim, so spawnSync("npx", ...) fails with
+  // ENOENT unless shell:true is set, which then warns about unescaped args.
+  const tsxCli = join(HERE, "..", "node_modules", "tsx", "dist", "cli.mjs");
+  const r = spawnSync(process.execPath, [tsxCli, join(HERE, "cleanup.ts")], {
+    encoding: "utf-8",
+    env: { ...process.env, E2E_EMAIL: EMAIL },
+  });
+  const line = (r.stdout || "").trim().split("\n").pop() || "";
+  const err =
+    (r.stderr || "").trim().split("\n").filter((l) => l && !l.includes("injected env")).pop() || "";
+  console.log(`  ${label}: ${line || err || "no output"}`);
+  return { code: r.status, out: line || err };
+}
+
+// React keeps its own value tracking, so a plain el.value = x is ignored. The
+// value has to go through the native prototype setter and then announce itself
+// with an input event.
+const FILL = `
+  const set = (el, v) => {
+    const desc = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), "value");
+    desc.set.call(el, v);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+  };
+`;
+
+const probe = await fetch(`${BASE}/login`).catch(() => null);
+if (!probe || !probe.ok) {
+  console.error(`dev server not reachable at ${BASE} - start it with: npm run dev`);
+  process.exit(1);
+}
+
+cleanup("pre-run sweep");
+
+const browser = await launch({ port: PORT, headless: HEADLESS });
+console.log("browser:", browser.version, "\n");
+
+try {
+  const cdp = await connect(PORT);
+  const page = await cdp.newPage();
+
+  // ---------- login ----------
+  await page.goto(`${BASE}/login`);
+  await page.eval(`
+    ${FILL}
+    set(document.querySelector('input[name="email"]'), ${JSON.stringify(EMAIL)});
+    set(document.querySelector('input[name="password"]'), ${JSON.stringify(PASSWORD)});
+    document.querySelector('button[type="submit"]').click();
+    return 1;
+  `);
+  await sleep(2500);
+  check("logged in", (await page.url()).startsWith(`${BASE}/hoohr`), (await page.url()).replace(BASE, ""));
+
+  // ---------- switch to English, then assert only English copy ----------
+  await page.eval(`
+    const el = [...document.querySelectorAll("button, a, [role=button]")]
+      .find((n) => (n.textContent || "").trim() === "English");
+    if (!el) return null;
+    el.click();
+    return 1;
+  `);
+  await sleep(2500);
+  check("switched to English for the assertions", (await page.text()).includes("Sign out"), "");
+
+  // =====================================================================
+  // Attendance: check in, then check out
+  //
+  // Both buttons are always in the DOM. The panel toggles them with the
+  // `disabled` attribute instead: check-in is disabled while the day is open,
+  // check-out is disabled until it is. So the assertions are about disabled
+  // state, not about which button exists. There is no note field on this form.
+  // =====================================================================
+  const attState = `(() => {
+    const byText = (t) => [...document.querySelectorAll('button[type="submit"]')]
+      .find((b) => (b.textContent || "").trim().startsWith(t));
+    const inb = byText("Check in");
+    const outb = byText("Check out");
+    const txt = document.body.innerText;
+    return {
+      inDisabled: inb ? inb.disabled : null,
+      outDisabled: outb ? outb.disabled : null,
+      onWork: /On work/.test(txt),
+      done: /Checked out/.test(txt),
+      notCheckedIn: /Not checked in/.test(txt),
+      eventCount: (txt.match(/Check in|Check out/g) || []).length,
+    };
+  })()`;
+
+  await page.goto(`${BASE}/hoohr/attendance`);
+  await waitForReact(page, 'input[name="startDate"]').catch(() => {});
+  await waitForReact(page, 'button[type="submit"]');
+  const att0 = await page.eval(`return ${attState};`);
+  check("starts not-checked-in: check-in enabled, check-out disabled",
+    att0.notCheckedIn && att0.inDisabled === false && att0.outDisabled === true,
+    JSON.stringify(att0));
+
+  const inLabel = await page.eval(`
+    const btn = [...document.querySelectorAll('button[type="submit"]')]
+      .find((b) => (b.textContent || "").trim() === "Check in");
+    if (!btn) return null;
+    btn.click();
+    return btn.textContent.trim();
+  `);
+  check("check-in clicked", inLabel === "Check in", String(inLabel));
+  await sleep(3000);
+
+  const att1 = await page.eval(`return ${attState};`);
+  check("after check-in the day is open and the buttons swapped",
+    att1.onWork && att1.inDisabled === true && att1.outDisabled === false,
+    JSON.stringify(att1));
+  check("an attendance event was recorded", att1.eventCount >= 1, `events=${att1.eventCount}`);
+
+  const outLabel = await page.eval(`
+    const btn = [...document.querySelectorAll('button[type="submit"]')]
+      .find((b) => (b.textContent || "").trim() === "Check out");
+    if (!btn) return null;
+    btn.click();
+    return btn.textContent.trim();
+  `);
+  check("check-out clicked", outLabel === "Check out", String(outLabel));
+  await sleep(3000);
+
+  const att2 = await page.eval(`return ${attState};`);
+  check("after check-out the day is closed again",
+    att2.done && att2.inDisabled === false && att2.outDisabled === true,
+    JSON.stringify(att2));
+  check("both events are listed", att2.eventCount >= 2, `events=${att2.eventCount}`);
+
+  const times = await page.eval(`
+    const m = document.body.innerText.match(/(\\d{1,2}:\\d{2})/g);
+    return m ? m.length : 0;
+  `);
+  check("timestamps are rendered", times >= 2, `time strings=${times}`);
+
+  // =====================================================================
+  // Leave: request, then cancel
+  // =====================================================================
+  // Two future weekdays. Format from the LOCAL calendar fields: toISOString()
+  // would shift a local-midnight date back a day whenever the machine is ahead
+  // of UTC, which silently turns a "future" date into today and gets rejected
+  // by the past-date validation.
+  const dates = (() => {
+    const fmt = (d) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const isWeekend = (d) => d.getDay() === 0 || d.getDay() === 6;
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    while (isWeekend(d)) d.setDate(d.getDate() + 1);
+    const start = fmt(d);
+    d.setDate(d.getDate() + 1);
+    while (isWeekend(d)) d.setDate(d.getDate() + 1);
+    return [start, fmt(d)];
+  })();
+
+  await page.goto(`${BASE}/hoohr/leave`);
+  await waitForReact(page, 'select[name="policyId"]');
+  const policy = await page.eval(`
+    const sel = document.querySelector('select[name="policyId"]');
+    if (!sel || !sel.options.length) return null;
+    return { count: sel.options.length, label: sel.options[0].text.trim() };
+  `);
+  check("leave policy dropdown is populated", !!policy && policy.count > 0, JSON.stringify(policy));
+
+  const today = (() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  })();
+  check("chosen dates are in the future", dates[0] > today, `today=${today} dates=${dates.join("..")}`);
+
+  await page.eval(`
+    ${FILL}
+    set(document.querySelector('input[name="startDate"]'), ${JSON.stringify(dates[0])});
+    set(document.querySelector('input[name="endDate"]'), ${JSON.stringify(dates[1])});
+    set(document.querySelector('textarea[name="reason"], input[name="reason"]'), ${JSON.stringify(REASON)});
+    return 1;
+  `);
+
+  const filled = await page.eval(`
+    return {
+      start: document.querySelector('input[name="startDate"]').value,
+      end: document.querySelector('input[name="endDate"]').value,
+      reason: (document.querySelector('textarea[name="reason"]') || {}).value || "",
+    };
+  `);
+  check("the form kept the typed dates and reason",
+    filled.start === dates[0] && filled.end === dates[1] && filled.reason === REASON,
+    JSON.stringify(filled));
+
+  const preview = await page.eval(`
+    const t = document.body.innerText;
+    const m = t.match(/Selected:\\s*([0-9]+(?:\\.[0-9]+)?) day\\(s\\)/);
+    return m ? m[1] : "";
+  `);
+  check("live day-count preview shows 2 workdays for 2 weekdays", preview === "2", `preview=${preview}`);
+
+  // The submit button shares its label with the section heading, so scope the
+  // click to the form that owns the policy select.
+  const submitted = await page.eval(`
+    const form = document.querySelector('select[name="policyId"]').closest('form');
+    if (!form) return null;
+    const btn = [...form.querySelectorAll('button[type="submit"]')]
+      .find((b) => /Request leave/.test(b.textContent || ""));
+    if (!btn) return null;
+    btn.click();
+    return btn.textContent.trim();
+  `);
+  check("leave request submitted", !!submitted, String(submitted));
+  await sleep(4000);
+
+  const afterSubmit = await page.text();
+  check("the request appears with the reason we typed", afterSubmit.includes(REASON), "");
+  check("it is awaiting approval", /Awaiting approval/.test(afterSubmit), "");
+  check("the submitted request shows in My leave requests", /My leave requests/.test(afterSubmit), "");
+
+  // Cancel it again through the UI, which exercises the cancel server action.
+  const cancelled = await page.eval(`
+    const btns = [...document.querySelectorAll('button[type="submit"]')]
+      .filter((b) => (b.textContent || "").trim() === "Cancel");
+    if (!btns.length) return null;
+    btns[0].click();
+    return btns.length;
+  `);
+  check("a Cancel control is offered on the pending request", !!cancelled, `found=${cancelled}`);
+  await sleep(3500);
+
+  const afterCancel = await page.text();
+  check("the request now reads Canceled", /Canceled/.test(afterCancel), "");
+
+  await cdp.close();
+} finally {
+  await browser.close();
+  const c = cleanup("post-run cleanup");
+  check("fixtures removed", c.code === 0, c.out);
+}
+
+console.log(`\n${pass} passed, ${fail} failed`);
+process.exit(fail ? 1 : 0);

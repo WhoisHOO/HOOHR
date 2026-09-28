@@ -101,6 +101,9 @@ export function LeaveRequestForm({
             }}
             className="rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
+          {state?.fieldErrors?.startDate && (
+            <p className="text-sm text-red-600">{state.fieldErrors.startDate[0]}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-1">
@@ -118,6 +121,9 @@ export function LeaveRequestForm({
             onChange={(e) => setEndDate(e.target.value)}
             className="rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-zinc-100 disabled:text-zinc-400"
           />
+          {state?.fieldErrors?.endDate && (
+            <p className="text-sm text-red-600">{state.fieldErrors.endDate[0]}</p>
+          )}
         </div>
       </div>
 
@@ -135,6 +141,9 @@ export function LeaveRequestForm({
         />
         {d.leave.form.halfDay}
       </label>
+      {state?.fieldErrors?.isHalfDay && (
+        <p className="-mt-2 text-sm text-red-600">{state.fieldErrors.isHalfDay[0]}</p>
+      )}
 
       <div className="flex flex-col gap-1">
         <label htmlFor="lv-reason" className="text-sm font-medium text-zinc-700">

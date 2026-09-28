@@ -16,8 +16,12 @@ export function leaveRequestFormSchema(v: LeaveValidationMessages) {
     endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
       error: v.validation.endDateRequired,
     }),
+    // An unchecked checkbox is omitted from FormData entirely, so the action
+    // sends the empty string here. It must count as "not a half day", not as
+    // an invalid value: .optional() only tolerates undefined, and "" was
+    // rejected, which made every leave request fail validation silently.
     isHalfDay: z
-      .enum(["true", "1", "on"], { error: v.validation.invalidHalfDay })
+      .enum(["", "false", "true", "1", "on"], { error: v.validation.invalidHalfDay })
       .optional(),
     reason: z
       .string()

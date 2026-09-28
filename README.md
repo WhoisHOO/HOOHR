@@ -170,7 +170,8 @@ Authenticated routes live under **`/hoohr`**. The pre-rename `/app` prefix still
 | `npm run build` / `npm start` | Production build / serve |
 | `npm run lint` | ESLint |
 | `npx tsc --noEmit` | Type check |
-| `npm run test:e2e` | Browser E2E of the locale switcher (needs `npm run dev`) |
+| `npm run test:e2e` | Browser E2E: locale switcher (needs `npm run dev`) |
+| `npm run test:e2e:forms` | Browser E2E: attendance + leave forms |
 | `npm run db:migrate` | Create/apply a development migration |
 | `npm run db:seed` | Seed the bootstrap company, policies, and admin |
 | `npm run db:studio` | Prisma Studio |
@@ -193,18 +194,30 @@ npx tsx _test-expense.ts    # expense draft -> submit -> approve -> pay
 Some flows cannot be reached over `curl` because a Next.js **server action** is not
 callable with a plain `POST`. The locale switcher was the notable case: setting the
 cookie by hand only proves the read path, so the `setLocale` write path stayed
-unverified.
+unverified. Forms were the other: a hand-rolled action POST returns
+`500 Connection closed.`, which is a framework restriction rather than an app bug,
+so no real form interaction had been tested since Session 5.
 
 ```bash
-npm run dev        # terminal 1
-npm run test:e2e   # terminal 2
+npm run dev            # terminal 1
+npm run test:e2e:all   # terminal 2
 ```
 
 `_e2e/` drives the Chrome or Edge already on the machine over the DevTools Protocol
 using Node's built-in `WebSocket`, so it adds **no dependencies** and needs no
-browser download. It logs in with a real typed-in form, clicks **English** and
+browser download.
+
+| Command | Covers |
+|---|---|
+| `npm run test:e2e` | Login + locale switcher (20 checks) |
+| `npm run test:e2e:forms` | Attendance check-in/out + leave request/cancel (21 checks) |
+| `npm run test:e2e:all` | Both |
+
+The switcher suite logs in with a real typed-in form, clicks **English** and
 **한국어**, and asserts the `httpOnly` `locale` cookie, the switched UI, persistence
-across reloads, `<html lang>`, and sign-out. See [`_e2e/README.md`](./_e2e/README.md).
+across reloads, `<html lang>`, and sign-out. The forms suite exercises attendance
+check-in/check-out and the leave request/cancel round trip, then deletes what it
+created. See [`_e2e/README.md`](./_e2e/README.md).
 
 ---
 

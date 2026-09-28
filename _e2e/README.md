@@ -4,12 +4,13 @@ Real-browser checks for the flows that `curl` cannot reach.
 
 ## Why this exists
 
-A Next.js **server action** cannot be invoked with a plain `POST`. Hand-rolling one
-returns `500 Connection closed.`, which is a framework restriction, not an app bug.
-That blocked one specific thing for a long time: proving the runtime locale
-switcher actually writes its cookie. Setting the cookie by hand proves only the
-*read* path, never the `setLocale` *write* path, so the switcher could have been
-completely broken and every HTTP check would still have passed.
+A Next.js **server action** cannot be invoked with a plain `POST`. Hand-rolling
+one returns `500 Connection closed.`, which is a framework restriction, not an app bug.
+That blocked every form's real interaction test from Session 5 until this harness
+existed.
+
+It has already paid for itself. `forms.mjs` found a bug that **every other layer
+missed**: the leave request form could not be submitted at all.
 
 ## How it works, with no new dependencies
 
@@ -25,42 +26,81 @@ clicks elements.
 
 ## Usage
 
-The dev server must be running first.
+The dev server must be running first. Next.js refuses a second dev server in the
+same directory, so do not try to start one on another port.
 
 ```bash
-npm run dev        # terminal 1
-npm run test:e2e   # terminal 2
+npm run dev              # terminal 1
+npm run test:e2e:all     # terminal 2
 ```
 
-Exit code is non-zero if any check fails, so it is usable in CI later.
+| Command | Covers |
+|---|---|
+| `npm run test:e2e` | Login + the locale switcher (20 checks) |
+| `npm run test:e2e:forms` | Attendance check-in/out + leave request/cancel (21 checks) |
+| `npm run test:e2e:all` | Both, in order |
+
+Both exit non-zero on failure and exit early with a clear message if the dev
+server is not up, so they are usable in CI later.
 
 | Variable | Default | Meaning |
 |---|---|---|
 | `E2E_BASE` | `http://localhost:3000` | App under test |
 | `E2E_EMAIL` | `admin@example.com` | Login, defaults to the public seed admin |
 | `E2E_PASSWORD` | `Admin1234!` | Login |
-| `E2E_PORT` | `9222` | DevTools port |
+| `E2E_PORT` | `9222` / `9223` | DevTools port, per suite |
 | `E2E_HEADFUL` | *(unset)* | Set to `1` to watch the browser |
 
 ```bash
 # watch it happen
-E2E_HEADFUL=1 npm run test:e2e
+E2E_HEADFUL=1 npm run test:e2e:forms
 ```
 
-## What `locale-switcher.mjs` covers
+## The two suites
+
+`locale-switcher.mjs` proves the `setLocale` **write** path, which no HTTP check
+can reach, because every one of them would pass a `locale=en` cookie by hand:
 
 1. Login with a real typed-in form, not a pre-minted cookie
 2. Dashboard renders Korean by default, and sets no `locale` cookie at all
 3. Clicks **English** in the sidebar
-4. Confirms the `setLocale` server action wrote `locale=en`, and that the cookie
-   is `httpOnly` with `path=/`
-5. Confirms the UI actually switched, then that English survives a hard reload and
-   carries across `/hoohr/leave` and `/hoohr/expenses`
-6. Clicks **한국어** to switch back, and confirms the cookie flips to `ko`
+4. Confirms the server action wrote `locale=en`, and that the cookie is `httpOnly`
+   with `path=/`
+5. Confirms the UI switched, then that English survives a hard reload and carries
+   across `/hoohr/leave` and `/hoohr/expenses`
+6. Clicks **한국어**, confirms the cookie flips to `ko`
 7. Confirms `<html lang>` follows the active locale
 8. Signs out and lands on `/login`
 
-Current result: **20/20**.
+`forms.mjs` exercises the real forms. It switches the UI to English right after
+login and asserts only English copy, which keeps Korean literals out of the file
+(a `Get-Content`/write round-trip already corrupted them once) and cross-checks the
+non-default locale. It covers:
+
+1. Attendance starts not-checked-in, with check-in enabled and check-out disabled.
+   Both buttons are always in the DOM and are toggled with `disabled`, so the
+   assertions are about disabled state, not about which button exists.
+2. Check in, then check out, asserting the disabled flags swap, the panel goes to
+   on-work and back to checked-out, both events are listed, and timestamps render.
+3. The leave policy dropdown is populated.
+4. The form accepts typed dates and a reason, and the live day-count preview shows
+   the right number of workdays.
+5. Submit: the request appears with the reason that was typed, reads
+   *Awaiting approval*, and shows under *My leave requests*.
+6. Cancel it through the UI, and confirm it reads *Canceled*.
+
+## Cleanup
+
+`forms.mjs` creates real records, so it removes them. `cleanup.ts` deletes leave
+requests tagged with the harness reason and today's attendance record for the
+login user (`AttendanceEvent` and `AttendanceCorrection` cascade from
+`AttendanceRecord`). It runs **before** the suite too, so an interrupted previous
+run cannot poison the next one: a leftover attendance row would leave the check-in
+button disabled, and a leftover leave request would double-spend the balance.
+
+```bash
+npx tsx _e2e/cleanup.ts
+```
 
 ## Adding a case
 
@@ -74,8 +114,16 @@ const ok = await page.eval(`
 `);
 ```
 
-For React-controlled inputs, set the value through the native prototype setter and
-fire an `input` event, otherwise React ignores the change:
+Three things that will otherwise waste your time:
+
+**Wait for hydration.** `waitForReact(page, selector)` is not optional. Before
+hydration, writing a value into a controlled input leaves the DOM looking
+correct — the native setter succeeds and no re-render follows to overwrite it — so
+a naive round-trip check reports success while the server receives the default
+value. `waitForReact` looks for React's `__reactFiber$` expando keys instead.
+
+**Fill React-controlled inputs through the native setter.** A plain
+`el.value = x` is ignored:
 
 ```js
 const set = (el, v) => {
@@ -85,5 +133,22 @@ const set = (el, v) => {
 };
 ```
 
-Cookies are read with `Network.getAllCookies`, which is how the `httpOnly`
-`locale` cookie is asserted even though `document.cookie` cannot see it.
+**Format dates from the local calendar fields.** `toISOString()` shifts a
+local-midnight date back by a day on any machine ahead of UTC, which quietly turns
+a "future" date into today and gets it rejected by past-date validation.
+
+Cookies are read with `Network.getAllCookies`, which is how the `httpOnly` `locale`
+cookie is asserted even though `document.cookie` cannot see it.
+
+## Debugging a failure
+
+The Next.js dev server writes to `.next/dev/logs/next-development.log`. When a
+server action appears to do nothing, that log plus a temporary `console.log` in
+the action is far faster than guessing from the client side. A `console.log` of an
+object serializes as `{}` in that log, so log `JSON.stringify(...)` of primitives
+instead.
+
+Do not use `Get-Content`/`WriteAllText` to edit these files. PowerShell 5.1 reads
+without an encoding by default, so the round-trip turns every Korean string into
+mojibake. Use a real editor or a UTF-8-safe tool.
+
