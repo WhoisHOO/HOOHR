@@ -13,9 +13,11 @@
 
 ---
 
-## 📍 Current Status (as of 2026-09-28, end of Session 15)
+## 📍 Current Status (as of 2026-09-29, end of Session 16)
 
-**Progress: The whole MVP feature set is implemented ✅ Auth + Attendance + Leave + Expense, employee/org admin, team-scoped approvals, expense CSV export, and the settings module with holiday-aware leave counting. The project is branded HOOHR, public on GitHub, and clone-and-run: real `Dockerfile`, working `docker-compose.yml`, `.env.example`, and a rewritten README. The UI is bilingual: Korean and English, switchable at runtime from the sidebar, with no external i18n library. The UI is now covered by real-browser E2E with zero added dependencies, and that harness has already caught two defects that had survived multiple sessions: a leave request form that could not be submitted at all, and an entire expense action layer that no test had ever invoked. Every module now has real-browser form coverage (74 checks). Remaining MVP item: email notifications (NOT-1/2), which needs SMTP credentials.**
+**Progress: The MVP feature set is complete ✅ Auth + Attendance + Leave + Expense, employee/org admin, team-scoped approvals, expense CSV export, the settings module with holiday-aware leave counting, and now email notifications (NOT-1 decision + invite mail, NOT-2 batched approval digest). The project is branded HOOHR, public on GitHub, and clone-and-run. The UI is bilingual (Korean/English) with no external i18n library, and is covered by real-browser E2E with zero added dependencies (74 checks) that has already caught two defects surviving multiple sessions. The mail layer is verified by 92 assertions: 58 on templates/config (`_test-mail.ts`) and 34 on the digest against a real Postgres and a real SMTP conversation (`_test-digest.ts`). The only thing left is real delivery, which needs an actual `SMTP_HOST`.**
+
+> **Session 16 finding worth keeping**: the digest's ledger was first constrained `UNIQUE(link)` alone, which silently let the first reviewer to claim a request silence every other reviewer for good — an admin's inbox overlaps a manager's, so both are legitimately notified about the same request. The constraint is `(userId, link)`. A related bug: releasing a failed claim by `link` alone deleted *every* recipient's claim, so one reviewer's SMTP failure unsubscribed the others who had been delivered successfully.
 
 > **Session 6 note**: Session 5 ended five minutes before the Leave module files were produced. The DB logic round-trip (`_test-leave.ts`), lint/tsc, and GET checks were done in Session 6. Server-action E2E (browser) of leave forms remained impossible for sessions after that, and Session 13 finally closed that gap — and found the leave form had been broken that whole time.
 
@@ -45,7 +47,7 @@
 | Team-scoped approval inboxes (attendance/leave/expense) | ✅ Done (Session 9) |
 | Settings module (company profile, policies, holidays, categories) | ✅ Done (Session 10) |
 | Holiday-aware leave day counting | ✅ Done (Session 10) |
-| Email notifications (NOT-1/2) | ⬜ Pending — needs SMTP credentials |
+| Email notifications (NOT-1/2) | ✅ **Done (Session 16)** — SMTP transport, ko/en templates, decision + invite + digest mail |
 | Checkpoint commit (Session 5–9) | ✅ `98f7ab8` + `e1cc5b3` |
 | **GitHub public repo** | ✅ **Done — https://github.com/WhoisHOO/HOOHR** (`main`, renamed in Session 11) |
 | Brand rename `hr-app` → `HOOHR` (routes/DB/containers/docs) | ✅ Done (Session 11) |
@@ -59,9 +61,13 @@
 | **Leave request form unusable since Session 6** | ✅ **Fixed (Session 13)** — unchecked checkbox sent `""`, which `.optional()` rejects; `isHalfDay` error was also swallowed by the form |
 | Browser E2E of the attendance + leave forms | ✅ **Done (Session 13)** — `_e2e/forms.mjs`, 21/21 |
 | **Expense action layer never invoked by any test** | ✅ **Covered (Session 14)** — `_test-expense.ts` only wrote Prisma; `_e2e/expenses.mjs` 33/33 drives the real forms |
-| **Remaining MVP item: email notifications (NOT-1/2)** | ⛔ **Blocked — needs SMTP credentials** |
+| **Remaining MVP item: email notifications (NOT-1/2)** | ✅ **Built and verified (Session 16)** — code complete; only a real `SMTP_HOST` credential is needed to send |
 | `storage.ts` tracing warning | ✅ **Fixed (Session 15)** — 3 build warnings → 0; stray project files traced 158 → 10 |
 | `src/lib/storage.ts` had zero test coverage | ✅ `_test-storage.ts` 11/11 (Session 15) — MIME, size, errors, traversal |
+| NOT-1 decision + invite email | ✅ `src/lib/mail.ts` + `src/lib/notifications.ts` (Session 16) |
+| NOT-2 batched approval digest | ✅ `src/lib/approval-digest.ts` + `scripts/approval-digest.ts` (Session 16) |
+| Mail layer + digest verification | ✅ `_test-mail.ts` 58/58, `_test-digest.ts` 34/34 (Session 16) |
+| Real SMTP delivery | ⛔ Needs a real `SMTP_HOST`; local sink verifies the transport |
 
 > **Key notes:**
 > - **The repo is live: https://github.com/WhoisHOO/HOOHR** (public, `main`, renamed in Session 11). `gh` is authenticated as `WhoisHOO`, so `git push` works without any further setup. App routes live under `/hoohr`.
@@ -729,6 +735,85 @@ C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchang
   (NOT-1/2)** once SMTP credentials exist, the only MVP item still open; whether to enable
   `output: "standalone"` for a much smaller runtime image; **stable domain** via a free subdomain + named tunnel;
   `pipelines/deploy` runtime validation; and the housekeeping noted above.
+
+### Session 16 (2026-09-29): email notifications (NOT-1 decision/invite mail, NOT-2 approval digest)
+- **Goal**: close the last open MVP item, `NOT-1` and `NOT-2` in `docs/REQUIREMENTS.md` 3.5. Every prior session
+  deferred this on "needs SMTP credentials", which was only half true: the sending path is the part that can be
+  built and verified without a real relay, so that is what this session did. `NOT-3` (in-app/push) stays out of scope
+  per the requirements.
+- **Dependency**: `nodemailer@10.0.12` as the one runtime dependency added. Checked
+  `npm audit` first: the 4 high-severity advisories are all pre-existing and come from Prisma's own CLI tree
+  (`prisma` -> `@prisma/config` -> `deepmerge-ts`, and `prisma` -> `mysql2`), not from nodemailer. The runtime
+  bundle does not use `mysql2`.
+- **Transport, `src/lib/mail.ts`**: three properties are load-bearing, and each exists for a specific failure mode.
+  1. *No-op when unconfigured* - `SMTP_HOST` was already an empty placeholder in `.env.example`, so a fresh clone runs
+     with no mail at all and must keep behaving exactly as before. `mailConfig()` returns null and `sendMail` returns
+     `{sent: false, reason: "not_configured"}`.
+  2. *Never throws* - by the time mail goes out, the approval is already committed. If SMTP is down, the decision
+     must not be reported as failed, and must not tempt anyone into a retry that would double-approve. Failures are
+     logged and swallowed. This is why every `notify*` function is awaited and its result discarded.
+  3. *Cannot hang a request* - a blackholed SMTP port would otherwise pin a server action for the default 120s, so
+     timeouts are 10s connect / 10s greeting / 20s socket. A dead mail server degrades to a slow request, not a
+     stuck one.
+  The transport is created lazily and cached per `host:port:secure:user`, so an unconfigured deployment never loads
+  nodemailer and a changed config cannot reuse a stale transport.
+- **Composition, `src/lib/notifications.ts`**: message building is split from sending (`build*Message` vs
+  `notify*`) so the templates are unit-testable without a transport. Every user-supplied value (report titles,
+  rejection reasons, employee names) is escaped through a hand-rolled `escapeHtml` before it reaches the HTML part -
+  no template dependency, and the escaping is the reason a `<script>` in a report title cannot inject.
+- **Wiring**: `decideLeave` and `decideExpense` now build their mail payload **inside the transaction, from the row
+  the transaction actually updated**, not from the read that preceded it. The two reads race, and a decision notice
+  describing a different row than the one approved would be worse than no notice. The transaction's return type
+  changed from `boolean` to the payload or `null`. `inviteEmployee` / `reinviteEmployee` also send now; the on-screen
+  invite link is retained, because it is the only delivery channel when SMTP is off, so the mail is purely additive.
+  `PAY` is included in the expense notice set - it is the terminal state of the same action and the employee
+  genuinely needs to know, at no extra cost.
+- **NOT-2 digest, `src/lib/approval-digest.ts` + `scripts/approval-digest.ts`**: `collectDigestPlans` reuses
+  `approvalInboxEmployeeWhere` - the exact predicate the leave and expense pages use - so the email cannot list
+  something the inbox hides or miss something it shows. One query pair per reviewer; the reviewer count is bounded by
+  the org chart. The `Notification` table, dead since it was added, is now the delivery ledger.
+- **Migration** `20260928120000_notification_link_unique`: `@@unique([userId, link])` on `Notification`. This is what
+  makes a digest claim race-safe - a second concurrent run gets P2002 and skips instead of sending a duplicate - and
+  a failed send releases its claim so the next run retries.
+- **Two real bugs found by the tests, not by reading**:
+  1. The ledger was first constrained `UNIQUE(link)` **alone**. Because an admin's inbox overlaps a manager's
+     (`canActAsAdmin` gives an admin the whole company), the first plan to claim a request silenced every other
+     reviewer permanently. The admin would have silently stopped receiving digests. Fixed by scoping the index to
+     `(userId, link)`.
+  2. `release()` originally deleted by `link` alone, so one reviewer's send failure revoked the claims of reviewers
+     whose digests had *already been delivered*. One SMTP failure would unsubscribe people who had been correctly
+     emailed. Fixed by scoping the delete to `(userId, link)`.
+  Both were caught only because the test asserts on the ledger contents after a real send, not on a mocked return.
+- **`scripts/approval-digest.ts`**: cron entry point, with `--dry-run`, `--locale`, `--company`. Exits 0 for "nothing
+  to send" and "SMTP not configured" (a cron job that always exits 0 for those is correct - only real failures page
+  someone) and 1 when a send genuinely failed. `--dry-run` is deliberately checked *before* the SMTP check, since
+  previewing the plan is exactly what you want while SMTP is still unset.
+- **`server-only` stub, `scripts/server-only-stub.ts`**: `src/lib/{mail,notifications,approval-digest}.ts` each begin
+  with `import "server-only"`, which throws under a bare `tsx` run. Next.js aliases it away for the server build;
+  this reproduces that. **The lib imports must be dynamic** (`await import(...)` inside the function) - a static
+  import is hoisted and evaluated before the stub runs, so the guard still fires. This cost one debugging round and
+  is now documented in the stub's own header.
+- **Tests**: `_test-mail.ts` 58/58 - config derivation (port 465 implies TLS, 587 implies STARTTLS, `SMTP_SECURE`
+  override, auth only when both user and pass are present, whitespace-only host counts as unset), graceful failure
+  against a refused connection, HTML escaping, and every template in both locales with a no-leftover-placeholder
+  assertion. `_test-digest.ts` 34/34 - runs against **real Postgres and a real SMTP conversation** using a ~90-line
+  in-process ESMTP sink (no STARTTLS/PIPELINING advertised, so nodemailer stays plaintext): plan-equals-inbox,
+  first run sends, second run sends nothing, a newly arrived request is picked up, a dead sink releases only the
+  failed claims, and the retry goes out. Both self-cleaning, including on an unexpected throw, since they write to a
+  shared dev database.
+- **Verification**: `tsc` 0, lint 0, build 0 warnings. `test:e2e:all` -> 20 + 21 + 33 = 74 checks, 0 failures
+  (the Docker PG had to be restarted mid-session; the engine was down, not the app). `_test-mail` 58/58,
+  `_test-digest` 34/34, `_test-team` 27/27, `_test-settings` 23/23, `_test-storage` 11/11, `_test-leave` 7/7,
+  `_test-expense` 8/8. 0 leftover fixtures, 0 stray ledger rows.
+- **Not done / honest limits**: no real SMTP delivery has been observed - there is no credential. The in-process sink
+  proves the transport, the templates, and the ledger, but a real relay could still differ (SPF/DKIM, rate limits,
+  provider-specific rejections). `Notification.read` is untouched; NOT-3 will render these same rows in-app. The
+  digest sends to admins as well as managers, which matches their inboxes but may be more mail than an operator
+  expects - worth a per-company opt-out later.
+- **Result/next**: the last MVP item is built and verified; only a real `SMTP_HOST` is needed to send. Remaining, in
+  rough priority order - supplying SMTP credentials and observing a real delivery; `output: "standalone"` for a much
+  smaller runtime image; a **stable domain** via free subdomain + named tunnel; `pipelines/deploy` runtime
+  validation; and the housekeeping noted in Session 15 (`_mint-cookie.ts`, `_db-state.ts`).
 
 <!-- ====== Template for next sessions (copy & use) ======
 ### Session 5 (2026-09-24): <title>

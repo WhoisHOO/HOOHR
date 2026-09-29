@@ -24,6 +24,17 @@ import {
   type LeaveRequestState,
 } from "@/lib/leave-validation";
 import { getDict, interpolate } from "@/i18n/server";
+import { notifyLeaveDecision, type LeaveDecisionOutcome } from "@/lib/notifications";
+
+/** The slice of a decided request the NOT-1 notice needs, captured in-transaction. */
+type LeaveDecisionMail = {
+  to: string;
+  requesterName: string;
+  kind: "PTO" | "SICK" | "UNPAID";
+  startDate: Date;
+  endDate: Date;
+  days: number;
+};
 
 // ============ 휴가 신청 (EMPLOYEE) ============
 
@@ -171,15 +182,19 @@ export async function decideLeave(
   }
 
   const status = decision === "APPROVE" ? "APPROVED" : "REJECTED";
-  let updated = false;
+
+  // The payload is built from the row the transaction actually updated, not
+  // from the read above it: the two reads race, and a decision notice that
+  // describes a different row than the one approved is worse than no notice.
+  let decided: LeaveDecisionMail | null = null;
 
   try {
-    updated = await prisma.$transaction(async (tx) => {
+    decided = await prisma.$transaction(async (tx) => {
       const reviewer = await tx.user.findFirst({
         where: { id: user.id, companyId: user.companyId, isActive: true },
         select: approvalReviewerSelect,
       });
-      if (!reviewer) return false;
+      if (!reviewer) return null;
 
       const fresh = await tx.leaveRequest.findFirst({
         where: { id, companyId: user.companyId, status: "PENDING" },
@@ -190,7 +205,7 @@ export async function decideLeave(
         fresh.policy.companyId !== user.companyId ||
         !canReviewEmployee(approvalReviewerFromUser(reviewer), fresh)
       ) {
-        return false;
+        return null;
       }
 
       const result = await tx.leaveRequest.updateMany({
@@ -207,7 +222,7 @@ export async function decideLeave(
           decisionComment: comment || null,
         },
       });
-      if (result.count !== 1) return false;
+      if (result.count !== 1) return null;
 
       if (status === "APPROVED" && fresh.policy.kind !== "UNPAID") {
         await tx.leaveBalance.update({
@@ -222,13 +237,32 @@ export async function decideLeave(
         });
       }
 
-      return true;
+      return {
+        to: fresh.employee.email,
+        requesterName: fresh.employee.name,
+        kind: fresh.policy.kind,
+        startDate: fresh.startDate,
+        endDate: fresh.endDate,
+        days: fresh.days,
+      };
     });
   } catch {
     return { message: unavailableMessage };
   }
 
-  if (!updated) return { message: unavailableMessage };
+  if (!decided) return { message: unavailableMessage };
+
+  // NOT-1. Awaited on purpose: an unawaited send can be dropped once the
+  // response is flushed, and a silently lost decision notice is exactly the
+  // quiet-failure class this codebase has been bitten by before. It is safe to
+  // await because `notifyLeaveDecision` cannot throw and the decision is
+  // already committed, so the worst case is a slower response, not a wrong one.
+  await notifyLeaveDecision({
+    ...decided,
+    reviewerName: user.name,
+    decision: status as LeaveDecisionOutcome,
+    comment,
+  });
 
   revalidatePath("/hoohr/leave");
   revalidatePath("/hoohr");

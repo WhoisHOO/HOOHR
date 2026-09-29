@@ -24,6 +24,19 @@ import {
   type ExpenseSubmitState,
 } from "@/lib/expense-validation";
 import { getDict, interpolate } from "@/i18n/server";
+import {
+  notifyExpenseDecision,
+  type ExpenseDecisionOutcome,
+} from "@/lib/notifications";
+
+/** The slice of a decided report the NOT-1 notice needs, captured in-transaction. */
+type ExpenseDecisionMail = {
+  to: string;
+  requesterName: string;
+  title: string;
+  totalAmountCents: number;
+  currency: string;
+};
 import type { ExpenseMessages } from "@/i18n/dictionaries/expenses";
 
 type ItemInput = {
@@ -298,45 +311,70 @@ export async function decideExpense(
 
   const status =
     decision === "APPROVE" ? "APPROVED" : decision === "PAY" ? "PAID" : "REJECTED";
-  const updated = await prisma.$transaction(async (tx) => {
-    const reviewer = await tx.user.findFirst({
-      where: { id: user.id, companyId: user.companyId, isActive: true },
-      select: approvalReviewerSelect,
-    });
-    if (!reviewer) return false;
+  // Captured in-transaction from the row that was actually updated, so the
+  // notice cannot describe a different report than the one decided.
+  let decided: ExpenseDecisionMail | null = null;
 
-    const fresh = await tx.expenseReport.findFirst({
-      where: { id, companyId: user.companyId, status: expected },
-      include: approvalTargetInclude,
-    });
-    if (
-      !fresh ||
-      fresh.employee.companyId !== user.companyId ||
-      (decision === "PAY"
-        ? !canActAsAdmin(approvalReviewerFromUser(reviewer))
-        : !canReviewEmployee(approvalReviewerFromUser(reviewer), fresh))
-    ) {
-      return false;
-    }
+  try {
+    decided = await prisma.$transaction(async (tx) => {
+      const reviewer = await tx.user.findFirst({
+        where: { id: user.id, companyId: user.companyId, isActive: true },
+        select: approvalReviewerSelect,
+      });
+      if (!reviewer) return null;
 
-    const result = await tx.expenseReport.updateMany({
-      where: {
-        id,
-        companyId: user.companyId,
-        status: expected,
-        employee: { companyId: user.companyId },
-      },
-      data: {
-        status,
-        decidedById: reviewer.id,
-        decidedAt: new Date(),
-        comment: comment || null,
-      },
+      const fresh = await tx.expenseReport.findFirst({
+        where: { id, companyId: user.companyId, status: expected },
+        include: approvalTargetInclude,
+      });
+      if (
+        !fresh ||
+        fresh.employee.companyId !== user.companyId ||
+        (decision === "PAY"
+          ? !canActAsAdmin(approvalReviewerFromUser(reviewer))
+          : !canReviewEmployee(approvalReviewerFromUser(reviewer), fresh))
+      ) {
+        return null;
+      }
+
+      const result = await tx.expenseReport.updateMany({
+        where: {
+          id,
+          companyId: user.companyId,
+          status: expected,
+          employee: { companyId: user.companyId },
+        },
+        data: {
+          status,
+          decidedById: reviewer.id,
+          decidedAt: new Date(),
+          comment: comment || null,
+        },
+      });
+      if (result.count !== 1) return null;
+
+      return {
+        to: fresh.employee.email,
+        requesterName: fresh.employee.name,
+        title: fresh.title,
+        totalAmountCents: fresh.totalAmountCents,
+        currency: fresh.currency,
+      };
     });
-    return result.count === 1;
+  } catch {
+    return { message: unavailableMessage };
+  }
+
+  if (!decided) return { message: unavailableMessage };
+
+  // NOT-1. Awaited for the same reason as in decideLeave, and equally safe:
+  // the status change is already committed and the sender cannot throw.
+  await notifyExpenseDecision({
+    ...decided,
+    reviewerName: user.name,
+    decision: status as ExpenseDecisionOutcome,
+    comment,
   });
-
-  if (!updated) return { message: unavailableMessage };
 
   revalidatePath("/hoohr/expenses");
   const label =

@@ -15,6 +15,8 @@ import {
   type LoginState,
 } from "@/lib/auth-validation";
 import { getDict, interpolate } from "@/i18n/server";
+import { notifyInvitation } from "@/lib/notifications";
+import { getCompanyName } from "@/lib/company";
 import { createSession, deleteSession } from "@/lib/session";
 import { requireAdmin } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
@@ -120,6 +122,19 @@ export async function inviteEmployee(
   const inviteUrl = `${baseUrl}/invite/${token}`;
   revalidatePath("/hoohr/admin/employees");
   revalidatePath("/hoohr/admin/invite");
+
+  // NOT-1. The invite link is returned on screen either way, so this is purely
+  // additive: with SMTP configured the invitee gets it in their inbox, without
+  // it the admin can still copy it manually. Never throws, so it cannot turn a
+  // successful invite into an error.
+  await notifyInvitation({
+    to: email,
+    name: result.employee.name,
+    companyName: await getCompanyName(admin.companyId),
+    inviteUrl,
+    expiresAt,
+  });
+
   return {
     inviteUrl,
     message: interpolate(auth.invite.createdFor, {
@@ -201,6 +216,16 @@ export async function reinviteEmployee(
   const inviteUrl = `${baseUrl}/invite/${token}`;
   revalidatePath("/hoohr/admin/employees");
   revalidatePath("/hoohr/admin/invite");
+
+  // NOT-1, same contract as inviteEmployee: additive, never throws.
+  await notifyInvitation({
+    to: result.employee.email,
+    name: result.employee.name,
+    companyName: await getCompanyName(admin.companyId),
+    inviteUrl,
+    expiresAt,
+  });
+
   return {
     inviteUrl,
     message: interpolate(auth.invite.createdFor, {

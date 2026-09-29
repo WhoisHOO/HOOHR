@@ -371,6 +371,12 @@ model Notification {
 
   company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // One row per (recipient, subject). Scoped to the recipient on purpose: an
+  // admin's inbox overlaps a manager's, so both are legitimately notified about
+  // the same request and a global unique on `link` would let the first claim
+  // silence everyone else. NULL links stay distinct under this constraint.
+  @@unique([userId, link])
 }
 
 model Holiday {
