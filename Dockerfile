@@ -49,7 +49,18 @@ COPY --from=builder --chown=node:node /app/.next ./.next
 COPY --from=builder --chown=node:node /app/node_modules ./node_modules
 COPY --from=builder --chown=node:node /app/package.json ./package.json
 COPY --from=builder --chown=node:node /app/prisma ./prisma
+# prisma/seed.ts imports ../src/generated/prisma/client, so the generated
+# client has to be present at runtime or the entrypoint's seed step dies with
+# MODULE_NOT_FOUND. 1.7MB, and it is what `prisma generate` already produced in
+# the builder.
+COPY --from=builder --chown=node:node /app/src/generated ./src/generated
+# prisma.config.ts is the CLI's entry point for both `migrate deploy` and
+# `db seed`; without it the entrypoint's Prisma commands have no seed command
+# and no datasource url. It must ship in the runner, not just the builder.
+COPY --from=builder --chown=node:node /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder --chown=node:node /app/docker ./docker
 
 USER node
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+# Migrate + seed on every boot, then serve. Both steps are idempotent.
+CMD ["sh", "docker/entrypoint.sh"]

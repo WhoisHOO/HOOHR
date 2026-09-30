@@ -1,0 +1,17 @@
+# HOOHR - line endings are load-bearing, not cosmetic.
+#
+# The biggest offender is docker/entrypoint.sh. A Windows clone defaults to
+# core.autocrlf=true, which rewrites LF to CRLF; a CRLF shell script fails
+# inside the container with a bare `\r: command not found`, and since the
+# entrypoint is what migrates and seeds, that means "no database, no admin
+# account, no app" - on precisely the machine we are trying to support.
+#
+# The .ps1 files are additionally saved as UTF-8 *with* a BOM. Git preserves
+# the BOM (it is ordinary content, not a line ending), and PowerShell 5.1 -
+# the version Windows ships - decodes a BOM-less UTF-8 file as the system ANSI
+# codepage, turning every Korean character into mojibake. Keep the BOM if you
+# edit them: re-save as UTF-8 with BOM, not "UTF-8".
+
+*.sh   text eol=lf
+*.ps1  text eol=crlf
+*.bat  text eol=crlf

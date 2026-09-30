@@ -1,7 +1,9 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: hoohr_db
+    # No hardcoded container_name: compose namespaces containers per project, so
+    # a second checkout (or a second copy of this stack) cannot collide with an
+    # already-running one.
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-hr}
@@ -19,7 +21,6 @@ services:
 
   app:
     build: .
-    container_name: hoohr
     restart: unless-stopped
     depends_on:
       db:
@@ -28,6 +29,11 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-hr}:${POSTGRES_PASSWORD:-hoohr_dev_password}@db:5432/${POSTGRES_DB:-hoohr}
       AUTH_SECRET: ${AUTH_SECRET}
       APP_URL: ${APP_URL:-http://localhost:3000}
+      # The entrypoint runs `prisma db seed` inside the container, where there
+      # is no .env file for the seed to read, so the bootstrap credentials have
+      # to arrive as real environment variables or the seed has nothing to use.
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-admin@example.com}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
@@ -37,6 +43,22 @@ services:
       - "${APP_PORT:-3000}:3000"
     volumes:
       - uploads:/app/uploads
+    # Reports healthy only once the schema exists, not merely once the port is
+    # listening. `start.bat` waits on this to decide when to open the browser,
+    # so a check that passes too early would open a page that 500s.
+    # `redirect: "manual"` matters: fetch follows redirects by default, so the
+    # default would have turned an auth bounce to /login (a 200) into a false
+    # "healthy" - the probe would pass while the schema was still missing.
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/api/health',{redirect:'manual'}).then(r=>process.exit(r.status===200?0:1)).catch(()=>process.exit(1))"
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
 
 volumes:
   pgdata:

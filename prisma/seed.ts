@@ -9,12 +9,25 @@ const prisma = new PrismaClient({
 
 async function main() {
   const adminEmail = process.env.BOOTSTRAP_ADMIN_EMAIL || "admin@example.com";
-  const adminPassword = process.env.BOOTSTRAP_ADMIN_PASSWORD || "Admin1234!";
+  const adminPassword = process.env.BOOTSTRAP_ADMIN_PASSWORD;
   const companyName = process.env.BOOTSTRAP_COMPANY_NAME || "내 회사";
+
+  // Refuse to fall back to a well-known password. A default here would be
+  // printed in this repo, so a fresh install whose .env was not written
+  // correctly would silently come up with a publicly known admin credential.
+  // `start.bat` generates a random one and shows it to the user instead.
+  if (!adminPassword) {
+    throw new Error(
+      "BOOTSTRAP_ADMIN_PASSWORD is not set. Put a password in .env " +
+        "(start.bat generates one for you) and run the seed again.",
+    );
+  }
 
   const existing = await prisma.user.findUnique({ where: { email: adminEmail } });
   if (existing) {
-    console.log("Seed already applied (admin exists). Skipping.");
+    console.log(
+      `Seed already applied - the account ${adminEmail} exists, so nothing was changed.`,
+    );
     return;
   }
 

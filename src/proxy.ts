@@ -16,7 +16,16 @@ export async function proxy(request: NextRequest) {
 
   const isAppRoute = pathname.startsWith("/hoohr");
   const isPublic =
-    pathname === "/" || pathname === "/login" || pathname.startsWith("/invite");
+    pathname === "/" ||
+    pathname === "/login" ||
+    pathname.startsWith("/invite") ||
+    // Readiness probe used by the compose healthcheck and start.bat. It reads
+    // no user data and returns only {status, database, schema} - the reach of
+    // the two booleans is the point, since "up but unmigrated" is exactly the
+    // state a first run has to survive. If this is ever exposed publicly,
+    // consider gating it - a 200/503 split does tell an attacker whether the
+    // database is answering.
+    pathname === "/api/health";
 
   // 미로그인 → 앱 라우트 차단
   if (isAppRoute && !session?.userId) {
