@@ -7,16 +7,16 @@ export const dashboardKo = {
   greeting: "안녕하세요, {name}님",
   profile: "{department} · {position} · 입사 {date}",
   stats: {
-    ptoRemaining: "연차 잔여",
-    ptoGrantedUsed: "발생 {granted}일 · 사용 {used}일",
-    pendingLeave: "승인 대기 휴가",
-    myRequests: "본인 신청",
-    submittedExpenses: "제출 경비",
-    awaitingPayment: "결제 대기",
-  },
-  next: {
-    title: "다음 단계",
-    body: "휴가 · 경비 모듈이 모두 열렸습니다. 이제 휴가 신청과 경비 정산을 이용할 수 있습니다.",
+    leave: {
+      title: "휴가 · 병가",
+      days: "{n}일",
+      pending: "승인 대기 {n}건",
+    },
+    expenses: {
+      title: "영수증 처리",
+      claims: "{n}건",
+      awaiting: "결제 대기",
+    },
   },
 };
 
@@ -29,15 +29,15 @@ export const dashboardEn: DashboardMessages = {
   greeting: "Hello, {name}",
   profile: "{department} · {position} · Joined {date}",
   stats: {
-    ptoRemaining: "Annual leave left",
-    ptoGrantedUsed: "Granted {granted} days · Used {used} days",
-    pendingLeave: "Leave awaiting approval",
-    myRequests: "Your requests",
-    submittedExpenses: "Expenses submitted",
-    awaitingPayment: "Awaiting payment",
-  },
-  next: {
-    title: "Next steps",
-    body: "Leave and expenses are both live. You can now request leave and file expense claims.",
+    leave: {
+      title: "Leave & sick days",
+      days: "{n} day(s)",
+      pending: "Awaiting approval · {n}",
+    },
+    expenses: {
+      title: "Receipts",
+      claims: "{n} claim(s)",
+      awaiting: "Awaiting payment",
+    },
   },
 };
