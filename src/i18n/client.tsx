@@ -33,5 +33,5 @@ export function useI18n(): I18nValue {
 }
 
 export { interpolate };
-export { LOCALE_LABELS, INTL_LOCALES } from "./config";
+export { INTL_LOCALES } from "./config";
 export type { Locale } from "./config";

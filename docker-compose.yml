@@ -34,6 +34,9 @@ services:
       # to arrive as real environment variables or the seed has nothing to use.
       BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-admin@example.com}
       BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD}
+      # The one answer the installer collected. The seed turns it into the
+      # company's currency, timezone and language, so it has to reach the seed.
+      COMPANY_COUNTRY: ${COMPANY_COUNTRY:-KR}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 import { parseWeekendDays, WEEKDAY_KEYS } from "@/lib/company-defaults";
+import { COUNTRIES, COUNTRY_DEFAULTS, COUNTRY_LABELS } from "@/lib/country";
 import {
   applyPolicyToCurrentYear,
   createExpenseCategory,
@@ -113,10 +114,7 @@ function Section({
 
 function CompanyForm({
   name,
-  timezone,
-  timezones,
-  currency,
-  currencies,
+  country,
   weekendDays,
 }: CompanyFormProps) {
   const { d } = useI18n();
@@ -153,40 +151,22 @@ function CompanyForm({
         <FieldError state={state} name="name" />
       </div>
       <div className="flex flex-col gap-1">
-        <label htmlFor="company-timezone" className="text-xs font-medium text-zinc-500">
-          {d.settings.labels.timezone}
+        <label htmlFor="company-country" className="text-xs font-medium text-zinc-500">
+          {d.settings.labels.country}
         </label>
         <select
-          id="company-timezone"
-          name="timezone"
-          defaultValue={timezone}
+          id="company-country"
+          name="country"
+          defaultValue={country}
           className={inputClass}
         >
-          {timezones.map((zone) => (
-            <option key={zone} value={zone}>
-              {zone}
+          {COUNTRIES.map((code) => (
+            <option key={code} value={code}>
+              {COUNTRY_LABELS[code]} ({COUNTRY_DEFAULTS[code].currency})
             </option>
           ))}
         </select>
-        <FieldError state={state} name="timezone" />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="company-currency" className="text-xs font-medium text-zinc-500">
-          {d.settings.labels.currency}
-        </label>
-        <select
-          id="company-currency"
-          name="currency"
-          defaultValue={currency}
-          className={inputClass}
-        >
-          {currencies.map((c) => (
-            <option key={c.value} value={c.value}>
-              {c.label}
-            </option>
-          ))}
-        </select>
-        <FieldError state={state} name="currency" />
+        <FieldError state={state} name="country" />
       </div>
       <div className="flex flex-col gap-1 sm:col-span-3">
         <span className="text-xs font-medium text-zinc-500">
@@ -226,10 +206,7 @@ function CompanyForm({
 
 type CompanyFormProps = {
   name: string;
-  timezone: string;
-  timezones: string[];
-  currency: string;
-  currencies: { value: string; label: string }[];
+  country: string;
   weekendDays: string;
 };
 
@@ -644,10 +621,7 @@ function CategorySection({ categories }: { categories: CategoryView[] }) {
 
 export function SettingsClient({
   companyName,
-  timezone,
-  timezones,
-  currency,
-  currencies,
+  country,
   weekendDays,
   currentYear,
   year,
@@ -658,10 +632,7 @@ export function SettingsClient({
   categories,
 }: {
   companyName: string;
-  timezone: string;
-  timezones: string[];
-  currency: string;
-  currencies: { value: string; label: string }[];
+  country: string;
   weekendDays: string;
   currentYear: number;
   year: number;
@@ -675,10 +646,7 @@ export function SettingsClient({
     <div className="space-y-8">
       <CompanySection
         name={companyName}
-        timezone={timezone}
-        timezones={timezones}
-        currency={currency}
-        currencies={currencies}
+        country={country}
         weekendDays={weekendDays}
       />
       <PolicySection policies={policies} currentYear={currentYear} />

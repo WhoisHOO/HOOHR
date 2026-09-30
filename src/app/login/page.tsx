@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { LoginForm } from "./login-form";
-import { LocaleSwitcher } from "@/i18n/LocaleSwitcher";
 import { getDict } from "@/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -19,9 +18,6 @@ export default async function LoginPage() {
           <p className="mt-1 text-sm text-zinc-500">{auth.login.subtitle}</p>
         </div>
         <LoginForm />
-        <div className="mt-6 flex justify-center border-t border-zinc-200 pt-4">
-          <LocaleSwitcher />
-        </div>
       </div>
     </div>
   );
