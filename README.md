@@ -225,12 +225,11 @@ npx tsx _test-expense.ts    # expense draft -> submit -> approve -> pay
 npx tsx _test-storage.ts    # 11 checks - receipt MIME, size, errors, path traversal
 npx tsx _test-mail.ts       # 58 checks - SMTP config, escaping, every template in ko/en
 npx tsx _test-digest.ts     # 34 checks - the digest against a real DB and SMTP conversation
+npx tsx _test-weekend-currency.ts  # 50 checks - company weekend, workday maths, currency codes
 ```
 
 `_test-digest.ts` starts a small in-process ESMTP server, so it verifies real delivery
 and the real ledger without needing a credential or an external relay.
-
-`_mint-cookie.ts <email>` prints a session cookie, handy for `curl` checks against a running dev server.
 
 ### Browser E2E
 

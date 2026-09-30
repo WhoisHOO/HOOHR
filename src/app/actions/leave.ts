@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireUser } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
-import { getCompanyTimezone } from "@/lib/company";
+import { getCompanyTimezone, getCompanyWeekend } from "@/lib/company";
 import { parseIsoDate, zonedToday } from "@/lib/attendance";
 import { computeLeaveDays, remainingDays } from "@/lib/leave";
 import { isWorkday } from "@/lib/holidays";
@@ -83,11 +83,12 @@ export async function requestLeave(
   }
 
   const holidays = await getCompanyHolidays(user.companyId);
-  const days = computeLeaveDays(start, end, isHalfDay, holidays);
+  const weekend = await getCompanyWeekend(user.companyId);
+  const days = computeLeaveDays(start, end, isHalfDay, holidays, weekend);
   if (days <= 0) {
     return { message: leave.messages.noWorkdays };
   }
-  if (isHalfDay && !isWorkday(start, holidays)) {
+  if (isHalfDay && !isWorkday(start, holidays, weekend)) {
     const name = await getCompanyHolidayName(user.companyId, start);
     return {
       message: name

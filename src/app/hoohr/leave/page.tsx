@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/dal";
-import { getCompanyTimezone } from "@/lib/company";
+import { getCompanyTimezone, getCompanyWeekendRaw } from "@/lib/company";
 import { addMonths, monthBounds, monthLabel, parseIsoDate, zonedToday } from "@/lib/attendance";
 import { formatLeaveDay, formatLeaveRange, remainingDays } from "@/lib/leave";
 import { isoDateKey } from "@/lib/holidays";
@@ -54,6 +54,7 @@ export default async function LeavePage({
     CANCELED: common.leaveStatus.CANCELED,
   };
   const tz = await getCompanyTimezone(user.companyId);
+  const weekendDays = await getCompanyWeekendRaw(user.companyId);
 
   const today = zonedToday(tz);
   const year = today.getUTCFullYear();
@@ -225,6 +226,7 @@ export default async function LeavePage({
                   policies={policyOptions}
                   today={`${today.getUTCFullYear()}-${String(today.getUTCMonth() + 1).padStart(2, "0")}-${String(today.getUTCDate()).padStart(2, "0")}`}
                   holidays={holidayDates}
+                  weekendDays={weekendDays}
                 />
               )}
             </div>

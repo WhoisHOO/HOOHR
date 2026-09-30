@@ -3,7 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import { requestLeave } from "@/app/actions/leave";
 import { countWorkdays } from "@/lib/leave";
-import { isWorkday } from "@/lib/holidays";
+import { isWorkday, toWeekendSet } from "@/lib/holidays";
 import type { LeaveRequestState } from "@/lib/leave-validation";
 import { useI18n, interpolate } from "@/i18n/client";
 
@@ -23,10 +23,13 @@ export function LeaveRequestForm({
   policies,
   today,
   holidays,
+  weekendDays,
 }: {
   policies: LeavePolicyOption[];
   today: string;
   holidays: string[];
+  /** Company-configured days off; falls back to Sat+Sun when absent. */
+  weekendDays: string;
 }) {
   const { d } = useI18n();
   const [state, action, pending] = useActionState<LeaveRequestState, FormData>(
@@ -43,9 +46,11 @@ export function LeaveRequestForm({
   const start: Date | null = parseIso(startDate);
   const end: Date | null = isHalfDay ? start : parseIso(endDate);
   const holidaySet = useMemo(() => new Set(holidays), [holidays]);
+  // Same fallback the server applies, so the disabled state matches the rejection.
+  const weekend = useMemo(() => toWeekendSet(weekendDays), [weekendDays]);
   const days =
     start && end && start.getTime() <= end.getTime() && !isHalfDay
-      ? countWorkdays(start, end, holidaySet)
+      ? countWorkdays(start, end, holidaySet, weekend)
       : isHalfDay && start
         ? 0.5
         : 0;
@@ -53,7 +58,7 @@ export function LeaveRequestForm({
   const remainingAfter = remaining !== null ? Math.max(0, remaining - days) : null;
   const over = remaining !== null && days > remaining;
   // Server refuses a half-day on a weekend/holiday; mirror it so the button state matches.
-  const halfDayBlocked = isHalfDay && start !== null && !isWorkday(start, holidaySet);
+  const halfDayBlocked = isHalfDay && start !== null && !isWorkday(start, holidaySet, weekend);
   const blocked = over || halfDayBlocked || days <= 0;
 
   return (

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { interpolate } from "@/i18n/format";
+import { isValidCurrency } from "@/lib/company-defaults";
 import type { FieldErrors } from "@/lib/auth-validation";
 import type { SettingsValidationMessages } from "@/i18n/dictionaries/settings";
 
@@ -58,6 +59,23 @@ export function companySettingsSchema(v: SettingsValidationMessages) {
       .trim()
       .min(1, { error: v.validation.timezoneRequired })
       .max(100, { error: v.validation.timezoneInvalid }),
+    currency: z
+      .string()
+      .trim()
+      .regex(/^[A-Za-z]{3}$/, { error: v.validation.currencyInvalid })
+      .refine((c) => isValidCurrency(c), { error: v.validation.currencyInvalid }),
+    // 주말 요일. 하나도 없으면 근무일 계산이 전부 0 이 되고, 7일 전부 쉬면
+    // 모든 휴가 신청이 실패하므로 양쪽 경계를 막는다.
+    weekend: z
+      .array(z.coerce.number().int().min(0).max(6))
+      .min(1, { error: v.validation.weekendRequired })
+      .refine(
+        (days) => new Set(days).size === days.length,
+        { error: v.validation.weekendInvalid },
+      )
+      .refine((days) => new Set(days).size < 7, {
+        error: v.validation.weekendAllOff,
+      }),
   });
 }
 

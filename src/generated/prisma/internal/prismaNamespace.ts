@@ -1809,6 +1809,8 @@ export const CompanyScalarFieldEnum = {
   id: 'id',
   name: 'name',
   timezone: 'timezone',
+  currency: 'currency',
+  weekendDays: 'weekendDays',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

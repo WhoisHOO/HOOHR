@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
+import { parseWeekendDays, WEEKDAY_KEYS } from "@/lib/company-defaults";
 import {
   applyPolicyToCurrentYear,
   createExpenseCategory,
@@ -110,12 +111,30 @@ function Section({
 
 // ---- SET-1 ----
 
-function CompanyForm({ name, timezone, timezones }: CompanyFormProps) {
+function CompanyForm({
+  name,
+  timezone,
+  timezones,
+  currency,
+  currencies,
+  weekendDays,
+}: CompanyFormProps) {
   const { d } = useI18n();
   const [state, action, pending] = useActionState<CompanySettingsState, FormData>(
     updateCompanySettings,
     undefined,
   );
+  const [weekend, setWeekend] = useState<number[]>(() => {
+    const parsed = parseWeekendDays(weekendDays);
+    return parsed ? [...parsed] : [0, 6];
+  });
+  const weekdayKeys = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+
+  function toggleDay(day: number) {
+    setWeekend((prev) =>
+      prev.includes(day) ? prev.filter((x) => x !== day) : [...prev, day],
+    );
+  }
 
   return (
     <form action={action} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
@@ -151,6 +170,50 @@ function CompanyForm({ name, timezone, timezones }: CompanyFormProps) {
         </select>
         <FieldError state={state} name="timezone" />
       </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="company-currency" className="text-xs font-medium text-zinc-500">
+          {d.settings.labels.currency}
+        </label>
+        <select
+          id="company-currency"
+          name="currency"
+          defaultValue={currency}
+          className={inputClass}
+        >
+          {currencies.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+        <FieldError state={state} name="currency" />
+      </div>
+      <div className="flex flex-col gap-1 sm:col-span-3">
+        <span className="text-xs font-medium text-zinc-500">
+          {d.settings.labels.weekend}
+        </span>
+        <div className="flex flex-wrap gap-2">
+          {WEEKDAY_KEYS.map((day) => (
+            <button
+              key={day}
+              type="button"
+              onClick={() => toggleDay(day)}
+              aria-pressed={weekend.includes(day)}
+              className={`rounded-md border px-3 py-1.5 text-xs font-medium ${
+                weekend.includes(day)
+                  ? "border-zinc-900 bg-zinc-900 text-white"
+                  : "border-zinc-300 text-zinc-700 hover:bg-zinc-100"
+              }`}
+            >
+              {d.settings.weekdays[weekdayKeys[day]]}
+              {weekend.includes(day) ? (
+                <input type="hidden" name="weekend" value={String(day)} />
+              ) : null}
+            </button>
+          ))}
+        </div>
+        <FieldError state={state} name="weekend" />
+      </div>
       <button type="submit" disabled={pending} className={primaryButtonClass}>
         {pending ? d.common.buttons.saving : d.common.actions.save}
       </button>
@@ -165,6 +228,9 @@ type CompanyFormProps = {
   name: string;
   timezone: string;
   timezones: string[];
+  currency: string;
+  currencies: { value: string; label: string }[];
+  weekendDays: string;
 };
 
 function CompanySection(props: CompanyFormProps) {
@@ -580,6 +646,9 @@ export function SettingsClient({
   companyName,
   timezone,
   timezones,
+  currency,
+  currencies,
+  weekendDays,
   currentYear,
   year,
   prevYear,
@@ -591,6 +660,9 @@ export function SettingsClient({
   companyName: string;
   timezone: string;
   timezones: string[];
+  currency: string;
+  currencies: { value: string; label: string }[];
+  weekendDays: string;
   currentYear: number;
   year: number;
   prevYear: number;
@@ -601,7 +673,14 @@ export function SettingsClient({
 }) {
   return (
     <div className="space-y-8">
-      <CompanySection name={companyName} timezone={timezone} timezones={timezones} />
+      <CompanySection
+        name={companyName}
+        timezone={timezone}
+        timezones={timezones}
+        currency={currency}
+        currencies={currencies}
+        weekendDays={weekendDays}
+      />
       <PolicySection policies={policies} currentYear={currentYear} />
       <HolidaySection
         holidays={holidays}

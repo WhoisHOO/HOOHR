@@ -6,6 +6,7 @@ import { requireUser } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
 import { parseIsoDate } from "@/lib/attendance";
 import { parseAmountToCents } from "@/lib/expense";
+import { getCompanyCurrency } from "@/lib/company";
 import { removeReceipt, saveReceipt, type ReceiptError } from "@/lib/storage";
 import {
   approvalReviewerFromUser,
@@ -182,16 +183,19 @@ export async function createExpenseReport(
     }
 
     await prisma.expenseReport.create({
-      data: {
-        companyId: user.companyId,
-        employeeId: user.employeeId,
-        title: meta.data.title,
-        periodStart: start,
-        periodEnd: end,
-        totalAmountCents: totalCents,
-        items: { create: itemData },
-      },
-    });
+        data: {
+          companyId: user.companyId,
+          employeeId: user.employeeId,
+          title: meta.data.title,
+          periodStart: start,
+          periodEnd: end,
+          totalAmountCents: totalCents,
+          // Pin the company currency instead of inheriting the column default,
+          // which would label a KRW report as USD.
+          currency: await getCompanyCurrency(user.companyId),
+          items: { create: itemData },
+        },
+      });
   } catch {
     for (const name of savedFiles) await removeReceipt(name);
     return { message: expenses.messages.saveError };

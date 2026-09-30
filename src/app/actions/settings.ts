@@ -6,6 +6,7 @@ import { requireAdmin } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
 import { parseIsoDate, zonedToday } from "@/lib/attendance";
 import { getCompanyTimezone } from "@/lib/company";
+import { formatWeekendDays } from "@/lib/company-defaults";
 import {
   companySettingsSchema,
   expenseCategoryCreateSchema,
@@ -78,6 +79,8 @@ export async function updateCompanySettings(
   const parsed = schema.safeParse({
     name: formText(formData, "name"),
     timezone: formText(formData, "timezone"),
+    currency: formText(formData, "currency"),
+    weekend: formData.getAll("weekend").map(String),
   });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
@@ -91,7 +94,12 @@ export async function updateCompanySettings(
 
   await prisma.company.update({
     where: { id: admin.companyId },
-    data: { name: parsed.data.name, timezone: parsed.data.timezone },
+    data: {
+      name: parsed.data.name,
+      timezone: parsed.data.timezone,
+      currency: parsed.data.currency.toUpperCase(),
+      weekendDays: formatWeekendDays(new Set(parsed.data.weekend)),
+    },
   });
 
   revalidateSettingsPages();

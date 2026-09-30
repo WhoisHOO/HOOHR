@@ -81,6 +81,10 @@ model Company {
   id        String   @id @default(cuid())
   name      String
   timezone  String   @default("America/New_York")
+  // ISO-4217 code, set by the admin in Settings.
+  currency  String   @default("USD")
+  // Comma-separated ISO weekdays off (0=Sun..6=Sat), e.g. "0,6".
+  weekendDays String @default("0,6")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

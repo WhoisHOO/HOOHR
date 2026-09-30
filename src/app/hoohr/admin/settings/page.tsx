@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/dal";
 import { getCompanyTimezone } from "@/lib/company";
+import { currencyOptions } from "@/lib/company-defaults";
 import { zonedToday } from "@/lib/attendance";
 import { formatLeaveDay } from "@/lib/leave";
 import { getDict, getLocale, interpolate, INTL_LOCALES } from "@/i18n/server";
@@ -38,7 +39,12 @@ export default async function SettingsPage({
   const [company, policies, holidays, categories] = await Promise.all([
     prisma.company.findUniqueOrThrow({
       where: { id: admin.companyId },
-      select: { name: true, timezone: true },
+      select: {
+        name: true,
+        timezone: true,
+        currency: true,
+        weekendDays: true,
+      },
     }),
     prisma.leavePolicy.findMany({
       where: { companyId: admin.companyId },
@@ -102,6 +108,9 @@ export default async function SettingsPage({
         companyName={company.name}
         timezone={company.timezone}
         timezones={Intl.supportedValuesOf("timeZone")}
+        currency={company.currency}
+        currencies={currencyOptions()}
+        weekendDays={company.weekendDays}
         currentYear={currentYear}
         year={year}
         prevYear={prevYear}
