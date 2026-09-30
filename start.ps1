@@ -1,0 +1,229 @@
+﻿# HOOHR - one-click start (Windows).
+# Safe to run repeatedly: the image is cached, so a second run is seconds.
+# Needs nothing beyond PowerShell 5.1, which ships with Windows 10/11.
+
+$ErrorActionPreference = "Stop"
+$root = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location $root
+
+# Console output as UTF-8 so the Korean below is not mangled by the OEM
+# codepage. (The .ps1 itself is saved as UTF-8 *with* a BOM, which is what
+# makes PowerShell 5.1 read it correctly - a BOM-less UTF-8 file is decoded as
+# ANSI and every Korean character turns to mojibake.)
+try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch {}
+
+$LogDir  = Join-Path $root "logs"
+$LogFile = Join-Path $LogDir  "start.log"
+$Utf8Bom = New-Object System.Text.UTF8Encoding $true
+
+function Say  ([string]$m)             { Write-Host $m }
+function Step ([string]$n, [string]$m) { Write-Host ""; Write-Host ("[{0}] {1}" -f $n, $m) -ForegroundColor Cyan }
+function Warn ([string]$m)             { Write-Host $m -ForegroundColor Yellow }
+function Die  ([string]$m)             { Write-Host ""; Write-Host ("X " + $m) -ForegroundColor Red; Write-Host ""; exit 1 }
+function Record([string]$m) {
+  Add-Content -LiteralPath $LogFile -Value ((Get-Date -Format "HH:mm:ss") + " " + $m) -Encoding UTF8
+}
+
+# Runs a native command with stderr merged into stdout, immune to
+# $ErrorActionPreference="Stop".
+#
+# This is not a style preference. Docker writes ordinary build progress to
+# stderr, and with ErrorActionPreference=Stop, `2>&1` turns each of those lines
+# into a terminating ErrorRecord - so the very first `docker compose up` killed
+# the script mid-build. The exit code is the real signal, and it is returned
+# alongside the output.
+function Invoke-Native([scriptblock]$Block) {
+  $prev = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  try {
+    $out  = & $Block 2>&1 | ForEach-Object { $_.ToString() }
+    $code = $LASTEXITCODE
+  } finally {
+    $ErrorActionPreference = $prev
+  }
+  return [pscustomobject]@{ Output = @($out); ExitCode = $code }
+}
+
+New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
+Record "=== start.ps1 invoked ==="
+
+# ---------------------------------------------------------------------------
+Step "1/5" "Docker 확인"
+
+# `docker info` is the only honest readiness signal: the CLI can be on PATH
+# while the engine is still booting.
+function Test-DockerReady {
+  return (Invoke-Native { docker info --format "{{.ServerVersion}}" }).ExitCode -eq 0
+}
+
+if (-not (Test-DockerReady)) {
+  Warn "Docker가 실행되고 있지 않습니다. Docker Desktop을 시작합니다..."
+  $exe = @(
+    "$Env:ProgramFiles\Docker\Docker\Docker Desktop.exe",
+    "${Env:ProgramFiles(x86)}\Docker\Docker\Docker Desktop.exe",
+    "$Env:LOCALAPPDATA\Docker\Docker Desktop.exe"
+  ) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+
+  if (-not $exe) {
+    Die "Docker Desktop을 찾을 수 없습니다.`n   https://www.docker.com/products/docker-desktop/ 에서 설치한 뒤 다시 실행해 주세요."
+  }
+  Start-Process -FilePath $exe | Out-Null
+
+  $waited = 0
+  while ($waited -lt 300 -and -not (Test-DockerReady)) {
+    Start-Sleep -Seconds 5
+    $waited += 5
+    Write-Host ("    ... 대기 중 {0}초" -f $waited) -ForegroundColor DarkGray
+  }
+  if (-not (Test-DockerReady)) {
+    Die "Docker가 5분 안에 준비되지 않았습니다. Docker Desktop을 직접 실행해 주세요."
+  }
+  Say ("    Docker 준비 완료 ({0}초 대기)" -f $waited)
+}
+$dockerVersion = (Invoke-Native { docker info --format "{{.ServerVersion}}" }).Output | Select-Object -First 1
+Say ("    Docker 준비됨 (engine " + $dockerVersion + ")")
+
+# ---------------------------------------------------------------------------
+Step "2/5" "설정 파일(.env) 준비"
+
+$envPath = Join-Path $root ".env"
+
+function New-RandomHex([int]$byteCount) {
+  $bytes = New-Object byte[] $byteCount
+  $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+  $rng.GetBytes($bytes)
+  -join ($bytes | ForEach-Object { $_.ToString("x2") })
+}
+
+function New-RandomPassword([int]$len) {
+  # No 0/O/1/l/I: a password that cannot be misread when copied off the screen
+  # is worth more than the few bits an extended alphabet would add.
+  $alphabet = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+  $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+  $limit = 256 - (256 % $alphabet.Length)
+  $sb = New-Object System.Text.StringBuilder
+  for ($i = 0; $i -lt $len; $i++) {
+    $b = New-Object byte[] 1
+    do { $rng.GetBytes($b) } while ($b[0] -ge $limit)
+    [void]$sb.Append($alphabet[$b[0] % $alphabet.Length])
+  }
+  $sb.ToString()
+}
+
+# Read with an explicit UTF-8 encoding. `Get-Content` would use the console's
+# ANSI codepage and mangle the Korean, and `Get-Content -Raw` on a UTF-8 file
+# has already cost this project one corrupted file.
+function Read-EnvValue([string]$path, [string]$key) {
+  if (-not (Test-Path -LiteralPath $path)) { return $null }
+  $line = [System.IO.File]::ReadAllLines($path, [System.Text.Encoding]::UTF8) |
+          Where-Object { $_ -match ("^" + [regex]::Escape($key) + "=") } |
+          Select-Object -First 1
+  if (-not $line) { return $null }
+  return ($line -split "=", 2)[1].Trim().Trim('"').Trim("'")
+}
+
+$freshInstall = $false
+if (Test-Path -LiteralPath $envPath) {
+  $secret = Read-EnvValue $envPath "AUTH_SECRET"
+  $adminPw = Read-EnvValue $envPath "BOOTSTRAP_ADMIN_PASSWORD"
+  if (-not ($secret -and $adminPw)) {
+    Die ".env 가 불완전합니다 (AUTH_SECRET 또는 BOOTSTRAP_ADMIN_PASSWORD 가 비어 있음).`n   .env 파일을 지운 뒤 start.bat 을 다시 실행해 주세요."
+  }
+  Say "    기존 .env 를 사용합니다. 비밀번호는 그대로 유지됩니다."
+} else {
+  $freshInstall = $true
+  $secret = New-RandomHex 32
+  $adminPw = New-RandomPassword 16
+  $template = [System.IO.File]::ReadAllText((Join-Path $root ".env.example"), [System.Text.Encoding]::UTF8)
+  # The template's comments explain the optional SMTP block, so they are kept;
+  # only the blank secrets get real values.
+  $written = "# HOOHR - start.bat 이 자동 생성했습니다. 수정 후 다시 실행하면 이 값들이 유지됩니다.`r`n" +
+    $template.Replace('AUTH_SECRET=""',                    ('AUTH_SECRET="' + $secret + '"')).
+            Replace('BOOTSTRAP_ADMIN_PASSWORD=""',         ('BOOTSTRAP_ADMIN_PASSWORD="' + $adminPw + '"')).
+            Replace('BOOTSTRAP_ADMIN_EMAIL="admin@example.com"', 'BOOTSTRAP_ADMIN_EMAIL="admin@example.com"')
+  [System.IO.File]::WriteAllText($envPath, $written, $Utf8Bom)
+  Say "    새 .env 를 만들었습니다 (시크릿/비밀번호 자동 생성)."
+}
+
+$adminEmailOut = Read-EnvValue $envPath "BOOTSTRAP_ADMIN_EMAIL"
+$adminPwOut    = Read-EnvValue $envPath "BOOTSTRAP_ADMIN_PASSWORD"
+$appPortOut    = Read-EnvValue $envPath "APP_PORT"
+if (-not $appPortOut) { $appPortOut = "3000" }
+
+# ---------------------------------------------------------------------------
+Step "3/5" "앱 빌드 및 실행 (최초 실행은 2~5분 걸립니다)"
+
+$build = Invoke-Native { docker compose up -d --build }
+$build.Output | ForEach-Object { Record ("  " + $_) }
+if ($build.ExitCode -ne 0) {
+  Write-Host ""
+  $build.Output | Select-Object -Last 25 | ForEach-Object { Write-Host $_ -ForegroundColor DarkGray }
+  Die "docker compose 실행에 실패했습니다.`n   원인은 start-logs.bat 창에서 볼 수 있습니다."
+}
+
+# ---------------------------------------------------------------------------
+Step "4/5" "앱이 준비될 때까지 대기"
+
+$url       = "http://localhost:" + $appPortOut
+$healthUrl = $url + "/api/health"
+$ready     = $false
+$waited    = 0
+$lastCode  = ""
+
+while ($waited -lt 600) {
+  Start-Sleep -Seconds 3
+  $waited += 3
+
+  # curl rather than Invoke-WebRequest: curl does not follow redirects unless
+  # told to, so a 307 auth bounce can never be mistaken for "ready". (PS 5.1's
+  # Invoke-WebRequest follows them, which is how a broken probe once reported
+  # healthy off a /login page.)
+  $lastCode = (& curl.exe -s -o NUL -w "%{http_code}" --max-time 5 $healthUrl 2>$null | Select-Object -First 1)
+
+  if ($lastCode -eq "200") { $ready = $true; break }
+  if ($lastCode -eq "503") {
+    Write-Host ("    ... 데이터베이스 준비 중 ({0}초)" -f $waited) -ForegroundColor DarkGray
+  } elseif ($lastCode -eq "307" -or $lastCode -eq "302") {
+    Warn ("    앱이 /api/health 를 인증으로 막고 있습니다 (HTTP {0}). 이건 버그입니다." -f $lastCode)
+  } else {
+    Write-Host ("    ... 대기 중 (HTTP {1}, {0}초)" -f $waited, $lastCode) -ForegroundColor DarkGray
+  }
+  Record ("  waiting: http=" + $lastCode + " t=" + $waited + "s")
+}
+
+if (-not $ready) {
+  Die ("10분 안에 앱이 준비되지 않았습니다 (마지막 HTTP 상태: {0}).`n   start-logs.bat 으로 원인을 확인해 주세요." -f $lastCode)
+}
+Say ("    준비 완료 ({0}초)" -f $waited)
+
+# ---------------------------------------------------------------------------
+Step "5/5" "브라우저 열기"
+
+Start-Process $url | Out-Null
+
+$line = "=" * 58
+Say ""
+Say $line -ForegroundColor Green
+if ($freshInstall) { Say "  HOOHR 설치가 완료되었습니다." -ForegroundColor Green }
+else               { Say "  HOOHR 가 실행 중입니다." -ForegroundColor Green }
+Say $line -ForegroundColor Green
+Say  ("  주소          : " + $url)
+Say  ("  관리자 이메일  : " + $adminEmailOut)
+Say  ("  관리자 비밀번호: " + $adminPwOut)
+Say $line -ForegroundColor Green
+if ($freshInstall) {
+  Say "  이 비밀번호는 .env 에 저장되어 있습니다." -ForegroundColor DarkGray
+  Say "  로그인 후 Settings 화면에서 바로 변경하세요." -ForegroundColor DarkGray
+} else {
+  Say "  (비밀번호를 잊으셨으면 .env 의 BOOTSTRAP_ADMIN_PASSWORD 를 확인하세요)" -ForegroundColor DarkGray
+}
+Say ""
+Say "  로그 실시간 보기 : start-logs.bat  더블클릭"
+Say "  정지하기         : docker compose down"
+Say ""
+Say $line -ForegroundColor Green
+
+Record ("ready at " + $url + " as " + $adminEmailOut)
+
+Write-Host ""
+$null = Read-Host "Enter 를 누르면 이 창이 닫힙니다 (앱은 계속 실행됩니다)"
