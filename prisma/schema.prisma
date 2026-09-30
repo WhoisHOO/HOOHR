@@ -37,7 +37,6 @@ enum LeaveStatus {
 enum ApprovalTargetType {
   LEAVE
   EXPENSE
-  ATTENDANCE_CORRECTION
 }
 
 enum ApprovalStatus {
@@ -54,24 +53,11 @@ enum ExpenseStatus {
   REJECTED
 }
 
-enum CorrectionStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-enum AttendanceEventKind {
-  CHECK_IN
-  CHECK_OUT
-}
-
 enum NotificationType {
   LEAVE_REQUEST
   LEAVE_DECISION
   EXPENSE_REQUEST
   EXPENSE_DECISION
-  CORRECTION_REQUEST
-  CORRECTION_DECISION
   SYSTEM
 }
 
@@ -105,9 +91,6 @@ model Company {
   notifications     Notification[]
   leaveRequests     LeaveRequest[]
   expenseReports    ExpenseReport[]
-  attendanceRecords AttendanceRecord[]
-  attendanceCorrections AttendanceCorrection[]
-  attendanceEvents AttendanceEvent[]
 }
 
 model Department {
@@ -145,10 +128,7 @@ model Employee {
 
   leaveBalances      LeaveBalance[]
   leaveRequests      LeaveRequest[]
-  attendanceRecords  AttendanceRecord[]
-  corrections        AttendanceCorrection[]
   expenseReports     ExpenseReport[]
-  attendanceEvents   AttendanceEvent[]
 
   @@unique([companyId, email])
 }
@@ -170,7 +150,6 @@ model User {
   approvals      Approval[]
   decidedLeaves  LeaveRequest[]    @relation("LeaveDecider")
   decidedExpense ExpenseReport[]   @relation("ExpenseDecider")
-  decidedCorrection AttendanceCorrection[] @relation("CorrectionDecider")
 }
 
 // ============ 휴가 ============
@@ -232,63 +211,6 @@ model LeaveRequest {
   employee Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   policy   LeavePolicy @relation(fields: [policyId], references: [id])
   decidedBy User?      @relation("LeaveDecider", fields: [decidedById], references: [id])
-}
-
-// ============ 근태 ============
-
-model AttendanceRecord {
-  id         String    @id @default(cuid())
-  companyId  String
-  employeeId String
-  date       DateTime  @db.Date
-  checkInAt  DateTime?
-  checkOutAt DateTime?
-  note       String?
-  createdAt  DateTime  @default(now())
-
-  company  Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  employee Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  corrections AttendanceCorrection[]
-  events    AttendanceEvent[]
-
-  @@unique([employeeId, date])
-}
-
-model AttendanceCorrection {
-  id          String          @id @default(cuid())
-  companyId   String
-  employeeId  String
-  attendanceId String?
-  date        DateTime        @db.Date
-  requestType String          // "ADD" | "EDIT" | "FIX"
-  note        String?
-  status      CorrectionStatus @default(PENDING)
-  decidedById String?
-  decidedAt   DateTime?
-  comment     String?
-  createdAt   DateTime        @default(now())
-
-  company    Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  employee   Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  attendance AttendanceRecord? @relation(fields: [attendanceId], references: [id], onDelete: SetNull)
-  decidedBy  User?             @relation("CorrectionDecider", fields: [decidedById], references: [id])
-}
-
-model AttendanceEvent {
-  id           String               @id @default(cuid())
-  companyId    String
-  employeeId   String
-  attendanceId String
-  kind         AttendanceEventKind
-  at           DateTime
-  createdAt    DateTime             @default(now())
-
-  company    Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  employee   Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  attendance AttendanceRecord @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
-
-  @@index([attendanceId, at])
-  @@index([employeeId, at])
 }
 
 // ============ 경비 ============

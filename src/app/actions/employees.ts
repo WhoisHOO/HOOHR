@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@/generated/prisma/client";
-import { parseIsoDate } from "@/lib/attendance";
+import { parseIsoDate } from "@/lib/date";
 import { requireAdmin } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
 import {
@@ -101,7 +101,6 @@ function isUniqueConstraintError(error: unknown): boolean {
 
 function revalidateEmployeePages(): void {
   revalidatePath("/hoohr/admin/employees");
-  revalidatePath("/hoohr/attendance");
   revalidatePath("/hoohr/leave");
   revalidatePath("/hoohr/expenses");
   revalidatePath("/hoohr");

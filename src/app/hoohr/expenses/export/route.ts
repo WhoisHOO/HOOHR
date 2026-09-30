@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/dal";
-import { monthBounds } from "@/lib/attendance";
+import { monthBounds } from "@/lib/date";
 import { teamEmployeeWhere } from "@/lib/team";
 import { getDict } from "@/i18n/server";
 

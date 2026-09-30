@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/dal";
 import { getCompanyTimezone } from "@/lib/company";
-import { zonedToday } from "@/lib/attendance";
+import { zonedToday } from "@/lib/date";
 import { formatLeaveDay } from "@/lib/leave";
 import { getDict, getLocale, interpolate, INTL_LOCALES } from "@/i18n/server";
 import { SettingsClient, type PolicyView, type CategoryView, type HolidayView } from "./settings-client";

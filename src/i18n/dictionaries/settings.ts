@@ -11,7 +11,7 @@ export const settingsKo = {
     company: {
       title: "회사 정보",
       description:
-        "회사명과 시간대를 지정합니다. 시간대는 근태·휴가 화면의 날짜 기준입니다.",
+        "회사명과 국가를 지정합니다. 국가가 통화와 시간대, 표시 언어를 정합니다.",
     },
     policy: {
       title: "휴가 정책",
@@ -144,7 +144,7 @@ export const settingsEn: SettingsMessages = {
     company: {
       title: "Company details",
       description:
-        "Set the company name and timezone. The timezone is the date basis for the attendance and leave screens.",
+        "Set the company name and country. The country decides the currency, the timezone and the display language.",
     },
     policy: {
       title: "Leave policies",

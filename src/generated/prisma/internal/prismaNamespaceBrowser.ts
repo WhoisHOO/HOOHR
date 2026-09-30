@@ -58,9 +58,6 @@ export const ModelName = {
   LeavePolicy: 'LeavePolicy',
   LeaveBalance: 'LeaveBalance',
   LeaveRequest: 'LeaveRequest',
-  AttendanceRecord: 'AttendanceRecord',
-  AttendanceCorrection: 'AttendanceCorrection',
-  AttendanceEvent: 'AttendanceEvent',
   ExpenseCategory: 'ExpenseCategory',
   ExpenseReport: 'ExpenseReport',
   ExpenseItem: 'ExpenseItem',
@@ -193,51 +190,6 @@ export const LeaveRequestScalarFieldEnum = {
 } as const
 
 export type LeaveRequestScalarFieldEnum = (typeof LeaveRequestScalarFieldEnum)[keyof typeof LeaveRequestScalarFieldEnum]
-
-
-export const AttendanceRecordScalarFieldEnum = {
-  id: 'id',
-  companyId: 'companyId',
-  employeeId: 'employeeId',
-  date: 'date',
-  checkInAt: 'checkInAt',
-  checkOutAt: 'checkOutAt',
-  note: 'note',
-  createdAt: 'createdAt'
-} as const
-
-export type AttendanceRecordScalarFieldEnum = (typeof AttendanceRecordScalarFieldEnum)[keyof typeof AttendanceRecordScalarFieldEnum]
-
-
-export const AttendanceCorrectionScalarFieldEnum = {
-  id: 'id',
-  companyId: 'companyId',
-  employeeId: 'employeeId',
-  attendanceId: 'attendanceId',
-  date: 'date',
-  requestType: 'requestType',
-  note: 'note',
-  status: 'status',
-  decidedById: 'decidedById',
-  decidedAt: 'decidedAt',
-  comment: 'comment',
-  createdAt: 'createdAt'
-} as const
-
-export type AttendanceCorrectionScalarFieldEnum = (typeof AttendanceCorrectionScalarFieldEnum)[keyof typeof AttendanceCorrectionScalarFieldEnum]
-
-
-export const AttendanceEventScalarFieldEnum = {
-  id: 'id',
-  companyId: 'companyId',
-  employeeId: 'employeeId',
-  attendanceId: 'attendanceId',
-  kind: 'kind',
-  at: 'at',
-  createdAt: 'createdAt'
-} as const
-
-export type AttendanceEventScalarFieldEnum = (typeof AttendanceEventScalarFieldEnum)[keyof typeof AttendanceEventScalarFieldEnum]
 
 
 export const ExpenseCategoryScalarFieldEnum = {

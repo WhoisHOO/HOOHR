@@ -4,7 +4,7 @@
 
 ### 1.1. Background
 - Lightweight employee management tool for startups/SMBs of ~20 people
-- Remote employees access over the internet to record attendance, request leave, and file expense claims
+- Remote employees access over the internet to request leave and file expense claims
 - **Planned open-source release** (License: Apache-2.0 — free to resell/modify, includes patent/trademark clauses)
 - Existing open-source HRMS (Frappe HRMS, etc.) are overkill for this scale → focus on "basic but essential" features only
 
@@ -23,14 +23,13 @@
 | File storage | Local volume (→ abstracted behind an S3-compatible interface) | MVP stays simple for 20 people |
 | Auth | Email + password, JWT session / invite links | Employee-invitation approach |
 | Notifications | SMTP email (MVP) → in-app notifications later | |
-| Data pipeline | **Apache Airflow + PySpark** (run on EKS) | Attendance-pattern analysis reports, etc. Confirmed (2026-09-24, option D all-in) |
 | Deployment | Docker Compose (dev) → **AWS EKS (K8s)** (prod) + Cloudflare Tunnel | Confirmed (2026-09-24) |
 
 ## 2. User Roles
 
 | Role | Description |
 |---|---|
-| **EMPLOYEE** | Manages only their own attendance, leave, and expenses |
+| **EMPLOYEE** | Manages only their own leave and expenses |
 | **MANAGER** | Approves requests for their team members; views team calendar |
 | **ADMIN** | Invites employees, configures policies, confirms payments, views company-wide data |
 
@@ -46,17 +45,8 @@ Roles are simplified to 3 given the small scale. Single-level department/team hi
 | EMP-3 | Deactivate/reactivate employees (termination handling) | ADMIN | ✅ |
 | EMP-4 | Manage department/position master data | ADMIN | ✅ |
 
-### 3.2. Attendance
-| ID | Requirement | Role | MVP |
-|---|---|---|---|
-| ATT-1 | Record check-in/check-out (browser button, server time) | EMPLOYEE | ✅ |
-| ATT-2 | Multiple check-ins/outs per day (away/return, lunch, etc.) | EMPLOYEE | ✅ |
-| ATT-3 | **Correction requests** for missing/erroneous records → manager approval | EMPLOYEE→Manager | ✅ |
-| ATT-4 | View daily/monthly history (own; manager for team) | All | ✅ |
-| ATT-5 | (Later) GPS/geofencing clock-in/out — location recorded only, not enforced | — | ❌ |
-
-### 3.3. Leave / PTO
-#### 3.3.1. Leave Types and Rules
+### 3.2. Leave / PTO
+#### 3.2.1. Leave Types and Rules
 | Type | Paid | Accrual rule (example) | Documentation required |
 |---|---|---|---|
 | Annual (PTO) | ✅ | *N* days/year from hire month, carry-over policy for unused | None |
@@ -67,7 +57,7 @@ Roles are simplified to 3 given the small scale. Single-level department/team hi
 - Policy values (N, M, carry-over days) must be configurable by ADMIN
 - Balance is **auto-calculated from accrual basis + manual adjustment** (for spreadsheet migration)
 
-#### 3.3.2. Request/Approval Workflow
+#### 3.2.2. Request/Approval Workflow
 | ID | Requirement | MVP |
 |---|---|---|
 | LV-1 | Leave request: type, period, reason, half-day flag | ✅ |
@@ -78,7 +68,7 @@ Roles are simplified to 3 given the small scale. Single-level department/team hi
 | LV-6 | Self-cancel allowed (only before approval) | ✅ |
 | LV-7 | Bulk import of existing balances from file (CSV) | ✅ |
 
-### 3.4. Expense Claims (Receipts)
+### 3.3. Expense Claims (Receipts)
 | ID | Requirement | MVP |
 |---|---|---|
 | EXP-1 | Expense report: date, item, amount, category, description | ✅ |
@@ -90,14 +80,14 @@ Roles are simplified to 3 given the small scale. Single-level department/team hi
 | EXP-7 | (Later) OCR auto-extraction of receipts (AI) — amount/date/vendor | ❌ |
 | EXP-8 | (Later) Multi-currency support | ❌ |
 
-### 3.5. Notifications
+### 3.4. Notifications
 | ID | Requirement | MVP |
 |---|---|---|
 | NOT-1 | Email on leave/expense approval & rejection (SMTP) | ✅ |
 | NOT-2 | Batched "pending approvals" email to manager | ✅ |
 | NOT-3 | (Later) In-app notifications/push | ❌ |
 
-### 3.6. Settings
+### 3.5. Settings
 | ID | Requirement | MVP |
 |---|---|---|
 | SET-1 | Company name, domain, timezone | ✅ |
@@ -112,8 +102,6 @@ Company (1) ─┬─ (N) Department ── (N) Employee ── (1) Position
              ├─ Holiday(list)
              └─ LeavePolicy (N) ── LeaveType ── (N) LeaveBalance (per Employee)
 
-Employee (1) ── (N) AttendanceRecord      -- check_in/check_out, source(intro/auto)
-Employee (1) ── (N) AttendanceCorrection  -- correction request, status
 Employee (1) ── (N) LeaveRequest          -- leave_type, dates, status
 LeaveRequest (1) ── (N) ApprovalStep      -- approver, status, comment, timestamp
 Employee (1) ── (N) ExpenseReport         -- period, total, status
@@ -129,7 +117,7 @@ Employee (1) ── (N) Notification
 
 | Feature | EMPLOYEE | MANAGER | ADMIN |
 |---|---|---|---|
-| Attendance records / correction requests | Own | Own + manage team | All |
+
 | Leave request/cancel | Own | Own + approve team | All + policies |
 | Balance view/adjustment | Own | View team | All + adjust |
 | Expense submission | Own | Own + approve team | All + confirm payment |
@@ -153,7 +141,6 @@ Employee (1) ── (N) Notification
 
 **MVP (v0.1):**
 1. Auth + employee invites
-2. Attendance check-in/out + correction approvals
 3. Leave (annual/sick/half-day) request·approval·balance calculation
 4. Expense claims + receipt attachments + approval + payment confirmation
 5. Email notifications, team calendar, CSV export
@@ -174,12 +161,12 @@ Employee (1) ── (N) Notification
 - [ ] Exact leave-accrual rule (hire-date vs fiscal year basis, carry-over cap)
 - [ ] Whether sick-leave proof (receipts) is mandatory and the sick-leave↔expense-claim linkage scenario
 - [ ] Final project name/brand
-- [ ] Default UI language (Korean-first → English i18n)
+- [x] ~~Default UI language~~ → **decided**: the install asks which country the company is in, and that picks the currency, the timezone and the language (KR → 한국어, US → English). No runtime switcher.
 
 ## 10. Data Pipeline (Airflow + PySpark on EKS)
 
 ### 10.1. Purpose
-- Periodically collect & process attendance/expense data to produce **pattern-analysis reports** (e.g., overtime trends, per-department attendance patterns, expense category trends)
+- Periodically collect & process expense data to produce **pattern-analysis reports** (e.g. expense category trends)
 - Keep the pipeline schema future-compatible for Kafka/Hadoop (HDFS) adoption in later phases
 
 ### 10.2. Architecture Principles
@@ -192,11 +179,17 @@ Employee (1) ── (N) Notification
 | Trigger | DAG `schedule` (daily) + on-demand execution API from the web app (later) |
 
 ### 10.3. MVP Reports (late v0.1)
-1. Weekly attendance summary (average check-in/out per person, absence detection)
+1. Weekly expense summary (spend per person and per department)
 2. Leave-usage aggregates (monthly usage by type)
 3. Monthly expense statistics (totals by category)
 
-### 10.4. Folder Layout
+### 10.4. Status
+**Not implemented.** The first version of this pipeline was attendance-only — an Airflow
+DAG and a PySpark job that both read `AttendanceRecord`. With attendance out of scope
+the directory was deleted rather than left behind reading a table that no longer
+exists, so this section is a design note for a future phase. The `pipelines/` layout
+below is what it would look like if it is built.
+
 ```
 pipelines/
 ├── dags/            → Airflow DAG definitions

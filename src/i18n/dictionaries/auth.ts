@@ -3,7 +3,7 @@ import type { CommonMessages } from "./common";
 export const authKo = {
   login: {
     title: "로그인",
-    subtitle: "근태 · 휴가 · 경비 관리에 로그인하세요",
+    subtitle: "휴가 · 경비 관리에 로그인하세요",
     submit: "로그인",
     submitting: "로그인 중...",
     invalid: "이메일 또는 비밀번호가 올바르지 않습니다",
@@ -45,7 +45,7 @@ export type AuthMessages = typeof authKo;
 export const authEn: AuthMessages = {
   login: {
     title: "Sign in",
-    subtitle: "Sign in to manage attendance, leave and expenses",
+    subtitle: "Sign in to manage leave and expenses",
     submit: "Sign in",
     submitting: "Signing in...",
     invalid: "That email or password is not correct",

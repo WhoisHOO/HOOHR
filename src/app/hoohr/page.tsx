@@ -18,15 +18,6 @@ function formatDate(d: Date | null, locale: string): string {
   });
 }
 
-function formatTime(d: Date | null, timeZone: string, locale: string): string | null {
-  if (!d) return null;
-  return d.toLocaleTimeString(locale, {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone,
-  });
-}
-
 export default async function DashboardPage() {
   const user = await requireUser();
   const { common, dashboard } = await getDict();
@@ -35,14 +26,11 @@ export default async function DashboardPage() {
   const year = now.getUTCFullYear();
 
   const [
-    company,
     employee,
     ptoBalance,
-    todayAttendance,
     pendingLeave,
     pendingExpense,
   ] = await Promise.all([
-    prisma.company.findUnique({ where: { id: user.companyId } }),
     user.employeeId
       ? prisma.employee.findUnique({
           where: { id: user.employeeId },
@@ -59,16 +47,6 @@ export default async function DashboardPage() {
         })
       : null,
     user.employeeId
-      ? prisma.attendanceRecord.findUnique({
-          where: {
-            employeeId_date: {
-              employeeId: user.employeeId,
-              date: now,
-            },
-          },
-        })
-      : null,
-    user.employeeId
       ? prisma.leaveRequest.count({
           where: { employeeId: user.employeeId, status: "PENDING" },
         })
@@ -80,13 +58,9 @@ export default async function DashboardPage() {
       : 0,
   ]);
 
-  const tz = company?.timezone ?? "UTC";
   const ptoRemaining = ptoBalance
     ? ptoBalance.grantedDays - ptoBalance.usedDays + ptoBalance.adjustDays
     : null;
-
-  const checkInTime = formatTime(todayAttendance?.checkInAt ?? null, tz, locale);
-  const checkOutTime = formatTime(todayAttendance?.checkOutAt ?? null, tz, locale);
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -101,7 +75,7 @@ export default async function DashboardPage() {
         })}
       </p>
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title={dashboard.stats.ptoRemaining}
           value={
@@ -113,19 +87,6 @@ export default async function DashboardPage() {
             granted: ptoBalance?.grantedDays ?? 0,
             used: ptoBalance?.usedDays ?? 0,
           })}
-        />
-        <StatCard
-          title={dashboard.stats.attendanceToday}
-          value={
-            checkInTime
-              ? interpolate(dashboard.stats.checkIn, { time: checkInTime })
-              : dashboard.stats.notRecorded
-          }
-          sub={
-            checkOutTime
-              ? interpolate(dashboard.stats.checkOut, { time: checkOutTime })
-              : dashboard.stats.beforeCheckOut
-          }
         />
         <StatCard
           title={dashboard.stats.pendingLeave}

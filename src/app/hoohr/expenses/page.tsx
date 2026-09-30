@@ -3,7 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/dal";
 import { getCompanyTimezone } from "@/lib/company";
-import { zonedToday, monthLabel } from "@/lib/attendance";
+import { zonedToday, monthLabel } from "@/lib/date";
 import { formatMoney } from "@/lib/expense";
 import { formatLeaveRange } from "@/lib/leave";
 import {

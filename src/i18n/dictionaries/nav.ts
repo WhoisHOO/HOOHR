@@ -1,6 +1,5 @@
 export const navKo = {
   dashboard: "대시보드",
-  attendance: "근태",
   leave: "휴가",
   expenses: "경비",
   adminSection: "관리자",
@@ -15,7 +14,6 @@ export type NavMessages = typeof navKo;
 
 export const navEn: NavMessages = {
   dashboard: "Dashboard",
-  attendance: "Attendance",
   leave: "Leave",
   expenses: "Expenses",
   adminSection: "Admin",

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
-import { parseIsoDate } from "@/lib/attendance";
+import { parseIsoDate } from "@/lib/date";
 import { parseAmountToCents } from "@/lib/expense";
 import { getCompanyCurrency } from "@/lib/company";
 import { removeReceipt, saveReceipt, type ReceiptError } from "@/lib/storage";

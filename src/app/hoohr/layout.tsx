@@ -5,7 +5,6 @@ import { getDict } from "@/i18n/server";
 
 const NAV_ITEMS = [
   { href: "/hoohr", label: "dashboard" },
-  { href: "/hoohr/attendance", label: "attendance" },
   { href: "/hoohr/leave", label: "leave" },
   { href: "/hoohr/expenses", label: "expenses" },
 ] as const;

@@ -48,8 +48,7 @@ export type LeaveStatus = (typeof LeaveStatus)[keyof typeof LeaveStatus]
 
 export const ApprovalTargetType = {
   LEAVE: 'LEAVE',
-  EXPENSE: 'EXPENSE',
-  ATTENDANCE_CORRECTION: 'ATTENDANCE_CORRECTION'
+  EXPENSE: 'EXPENSE'
 } as const
 
 export type ApprovalTargetType = (typeof ApprovalTargetType)[keyof typeof ApprovalTargetType]
@@ -75,30 +74,11 @@ export const ExpenseStatus = {
 export type ExpenseStatus = (typeof ExpenseStatus)[keyof typeof ExpenseStatus]
 
 
-export const CorrectionStatus = {
-  PENDING: 'PENDING',
-  APPROVED: 'APPROVED',
-  REJECTED: 'REJECTED'
-} as const
-
-export type CorrectionStatus = (typeof CorrectionStatus)[keyof typeof CorrectionStatus]
-
-
-export const AttendanceEventKind = {
-  CHECK_IN: 'CHECK_IN',
-  CHECK_OUT: 'CHECK_OUT'
-} as const
-
-export type AttendanceEventKind = (typeof AttendanceEventKind)[keyof typeof AttendanceEventKind]
-
-
 export const NotificationType = {
   LEAVE_REQUEST: 'LEAVE_REQUEST',
   LEAVE_DECISION: 'LEAVE_DECISION',
   EXPENSE_REQUEST: 'EXPENSE_REQUEST',
   EXPENSE_DECISION: 'EXPENSE_DECISION',
-  CORRECTION_REQUEST: 'CORRECTION_REQUEST',
-  CORRECTION_DECISION: 'CORRECTION_DECISION',
   SYSTEM: 'SYSTEM'
 } as const
 

@@ -220,7 +220,6 @@ export type UserWhereInput = {
   approvals?: Prisma.ApprovalListRelationFilter
   decidedLeaves?: Prisma.LeaveRequestListRelationFilter
   decidedExpense?: Prisma.ExpenseReportListRelationFilter
-  decidedCorrection?: Prisma.AttendanceCorrectionListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -239,7 +238,6 @@ export type UserOrderByWithRelationInput = {
   approvals?: Prisma.ApprovalOrderByRelationAggregateInput
   decidedLeaves?: Prisma.LeaveRequestOrderByRelationAggregateInput
   decidedExpense?: Prisma.ExpenseReportOrderByRelationAggregateInput
-  decidedCorrection?: Prisma.AttendanceCorrectionOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -261,7 +259,6 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   approvals?: Prisma.ApprovalListRelationFilter
   decidedLeaves?: Prisma.LeaveRequestListRelationFilter
   decidedExpense?: Prisma.ExpenseReportListRelationFilter
-  decidedCorrection?: Prisma.AttendanceCorrectionListRelationFilter
 }, "id" | "email">
 
 export type UserOrderByWithAggregationInput = {
@@ -309,7 +306,6 @@ export type UserCreateInput = {
   approvals?: Prisma.ApprovalCreateNestedManyWithoutApproverInput
   decidedLeaves?: Prisma.LeaveRequestCreateNestedManyWithoutDecidedByInput
   decidedExpense?: Prisma.ExpenseReportCreateNestedManyWithoutDecidedByInput
-  decidedCorrection?: Prisma.AttendanceCorrectionCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -327,7 +323,6 @@ export type UserUncheckedCreateInput = {
   approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutApproverInput
   decidedLeaves?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutDecidedByInput
   decidedExpense?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutDecidedByInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUpdateInput = {
@@ -345,7 +340,6 @@ export type UserUpdateInput = {
   approvals?: Prisma.ApprovalUpdateManyWithoutApproverNestedInput
   decidedLeaves?: Prisma.LeaveRequestUpdateManyWithoutDecidedByNestedInput
   decidedExpense?: Prisma.ExpenseReportUpdateManyWithoutDecidedByNestedInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -363,7 +357,6 @@ export type UserUncheckedUpdateInput = {
   approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutApproverNestedInput
   decidedLeaves?: Prisma.LeaveRequestUncheckedUpdateManyWithoutDecidedByNestedInput
   decidedExpense?: Prisma.ExpenseReportUncheckedUpdateManyWithoutDecidedByNestedInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -539,22 +532,6 @@ export type UserUpdateOneWithoutDecidedLeavesNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDecidedLeavesInput, Prisma.UserUpdateWithoutDecidedLeavesInput>, Prisma.UserUncheckedUpdateWithoutDecidedLeavesInput>
 }
 
-export type UserCreateNestedOneWithoutDecidedCorrectionInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutDecidedCorrectionInput, Prisma.UserUncheckedCreateWithoutDecidedCorrectionInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDecidedCorrectionInput
-  connect?: Prisma.UserWhereUniqueInput
-}
-
-export type UserUpdateOneWithoutDecidedCorrectionNestedInput = {
-  create?: Prisma.XOR<Prisma.UserCreateWithoutDecidedCorrectionInput, Prisma.UserUncheckedCreateWithoutDecidedCorrectionInput>
-  connectOrCreate?: Prisma.UserCreateOrConnectWithoutDecidedCorrectionInput
-  upsert?: Prisma.UserUpsertWithoutDecidedCorrectionInput
-  disconnect?: Prisma.UserWhereInput | boolean
-  delete?: Prisma.UserWhereInput | boolean
-  connect?: Prisma.UserWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutDecidedCorrectionInput, Prisma.UserUpdateWithoutDecidedCorrectionInput>, Prisma.UserUncheckedUpdateWithoutDecidedCorrectionInput>
-}
-
 export type UserCreateNestedOneWithoutDecidedExpenseInput = {
   create?: Prisma.XOR<Prisma.UserCreateWithoutDecidedExpenseInput, Prisma.UserUncheckedCreateWithoutDecidedExpenseInput>
   connectOrCreate?: Prisma.UserCreateOrConnectWithoutDecidedExpenseInput
@@ -613,7 +590,6 @@ export type UserCreateWithoutCompanyInput = {
   approvals?: Prisma.ApprovalCreateNestedManyWithoutApproverInput
   decidedLeaves?: Prisma.LeaveRequestCreateNestedManyWithoutDecidedByInput
   decidedExpense?: Prisma.ExpenseReportCreateNestedManyWithoutDecidedByInput
-  decidedCorrection?: Prisma.AttendanceCorrectionCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutCompanyInput = {
@@ -630,7 +606,6 @@ export type UserUncheckedCreateWithoutCompanyInput = {
   approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutApproverInput
   decidedLeaves?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutDecidedByInput
   decidedExpense?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutDecidedByInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutCompanyInput = {
@@ -688,7 +663,6 @@ export type UserCreateWithoutEmployeeInput = {
   approvals?: Prisma.ApprovalCreateNestedManyWithoutApproverInput
   decidedLeaves?: Prisma.LeaveRequestCreateNestedManyWithoutDecidedByInput
   decidedExpense?: Prisma.ExpenseReportCreateNestedManyWithoutDecidedByInput
-  decidedCorrection?: Prisma.AttendanceCorrectionCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutEmployeeInput = {
@@ -705,7 +679,6 @@ export type UserUncheckedCreateWithoutEmployeeInput = {
   approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutApproverInput
   decidedLeaves?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutDecidedByInput
   decidedExpense?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutDecidedByInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutEmployeeInput = {
@@ -738,7 +711,6 @@ export type UserUpdateWithoutEmployeeInput = {
   approvals?: Prisma.ApprovalUpdateManyWithoutApproverNestedInput
   decidedLeaves?: Prisma.LeaveRequestUpdateManyWithoutDecidedByNestedInput
   decidedExpense?: Prisma.ExpenseReportUpdateManyWithoutDecidedByNestedInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutEmployeeInput = {
@@ -755,7 +727,6 @@ export type UserUncheckedUpdateWithoutEmployeeInput = {
   approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutApproverNestedInput
   decidedLeaves?: Prisma.LeaveRequestUncheckedUpdateManyWithoutDecidedByNestedInput
   decidedExpense?: Prisma.ExpenseReportUncheckedUpdateManyWithoutDecidedByNestedInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutDecidedLeavesInput = {
@@ -772,7 +743,6 @@ export type UserCreateWithoutDecidedLeavesInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   approvals?: Prisma.ApprovalCreateNestedManyWithoutApproverInput
   decidedExpense?: Prisma.ExpenseReportCreateNestedManyWithoutDecidedByInput
-  decidedCorrection?: Prisma.AttendanceCorrectionCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutDecidedLeavesInput = {
@@ -789,7 +759,6 @@ export type UserUncheckedCreateWithoutDecidedLeavesInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutApproverInput
   decidedExpense?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutDecidedByInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutDecidedLeavesInput = {
@@ -822,7 +791,6 @@ export type UserUpdateWithoutDecidedLeavesInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   approvals?: Prisma.ApprovalUpdateManyWithoutApproverNestedInput
   decidedExpense?: Prisma.ExpenseReportUpdateManyWithoutDecidedByNestedInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutDecidedLeavesInput = {
@@ -838,91 +806,6 @@ export type UserUncheckedUpdateWithoutDecidedLeavesInput = {
   employee?: Prisma.EmployeeUncheckedUpdateOneWithoutUserNestedInput
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutApproverNestedInput
-  decidedExpense?: Prisma.ExpenseReportUncheckedUpdateManyWithoutDecidedByNestedInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutDecidedByNestedInput
-}
-
-export type UserCreateWithoutDecidedCorrectionInput = {
-  id?: string
-  email: string
-  name: string
-  passwordHash: string
-  role?: $Enums.Role
-  isActive?: boolean
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  company: Prisma.CompanyCreateNestedOneWithoutUsersInput
-  employee?: Prisma.EmployeeCreateNestedOneWithoutUserInput
-  notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
-  approvals?: Prisma.ApprovalCreateNestedManyWithoutApproverInput
-  decidedLeaves?: Prisma.LeaveRequestCreateNestedManyWithoutDecidedByInput
-  decidedExpense?: Prisma.ExpenseReportCreateNestedManyWithoutDecidedByInput
-}
-
-export type UserUncheckedCreateWithoutDecidedCorrectionInput = {
-  id?: string
-  companyId: string
-  email: string
-  name: string
-  passwordHash: string
-  role?: $Enums.Role
-  isActive?: boolean
-  createdAt?: Date | string
-  updatedAt?: Date | string
-  employee?: Prisma.EmployeeUncheckedCreateNestedOneWithoutUserInput
-  notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
-  approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutApproverInput
-  decidedLeaves?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutDecidedByInput
-  decidedExpense?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutDecidedByInput
-}
-
-export type UserCreateOrConnectWithoutDecidedCorrectionInput = {
-  where: Prisma.UserWhereUniqueInput
-  create: Prisma.XOR<Prisma.UserCreateWithoutDecidedCorrectionInput, Prisma.UserUncheckedCreateWithoutDecidedCorrectionInput>
-}
-
-export type UserUpsertWithoutDecidedCorrectionInput = {
-  update: Prisma.XOR<Prisma.UserUpdateWithoutDecidedCorrectionInput, Prisma.UserUncheckedUpdateWithoutDecidedCorrectionInput>
-  create: Prisma.XOR<Prisma.UserCreateWithoutDecidedCorrectionInput, Prisma.UserUncheckedCreateWithoutDecidedCorrectionInput>
-  where?: Prisma.UserWhereInput
-}
-
-export type UserUpdateToOneWithWhereWithoutDecidedCorrectionInput = {
-  where?: Prisma.UserWhereInput
-  data: Prisma.XOR<Prisma.UserUpdateWithoutDecidedCorrectionInput, Prisma.UserUncheckedUpdateWithoutDecidedCorrectionInput>
-}
-
-export type UserUpdateWithoutDecidedCorrectionInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  company?: Prisma.CompanyUpdateOneRequiredWithoutUsersNestedInput
-  employee?: Prisma.EmployeeUpdateOneWithoutUserNestedInput
-  notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
-  approvals?: Prisma.ApprovalUpdateManyWithoutApproverNestedInput
-  decidedLeaves?: Prisma.LeaveRequestUpdateManyWithoutDecidedByNestedInput
-  decidedExpense?: Prisma.ExpenseReportUpdateManyWithoutDecidedByNestedInput
-}
-
-export type UserUncheckedUpdateWithoutDecidedCorrectionInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  companyId?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  passwordHash?: Prisma.StringFieldUpdateOperationsInput | string
-  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
-  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  employee?: Prisma.EmployeeUncheckedUpdateOneWithoutUserNestedInput
-  notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
-  approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutApproverNestedInput
-  decidedLeaves?: Prisma.LeaveRequestUncheckedUpdateManyWithoutDecidedByNestedInput
   decidedExpense?: Prisma.ExpenseReportUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
@@ -940,7 +823,6 @@ export type UserCreateWithoutDecidedExpenseInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   approvals?: Prisma.ApprovalCreateNestedManyWithoutApproverInput
   decidedLeaves?: Prisma.LeaveRequestCreateNestedManyWithoutDecidedByInput
-  decidedCorrection?: Prisma.AttendanceCorrectionCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutDecidedExpenseInput = {
@@ -957,7 +839,6 @@ export type UserUncheckedCreateWithoutDecidedExpenseInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutApproverInput
   decidedLeaves?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutDecidedByInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutDecidedExpenseInput = {
@@ -990,7 +871,6 @@ export type UserUpdateWithoutDecidedExpenseInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   approvals?: Prisma.ApprovalUpdateManyWithoutApproverNestedInput
   decidedLeaves?: Prisma.LeaveRequestUpdateManyWithoutDecidedByNestedInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutDecidedExpenseInput = {
@@ -1007,7 +887,6 @@ export type UserUncheckedUpdateWithoutDecidedExpenseInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutApproverNestedInput
   decidedLeaves?: Prisma.LeaveRequestUncheckedUpdateManyWithoutDecidedByNestedInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutApprovalsInput = {
@@ -1024,7 +903,6 @@ export type UserCreateWithoutApprovalsInput = {
   notifications?: Prisma.NotificationCreateNestedManyWithoutUserInput
   decidedLeaves?: Prisma.LeaveRequestCreateNestedManyWithoutDecidedByInput
   decidedExpense?: Prisma.ExpenseReportCreateNestedManyWithoutDecidedByInput
-  decidedCorrection?: Prisma.AttendanceCorrectionCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutApprovalsInput = {
@@ -1041,7 +919,6 @@ export type UserUncheckedCreateWithoutApprovalsInput = {
   notifications?: Prisma.NotificationUncheckedCreateNestedManyWithoutUserInput
   decidedLeaves?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutDecidedByInput
   decidedExpense?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutDecidedByInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutApprovalsInput = {
@@ -1074,7 +951,6 @@ export type UserUpdateWithoutApprovalsInput = {
   notifications?: Prisma.NotificationUpdateManyWithoutUserNestedInput
   decidedLeaves?: Prisma.LeaveRequestUpdateManyWithoutDecidedByNestedInput
   decidedExpense?: Prisma.ExpenseReportUpdateManyWithoutDecidedByNestedInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutApprovalsInput = {
@@ -1091,7 +967,6 @@ export type UserUncheckedUpdateWithoutApprovalsInput = {
   notifications?: Prisma.NotificationUncheckedUpdateManyWithoutUserNestedInput
   decidedLeaves?: Prisma.LeaveRequestUncheckedUpdateManyWithoutDecidedByNestedInput
   decidedExpense?: Prisma.ExpenseReportUncheckedUpdateManyWithoutDecidedByNestedInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateWithoutNotificationsInput = {
@@ -1108,7 +983,6 @@ export type UserCreateWithoutNotificationsInput = {
   approvals?: Prisma.ApprovalCreateNestedManyWithoutApproverInput
   decidedLeaves?: Prisma.LeaveRequestCreateNestedManyWithoutDecidedByInput
   decidedExpense?: Prisma.ExpenseReportCreateNestedManyWithoutDecidedByInput
-  decidedCorrection?: Prisma.AttendanceCorrectionCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -1125,7 +999,6 @@ export type UserUncheckedCreateWithoutNotificationsInput = {
   approvals?: Prisma.ApprovalUncheckedCreateNestedManyWithoutApproverInput
   decidedLeaves?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutDecidedByInput
   decidedExpense?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutDecidedByInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUncheckedCreateNestedManyWithoutDecidedByInput
 }
 
 export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -1158,7 +1031,6 @@ export type UserUpdateWithoutNotificationsInput = {
   approvals?: Prisma.ApprovalUpdateManyWithoutApproverNestedInput
   decidedLeaves?: Prisma.LeaveRequestUpdateManyWithoutDecidedByNestedInput
   decidedExpense?: Prisma.ExpenseReportUpdateManyWithoutDecidedByNestedInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -1175,7 +1047,6 @@ export type UserUncheckedUpdateWithoutNotificationsInput = {
   approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutApproverNestedInput
   decidedLeaves?: Prisma.LeaveRequestUncheckedUpdateManyWithoutDecidedByNestedInput
   decidedExpense?: Prisma.ExpenseReportUncheckedUpdateManyWithoutDecidedByNestedInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserCreateManyCompanyInput = {
@@ -1203,7 +1074,6 @@ export type UserUpdateWithoutCompanyInput = {
   approvals?: Prisma.ApprovalUpdateManyWithoutApproverNestedInput
   decidedLeaves?: Prisma.LeaveRequestUpdateManyWithoutDecidedByNestedInput
   decidedExpense?: Prisma.ExpenseReportUpdateManyWithoutDecidedByNestedInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCompanyInput = {
@@ -1220,7 +1090,6 @@ export type UserUncheckedUpdateWithoutCompanyInput = {
   approvals?: Prisma.ApprovalUncheckedUpdateManyWithoutApproverNestedInput
   decidedLeaves?: Prisma.LeaveRequestUncheckedUpdateManyWithoutDecidedByNestedInput
   decidedExpense?: Prisma.ExpenseReportUncheckedUpdateManyWithoutDecidedByNestedInput
-  decidedCorrection?: Prisma.AttendanceCorrectionUncheckedUpdateManyWithoutDecidedByNestedInput
 }
 
 export type UserUncheckedUpdateManyWithoutCompanyInput = {
@@ -1244,7 +1113,6 @@ export type UserCountOutputType = {
   approvals: number
   decidedLeaves: number
   decidedExpense: number
-  decidedCorrection: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1252,7 +1120,6 @@ export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.I
   approvals?: boolean | UserCountOutputTypeCountApprovalsArgs
   decidedLeaves?: boolean | UserCountOutputTypeCountDecidedLeavesArgs
   decidedExpense?: boolean | UserCountOutputTypeCountDecidedExpenseArgs
-  decidedCorrection?: boolean | UserCountOutputTypeCountDecidedCorrectionArgs
 }
 
 /**
@@ -1293,13 +1160,6 @@ export type UserCountOutputTypeCountDecidedExpenseArgs<ExtArgs extends runtime.T
   where?: Prisma.ExpenseReportWhereInput
 }
 
-/**
- * UserCountOutputType without action
- */
-export type UserCountOutputTypeCountDecidedCorrectionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.AttendanceCorrectionWhereInput
-}
-
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
@@ -1317,7 +1177,6 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   approvals?: boolean | Prisma.User$approvalsArgs<ExtArgs>
   decidedLeaves?: boolean | Prisma.User$decidedLeavesArgs<ExtArgs>
   decidedExpense?: boolean | Prisma.User$decidedExpenseArgs<ExtArgs>
-  decidedCorrection?: boolean | Prisma.User$decidedCorrectionArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -1367,7 +1226,6 @@ export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   approvals?: boolean | Prisma.User$approvalsArgs<ExtArgs>
   decidedLeaves?: boolean | Prisma.User$decidedLeavesArgs<ExtArgs>
   decidedExpense?: boolean | Prisma.User$decidedExpenseArgs<ExtArgs>
-  decidedCorrection?: boolean | Prisma.User$decidedCorrectionArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1386,7 +1244,6 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     approvals: Prisma.$ApprovalPayload<ExtArgs>[]
     decidedLeaves: Prisma.$LeaveRequestPayload<ExtArgs>[]
     decidedExpense: Prisma.$ExpenseReportPayload<ExtArgs>[]
-    decidedCorrection: Prisma.$AttendanceCorrectionPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
@@ -1798,7 +1655,6 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   approvals<T extends Prisma.User$approvalsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$approvalsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ApprovalPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   decidedLeaves<T extends Prisma.User$decidedLeavesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$decidedLeavesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeaveRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   decidedExpense<T extends Prisma.User$decidedExpenseArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$decidedExpenseArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExpenseReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  decidedCorrection<T extends Prisma.User$decidedCorrectionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$decidedCorrectionArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$AttendanceCorrectionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -2350,30 +2206,6 @@ export type User$decidedExpenseArgs<ExtArgs extends runtime.Types.Extensions.Int
   take?: number
   skip?: number
   distinct?: Prisma.ExpenseReportScalarFieldEnum | Prisma.ExpenseReportScalarFieldEnum[]
-}
-
-/**
- * User.decidedCorrection
- */
-export type User$decidedCorrectionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the AttendanceCorrection
-   */
-  select?: Prisma.AttendanceCorrectionSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the AttendanceCorrection
-   */
-  omit?: Prisma.AttendanceCorrectionOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.AttendanceCorrectionInclude<ExtArgs> | null
-  where?: Prisma.AttendanceCorrectionWhereInput
-  orderBy?: Prisma.AttendanceCorrectionOrderByWithRelationInput | Prisma.AttendanceCorrectionOrderByWithRelationInput[]
-  cursor?: Prisma.AttendanceCorrectionWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.AttendanceCorrectionScalarFieldEnum | Prisma.AttendanceCorrectionScalarFieldEnum[]
 }
 
 /**
