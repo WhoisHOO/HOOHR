@@ -7,6 +7,7 @@ import { fieldErrors } from "@/lib/form-utils";
 import { parseIsoDate, zonedToday } from "@/lib/attendance";
 import { getCompanyTimezone } from "@/lib/company";
 import { formatWeekendDays } from "@/lib/company-defaults";
+import { countryDefaults } from "@/lib/country";
 import {
   companySettingsSchema,
   expenseCategoryCreateSchema,
@@ -55,15 +56,6 @@ function revalidateSettingsPages(): void {
   revalidatePath("/hoohr/expenses");
 }
 
-function isValidTimezone(timezone: string): boolean {
-  try {
-    new Intl.DateTimeFormat("en-US", { timeZone: timezone });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 // ============ SET-1: 회사 설정 ============
 
 export async function updateCompanySettings(
@@ -78,26 +70,26 @@ export async function updateCompanySettings(
   });
   const parsed = schema.safeParse({
     name: formText(formData, "name"),
-    timezone: formText(formData, "timezone"),
-    currency: formText(formData, "currency"),
+    country: formText(formData, "country"),
     weekend: formData.getAll("weekend").map(String),
   });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
   }
 
-  if (!isValidTimezone(parsed.data.timezone)) {
-    return {
-      fieldErrors: { timezone: [settings.validation.unknownTimezone] },
-    };
-  }
+  // Currency and timezone are not chosen here - they are what the country
+  // means. Note this also reinterprets stored amounts when the currency moves
+  // (there is no FX conversion): the country is meant to be right once, at
+  // install, and this exists so a mis-pick is recoverable.
+  const { currency, timezone } = countryDefaults(parsed.data.country);
 
   await prisma.company.update({
     where: { id: admin.companyId },
     data: {
       name: parsed.data.name,
-      timezone: parsed.data.timezone,
-      currency: parsed.data.currency.toUpperCase(),
+      country: parsed.data.country,
+      currency,
+      timezone,
       weekendDays: formatWeekendDays(new Set(parsed.data.weekend)),
     },
   });

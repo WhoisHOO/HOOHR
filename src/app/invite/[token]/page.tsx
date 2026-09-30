@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { prisma } from "@/lib/prisma";
 import { AcceptInviteForm } from "./accept-form";
-import { LocaleSwitcher } from "@/i18n/LocaleSwitcher";
 import { getDict, interpolate } from "@/i18n/server";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -67,9 +66,6 @@ async function Shell({ children }: { children: ReactNode }) {
           <p className="mt-1 text-sm text-zinc-500">{auth.accept.subtitle}</p>
         </div>
         {children}
-        <div className="mt-6 flex justify-center border-t border-zinc-200 pt-4">
-          <LocaleSwitcher />
-        </div>
       </div>
     </div>
   );

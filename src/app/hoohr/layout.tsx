@@ -2,7 +2,6 @@ import Link from "next/link";
 import { requireUser } from "@/lib/dal";
 import { logout } from "@/app/actions/auth";
 import { getDict } from "@/i18n/server";
-import { LocaleSwitcher } from "@/i18n/LocaleSwitcher";
 
 const NAV_ITEMS = [
   { href: "/hoohr", label: "dashboard" },
@@ -75,7 +74,7 @@ export default async function AppLayout({ children }: LayoutProps<"/hoohr">) {
             {user.name}
           </p>
           <p className="truncate text-xs text-zinc-500">{user.email}</p>
-          <div className="mt-2 flex items-center justify-between">
+          <div className="mt-2">
             <form action={logout}>
               <button
                 type="submit"
@@ -84,7 +83,6 @@ export default async function AppLayout({ children }: LayoutProps<"/hoohr">) {
                 {nav.logout}
               </button>
             </form>
-            <LocaleSwitcher label={nav.language} />
           </div>
         </div>
       </aside>

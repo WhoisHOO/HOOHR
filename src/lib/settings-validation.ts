@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { interpolate } from "@/i18n/format";
-import { isValidCurrency } from "@/lib/company-defaults";
+import { isCountry } from "@/lib/country";
 import type { FieldErrors } from "@/lib/auth-validation";
 import type { SettingsValidationMessages } from "@/i18n/dictionaries/settings";
 
@@ -54,16 +54,12 @@ const booleanSchema = (v: SettingsValidationMessages) =>
 export function companySettingsSchema(v: SettingsValidationMessages) {
   return z.object({
     name: nameSchema(v, v.labels.companyName),
-    timezone: z
+    // The country is the one thing the admin chooses; currency and timezone
+    // are derived from it, so they are no longer validated as free fields.
+    country: z
       .string()
       .trim()
-      .min(1, { error: v.validation.timezoneRequired })
-      .max(100, { error: v.validation.timezoneInvalid }),
-    currency: z
-      .string()
-      .trim()
-      .regex(/^[A-Za-z]{3}$/, { error: v.validation.currencyInvalid })
-      .refine((c) => isValidCurrency(c), { error: v.validation.currencyInvalid }),
+      .refine((c) => isCountry(c), { error: v.validation.countryInvalid }),
     // 주말 요일. 하나도 없으면 근무일 계산이 전부 0 이 되고, 7일 전부 쉬면
     // 모든 휴가 신청이 실패하므로 양쪽 경계를 막는다.
     weekend: z

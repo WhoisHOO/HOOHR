@@ -27,6 +27,7 @@ export type AggregateCompany = {
 export type CompanyMinAggregateOutputType = {
   id: string | null
   name: string | null
+  country: string | null
   timezone: string | null
   currency: string | null
   weekendDays: string | null
@@ -37,6 +38,7 @@ export type CompanyMinAggregateOutputType = {
 export type CompanyMaxAggregateOutputType = {
   id: string | null
   name: string | null
+  country: string | null
   timezone: string | null
   currency: string | null
   weekendDays: string | null
@@ -47,6 +49,7 @@ export type CompanyMaxAggregateOutputType = {
 export type CompanyCountAggregateOutputType = {
   id: number
   name: number
+  country: number
   timezone: number
   currency: number
   weekendDays: number
@@ -59,6 +62,7 @@ export type CompanyCountAggregateOutputType = {
 export type CompanyMinAggregateInputType = {
   id?: true
   name?: true
+  country?: true
   timezone?: true
   currency?: true
   weekendDays?: true
@@ -69,6 +73,7 @@ export type CompanyMinAggregateInputType = {
 export type CompanyMaxAggregateInputType = {
   id?: true
   name?: true
+  country?: true
   timezone?: true
   currency?: true
   weekendDays?: true
@@ -79,6 +84,7 @@ export type CompanyMaxAggregateInputType = {
 export type CompanyCountAggregateInputType = {
   id?: true
   name?: true
+  country?: true
   timezone?: true
   currency?: true
   weekendDays?: true
@@ -162,6 +168,7 @@ export type CompanyGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
 export type CompanyGroupByOutputType = {
   id: string
   name: string
+  country: string
   timezone: string
   currency: string
   weekendDays: string
@@ -193,6 +200,7 @@ export type CompanyWhereInput = {
   NOT?: Prisma.CompanyWhereInput | Prisma.CompanyWhereInput[]
   id?: Prisma.StringFilter<"Company"> | string
   name?: Prisma.StringFilter<"Company"> | string
+  country?: Prisma.StringFilter<"Company"> | string
   timezone?: Prisma.StringFilter<"Company"> | string
   currency?: Prisma.StringFilter<"Company"> | string
   weekendDays?: Prisma.StringFilter<"Company"> | string
@@ -216,6 +224,7 @@ export type CompanyWhereInput = {
 export type CompanyOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  country?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   weekendDays?: Prisma.SortOrder
@@ -242,6 +251,7 @@ export type CompanyWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.CompanyWhereInput[]
   NOT?: Prisma.CompanyWhereInput | Prisma.CompanyWhereInput[]
   name?: Prisma.StringFilter<"Company"> | string
+  country?: Prisma.StringFilter<"Company"> | string
   timezone?: Prisma.StringFilter<"Company"> | string
   currency?: Prisma.StringFilter<"Company"> | string
   weekendDays?: Prisma.StringFilter<"Company"> | string
@@ -265,6 +275,7 @@ export type CompanyWhereUniqueInput = Prisma.AtLeast<{
 export type CompanyOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  country?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   weekendDays?: Prisma.SortOrder
@@ -281,6 +292,7 @@ export type CompanyScalarWhereWithAggregatesInput = {
   NOT?: Prisma.CompanyScalarWhereWithAggregatesInput | Prisma.CompanyScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"Company"> | string
   name?: Prisma.StringWithAggregatesFilter<"Company"> | string
+  country?: Prisma.StringWithAggregatesFilter<"Company"> | string
   timezone?: Prisma.StringWithAggregatesFilter<"Company"> | string
   currency?: Prisma.StringWithAggregatesFilter<"Company"> | string
   weekendDays?: Prisma.StringWithAggregatesFilter<"Company"> | string
@@ -291,6 +303,7 @@ export type CompanyScalarWhereWithAggregatesInput = {
 export type CompanyCreateInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -314,6 +327,7 @@ export type CompanyCreateInput = {
 export type CompanyUncheckedCreateInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -337,6 +351,7 @@ export type CompanyUncheckedCreateInput = {
 export type CompanyUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -360,6 +375,7 @@ export type CompanyUpdateInput = {
 export type CompanyUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -383,6 +399,7 @@ export type CompanyUncheckedUpdateInput = {
 export type CompanyCreateManyInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -393,6 +410,7 @@ export type CompanyCreateManyInput = {
 export type CompanyUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -403,6 +421,7 @@ export type CompanyUpdateManyMutationInput = {
 export type CompanyUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -413,6 +432,7 @@ export type CompanyUncheckedUpdateManyInput = {
 export type CompanyCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  country?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   weekendDays?: Prisma.SortOrder
@@ -423,6 +443,7 @@ export type CompanyCountOrderByAggregateInput = {
 export type CompanyMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  country?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   weekendDays?: Prisma.SortOrder
@@ -433,6 +454,7 @@ export type CompanyMaxOrderByAggregateInput = {
 export type CompanyMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   name?: Prisma.SortOrder
+  country?: Prisma.SortOrder
   timezone?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   weekendDays?: Prisma.SortOrder
@@ -638,6 +660,7 @@ export type CompanyUpdateOneRequiredWithoutInvitationsNestedInput = {
 export type CompanyCreateWithoutDepartmentsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -660,6 +683,7 @@ export type CompanyCreateWithoutDepartmentsInput = {
 export type CompanyUncheckedCreateWithoutDepartmentsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -698,6 +722,7 @@ export type CompanyUpdateToOneWithWhereWithoutDepartmentsInput = {
 export type CompanyUpdateWithoutDepartmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -720,6 +745,7 @@ export type CompanyUpdateWithoutDepartmentsInput = {
 export type CompanyUncheckedUpdateWithoutDepartmentsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -742,6 +768,7 @@ export type CompanyUncheckedUpdateWithoutDepartmentsInput = {
 export type CompanyCreateWithoutEmployeesInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -764,6 +791,7 @@ export type CompanyCreateWithoutEmployeesInput = {
 export type CompanyUncheckedCreateWithoutEmployeesInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -802,6 +830,7 @@ export type CompanyUpdateToOneWithWhereWithoutEmployeesInput = {
 export type CompanyUpdateWithoutEmployeesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -824,6 +853,7 @@ export type CompanyUpdateWithoutEmployeesInput = {
 export type CompanyUncheckedUpdateWithoutEmployeesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -846,6 +876,7 @@ export type CompanyUncheckedUpdateWithoutEmployeesInput = {
 export type CompanyCreateWithoutUsersInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -868,6 +899,7 @@ export type CompanyCreateWithoutUsersInput = {
 export type CompanyUncheckedCreateWithoutUsersInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -906,6 +938,7 @@ export type CompanyUpdateToOneWithWhereWithoutUsersInput = {
 export type CompanyUpdateWithoutUsersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -928,6 +961,7 @@ export type CompanyUpdateWithoutUsersInput = {
 export type CompanyUncheckedUpdateWithoutUsersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -950,6 +984,7 @@ export type CompanyUncheckedUpdateWithoutUsersInput = {
 export type CompanyCreateWithoutLeavePoliciesInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -972,6 +1007,7 @@ export type CompanyCreateWithoutLeavePoliciesInput = {
 export type CompanyUncheckedCreateWithoutLeavePoliciesInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1010,6 +1046,7 @@ export type CompanyUpdateToOneWithWhereWithoutLeavePoliciesInput = {
 export type CompanyUpdateWithoutLeavePoliciesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1032,6 +1069,7 @@ export type CompanyUpdateWithoutLeavePoliciesInput = {
 export type CompanyUncheckedUpdateWithoutLeavePoliciesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1054,6 +1092,7 @@ export type CompanyUncheckedUpdateWithoutLeavePoliciesInput = {
 export type CompanyCreateWithoutLeaveRequestsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1076,6 +1115,7 @@ export type CompanyCreateWithoutLeaveRequestsInput = {
 export type CompanyUncheckedCreateWithoutLeaveRequestsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1114,6 +1154,7 @@ export type CompanyUpdateToOneWithWhereWithoutLeaveRequestsInput = {
 export type CompanyUpdateWithoutLeaveRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1136,6 +1177,7 @@ export type CompanyUpdateWithoutLeaveRequestsInput = {
 export type CompanyUncheckedUpdateWithoutLeaveRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1158,6 +1200,7 @@ export type CompanyUncheckedUpdateWithoutLeaveRequestsInput = {
 export type CompanyCreateWithoutAttendanceRecordsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1180,6 +1223,7 @@ export type CompanyCreateWithoutAttendanceRecordsInput = {
 export type CompanyUncheckedCreateWithoutAttendanceRecordsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1218,6 +1262,7 @@ export type CompanyUpdateToOneWithWhereWithoutAttendanceRecordsInput = {
 export type CompanyUpdateWithoutAttendanceRecordsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1240,6 +1285,7 @@ export type CompanyUpdateWithoutAttendanceRecordsInput = {
 export type CompanyUncheckedUpdateWithoutAttendanceRecordsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1262,6 +1308,7 @@ export type CompanyUncheckedUpdateWithoutAttendanceRecordsInput = {
 export type CompanyCreateWithoutAttendanceCorrectionsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1284,6 +1331,7 @@ export type CompanyCreateWithoutAttendanceCorrectionsInput = {
 export type CompanyUncheckedCreateWithoutAttendanceCorrectionsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1322,6 +1370,7 @@ export type CompanyUpdateToOneWithWhereWithoutAttendanceCorrectionsInput = {
 export type CompanyUpdateWithoutAttendanceCorrectionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1344,6 +1393,7 @@ export type CompanyUpdateWithoutAttendanceCorrectionsInput = {
 export type CompanyUncheckedUpdateWithoutAttendanceCorrectionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1366,6 +1416,7 @@ export type CompanyUncheckedUpdateWithoutAttendanceCorrectionsInput = {
 export type CompanyCreateWithoutAttendanceEventsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1388,6 +1439,7 @@ export type CompanyCreateWithoutAttendanceEventsInput = {
 export type CompanyUncheckedCreateWithoutAttendanceEventsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1426,6 +1478,7 @@ export type CompanyUpdateToOneWithWhereWithoutAttendanceEventsInput = {
 export type CompanyUpdateWithoutAttendanceEventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1448,6 +1501,7 @@ export type CompanyUpdateWithoutAttendanceEventsInput = {
 export type CompanyUncheckedUpdateWithoutAttendanceEventsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1470,6 +1524,7 @@ export type CompanyUncheckedUpdateWithoutAttendanceEventsInput = {
 export type CompanyCreateWithoutExpenseCategoriesInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1492,6 +1547,7 @@ export type CompanyCreateWithoutExpenseCategoriesInput = {
 export type CompanyUncheckedCreateWithoutExpenseCategoriesInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1530,6 +1586,7 @@ export type CompanyUpdateToOneWithWhereWithoutExpenseCategoriesInput = {
 export type CompanyUpdateWithoutExpenseCategoriesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1552,6 +1609,7 @@ export type CompanyUpdateWithoutExpenseCategoriesInput = {
 export type CompanyUncheckedUpdateWithoutExpenseCategoriesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1574,6 +1632,7 @@ export type CompanyUncheckedUpdateWithoutExpenseCategoriesInput = {
 export type CompanyCreateWithoutExpenseReportsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1596,6 +1655,7 @@ export type CompanyCreateWithoutExpenseReportsInput = {
 export type CompanyUncheckedCreateWithoutExpenseReportsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1634,6 +1694,7 @@ export type CompanyUpdateToOneWithWhereWithoutExpenseReportsInput = {
 export type CompanyUpdateWithoutExpenseReportsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1656,6 +1717,7 @@ export type CompanyUpdateWithoutExpenseReportsInput = {
 export type CompanyUncheckedUpdateWithoutExpenseReportsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1678,6 +1740,7 @@ export type CompanyUncheckedUpdateWithoutExpenseReportsInput = {
 export type CompanyCreateWithoutNotificationsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1700,6 +1763,7 @@ export type CompanyCreateWithoutNotificationsInput = {
 export type CompanyUncheckedCreateWithoutNotificationsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1738,6 +1802,7 @@ export type CompanyUpdateToOneWithWhereWithoutNotificationsInput = {
 export type CompanyUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1760,6 +1825,7 @@ export type CompanyUpdateWithoutNotificationsInput = {
 export type CompanyUncheckedUpdateWithoutNotificationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1782,6 +1848,7 @@ export type CompanyUncheckedUpdateWithoutNotificationsInput = {
 export type CompanyCreateWithoutHolidaysInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1804,6 +1871,7 @@ export type CompanyCreateWithoutHolidaysInput = {
 export type CompanyUncheckedCreateWithoutHolidaysInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1842,6 +1910,7 @@ export type CompanyUpdateToOneWithWhereWithoutHolidaysInput = {
 export type CompanyUpdateWithoutHolidaysInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1864,6 +1933,7 @@ export type CompanyUpdateWithoutHolidaysInput = {
 export type CompanyUncheckedUpdateWithoutHolidaysInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1886,6 +1956,7 @@ export type CompanyUncheckedUpdateWithoutHolidaysInput = {
 export type CompanyCreateWithoutInvitationsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1908,6 +1979,7 @@ export type CompanyCreateWithoutInvitationsInput = {
 export type CompanyUncheckedCreateWithoutInvitationsInput = {
   id?: string
   name: string
+  country?: string
   timezone?: string
   currency?: string
   weekendDays?: string
@@ -1946,6 +2018,7 @@ export type CompanyUpdateToOneWithWhereWithoutInvitationsInput = {
 export type CompanyUpdateWithoutInvitationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -1968,6 +2041,7 @@ export type CompanyUpdateWithoutInvitationsInput = {
 export type CompanyUncheckedUpdateWithoutInvitationsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
+  country?: Prisma.StringFieldUpdateOperationsInput | string
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
@@ -2129,6 +2203,7 @@ export type CompanyCountOutputTypeCountAttendanceEventsArgs<ExtArgs extends runt
 export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  country?: boolean
   timezone?: boolean
   currency?: boolean
   weekendDays?: boolean
@@ -2153,6 +2228,7 @@ export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
 export type CompanySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  country?: boolean
   timezone?: boolean
   currency?: boolean
   weekendDays?: boolean
@@ -2163,6 +2239,7 @@ export type CompanySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
 export type CompanySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   name?: boolean
+  country?: boolean
   timezone?: boolean
   currency?: boolean
   weekendDays?: boolean
@@ -2173,6 +2250,7 @@ export type CompanySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
 export type CompanySelectScalar = {
   id?: boolean
   name?: boolean
+  country?: boolean
   timezone?: boolean
   currency?: boolean
   weekendDays?: boolean
@@ -2180,7 +2258,7 @@ export type CompanySelectScalar = {
   updatedAt?: boolean
 }
 
-export type CompanyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "timezone" | "currency" | "weekendDays" | "createdAt" | "updatedAt", ExtArgs["result"]["company"]>
+export type CompanyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "country" | "timezone" | "currency" | "weekendDays" | "createdAt" | "updatedAt", ExtArgs["result"]["company"]>
 export type CompanyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | Prisma.Company$usersArgs<ExtArgs>
   departments?: boolean | Prisma.Company$departmentsArgs<ExtArgs>
@@ -2220,6 +2298,7 @@ export type $CompanyPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     name: string
+    country: string
     timezone: string
     currency: string
     weekendDays: string
@@ -2663,6 +2742,7 @@ export interface Prisma__CompanyClient<T, Null = never, ExtArgs extends runtime.
 export interface CompanyFieldRefs {
   readonly id: Prisma.FieldRef<"Company", 'String'>
   readonly name: Prisma.FieldRef<"Company", 'String'>
+  readonly country: Prisma.FieldRef<"Company", 'String'>
   readonly timezone: Prisma.FieldRef<"Company", 'String'>
   readonly currency: Prisma.FieldRef<"Company", 'String'>
   readonly weekendDays: Prisma.FieldRef<"Company", 'String'>

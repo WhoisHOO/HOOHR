@@ -80,9 +80,16 @@ enum NotificationType {
 model Company {
   id        String   @id @default(cuid())
   name      String
-  timezone  String   @default("America/New_York")
-  // ISO-4217 code, set by the admin in Settings.
-  currency  String   @default("USD")
+  // The one choice the admin makes at install: "KR" or "US". Currency,
+  // timezone and the on-screen language are all derived from it (see
+  // lib/country.ts) - there is deliberately no separate language switch.
+  country   String   @default("KR")
+  // Derived from `country` (lib/country.ts), never chosen on its own. The
+  // defaults below restate the "KR" row so a Company created without going
+  // through the seed or the settings action is still self-consistent.
+  timezone  String   @default("Asia/Seoul")
+  // ISO-4217 code, also derived from `country`.
+  currency  String   @default("KRW")
   // Comma-separated ISO weekdays off (0=Sun..6=Sat), e.g. "0,6".
   weekendDays String @default("0,6")
   createdAt DateTime @default(now())

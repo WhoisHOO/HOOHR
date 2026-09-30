@@ -22,6 +22,12 @@ export const metadata: Metadata = {
   description: "HR management for small teams: attendance, leave, expenses",
 };
 
+// The language comes from the company's country row in the database, not from a
+// cookie. Without this, /login and /invite/[token] would have no dynamic
+// dependency left and be prerendered at build time - where there is no database
+// - baking the default language into the served page.
+export const dynamic = "force-dynamic";
+
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const locale = await getLocale();
   const d = await getDict();

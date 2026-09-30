@@ -30,7 +30,8 @@ import {
   approvalReviewerFromUser,
   isApprovalReviewer,
 } from "@/lib/team";
-import { DEFAULT_LOCALE, INTL_LOCALES, type Locale } from "@/i18n/config";
+import { getCompanyLocale } from "@/lib/company";
+import { INTL_LOCALES, type Locale } from "@/i18n/config";
 import { dictionaries } from "@/i18n/dictionaries";
 import { interpolate } from "@/i18n/format";
 import { formatLeaveRange } from "./leave";
@@ -298,7 +299,9 @@ export async function runApprovalDigest(opts?: {
   locale?: Locale;
   dryRun?: boolean;
 }): Promise<DigestResult> {
-  const locale = opts?.locale ?? DEFAULT_LOCALE;
+  // Same rule as the screens: the language is the company's country. `--locale`
+  // is only an override, for previewing the other language in a cron log.
+  const locale = opts?.locale ?? (await getCompanyLocale(opts?.companyId));
   const dryRun = opts?.dryRun ?? false;
   const result: DigestResult = {
     planned: 0,

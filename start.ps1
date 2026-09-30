@@ -84,9 +84,25 @@ $dockerVersion = (Invoke-Native { docker info --format "{{.ServerVersion}}" }).O
 Say ("    Docker 준비됨 (engine " + $dockerVersion + ")")
 
 # ---------------------------------------------------------------------------
-Step "2/5" "설정 파일(.env) 준비"
+Step "2/5" "설정 (국가, 실행 환경)"
 
 $envPath = Join-Path $root ".env"
+
+# Every setup question is two options. Not a free-text field, not a third
+# choice: the whole point of the setup is that a non-developer can finish it
+# without reading anything.
+function Ask-Choice([string]$question, [string]$optionA, [string]$optionB) {
+  while ($true) {
+    Write-Host ""
+    Write-Host ("  " + $question) -ForegroundColor White
+    Write-Host ("    1) " + $optionA)
+    Write-Host ("    2) " + $optionB)
+    $answer = (Read-Host "    1 또는 2 를 입력").Trim()
+    if ($answer -eq "1") { return "1" }
+    if ($answer -eq "2") { return "2" }
+    Warn "    1 또는 2 중 하나를 입력해 주세요."
+  }
+}
 
 function New-RandomHex([int]$byteCount) {
   $bytes = New-Object byte[] $byteCount
@@ -129,20 +145,43 @@ if (Test-Path -LiteralPath $envPath) {
   if (-not ($secret -and $adminPw)) {
     Die ".env 가 불완전합니다 (AUTH_SECRET 또는 BOOTSTRAP_ADMIN_PASSWORD 가 비어 있음).`n   .env 파일을 지운 뒤 start.bat 을 다시 실행해 주세요."
   }
-  Say "    기존 .env 를 사용합니다. 비밀번호는 그대로 유지됩니다."
+  $countryOut = Read-EnvValue $envPath "COMPANY_COUNTRY"
+  $targetOut  = Read-EnvValue $envPath "RUNTIME_TARGET"
+  if (-not $countryOut) { $countryOut = "KR" }
+  if (-not $targetOut)  { $targetOut = "personal" }
+  Say "    기존 .env 를 사용합니다. 비밀번호와 설정은 그대로 유지됩니다."
 } else {
   $freshInstall = $true
   $secret = New-RandomHex 32
   $adminPw = New-RandomPassword 16
+
+  # Q1. The country decides the currency, the timezone and the language.
+  if ((Ask-Choice "어느 국가로 사용하시겠습니까?" "대한민국" "미국") -eq "1") {
+    $country = "KR"
+  } else {
+    $country = "US"
+  }
+
+  # Q2. Where it runs. "server" gets a public https address in step 5.
+  if ((Ask-Choice "이 컴퓨터에서만 쓰시겠습니까, 서버에 올리시겠습니까?" "개인 컴퓨터" "서버") -eq "1") {
+    $target = "personal"
+  } else {
+    $target = "server"
+  }
+
   $template = [System.IO.File]::ReadAllText((Join-Path $root ".env.example"), [System.Text.Encoding]::UTF8)
   # The template's comments explain the optional SMTP block, so they are kept;
-  # only the blank secrets get real values.
+  # only the blank secrets and the two answers get real values.
   $written = "# HOOHR - start.bat 이 자동 생성했습니다. 수정 후 다시 실행하면 이 값들이 유지됩니다.`r`n" +
     $template.Replace('AUTH_SECRET=""',                    ('AUTH_SECRET="' + $secret + '"')).
             Replace('BOOTSTRAP_ADMIN_PASSWORD=""',         ('BOOTSTRAP_ADMIN_PASSWORD="' + $adminPw + '"')).
-            Replace('BOOTSTRAP_ADMIN_EMAIL="admin@example.com"', 'BOOTSTRAP_ADMIN_EMAIL="admin@example.com"')
+            Replace('BOOTSTRAP_ADMIN_EMAIL="admin@example.com"', 'BOOTSTRAP_ADMIN_EMAIL="admin@example.com"').
+            Replace('COMPANY_COUNTRY="KR"',                ('COMPANY_COUNTRY="' + $country + '"')).
+            Replace('RUNTIME_TARGET="personal"',          ('RUNTIME_TARGET="' + $target + '"'))
   [System.IO.File]::WriteAllText($envPath, $written, $Utf8Bom)
-  Say "    새 .env 를 만들었습니다 (시크릿/비밀번호 자동 생성)."
+  $countryOut = $country
+  $targetOut  = $target
+  Say ("    새 .env 를 만들었습니다 (국가 " + $country + ", " + $target + " / 시크릿·비밀번호 자동 생성).")
 }
 
 $adminEmailOut = Read-EnvValue $envPath "BOOTSTRAP_ADMIN_EMAIL"
@@ -208,6 +247,7 @@ if ($freshInstall) { Say "  HOOHR 설치가 완료되었습니다." -ForegroundC
 else               { Say "  HOOHR 가 실행 중입니다." -ForegroundColor Green }
 Say $line -ForegroundColor Green
 Say  ("  주소          : " + $url)
+Say  ("  국가          : " + $countryOut)
 Say  ("  관리자 이메일  : " + $adminEmailOut)
 Say  ("  관리자 비밀번호: " + $adminPwOut)
 Say $line -ForegroundColor Green

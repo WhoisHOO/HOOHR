@@ -90,6 +90,7 @@ export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof
 export const CompanyScalarFieldEnum = {
   id: 'id',
   name: 'name',
+  country: 'country',
   timezone: 'timezone',
   currency: 'currency',
   weekendDays: 'weekendDays',

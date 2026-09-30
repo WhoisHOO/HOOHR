@@ -9,7 +9,6 @@ export const navKo = {
   balances: "연차 잔여 가져오기",
   settings: "회사 설정",
   logout: "로그아웃",
-  language: "언어",
 };
 
 export type NavMessages = typeof navKo;
@@ -25,5 +24,4 @@ export const navEn: NavMessages = {
   balances: "Import leave balances",
   settings: "Company settings",
   logout: "Sign out",
-  language: "Language",
 };

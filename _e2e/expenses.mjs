@@ -27,14 +27,20 @@
 // and also runs first so an interrupted run cannot poison the next one.
 
 import { launch, connect, sleep, waitForReact } from "./cdp.mjs";
+import { E2E_PASSWORD, E2E_EMAIL, setCountry, isEnglish, signOut as signOutAny } from "./country.mjs";
+
+// Base-scoped wrappers, so the call sites below stay as readable as before.
+const signOut = (page) => signOutAny(page, BASE);
+// Not named use*: eslint's rules-of-hooks flags any use-prefixed call at top level.
+const changeCountry = (page, code) => setCountry(page, BASE, code);
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BASE = process.env.E2E_BASE || "http://localhost:3000";
-const ADMIN_EMAIL = process.env.E2E_EMAIL || "admin@example.com";
-const ADMIN_PASSWORD = process.env.E2E_PASSWORD || "Admin1234!";
+const ADMIN_EMAIL = E2E_EMAIL;
+const ADMIN_PASSWORD = E2E_PASSWORD;
 const MANAGER_EMAIL = process.env.E2E_MANAGER_EMAIL || "e2e-manager@example.com";
 const MANAGER_PASSWORD = process.env.E2E_MANAGER_PASSWORD || "E2eManager1234!";
 const PORT = Number(process.env.E2E_PORT || 9224);
@@ -119,29 +125,11 @@ async function signIn(page, email, password) {
   return (await page.url()).startsWith(`${BASE}/hoohr`);
 }
 
-async function switchToEnglish(page) {
-  const clicked = await page.eval(`
-    const el = [...document.querySelectorAll("button, a, [role=button]")]
-      .find((n) => (n.textContent || "").trim() === "English");
-    if (!el) return null;
-    el.click();
-    return 1;
-  `);
-  await sleep(2500);
-  return clicked === 1;
-}
+// The UI renders in the company's country - there is no language switcher any
+// more. These assertions are all written against the English labels, so the
+// suite pins the company to US for its duration and restores KR at the end.
+// The mechanics live in ./country.mjs.
 
-async function signOut(page) {
-  await page.eval(`
-    const el = [...document.querySelectorAll("button, a, [role=button]")]
-      .find((n) => (n.textContent || "").trim() === "Sign out");
-    if (!el) return null;
-    el.click();
-    return 1;
-  `);
-  await sleep(2500);
-  return !(await page.url()).startsWith(`${BASE}/hoohr`);
-}
 
 // Fills the "new expense report" form and submits it. The form is a controlled
 // client component, so revalidatePath does not reset it: the caller has to clear
@@ -232,10 +220,19 @@ try {
   const page = await cdp.newPage();
 
   // =====================================================================
+  // Pin the language. The UI renders in the company's country, so to assert
+  // against the English labels below the company is set to US first.
+  // =====================================================================
+  check("admin signed in to set the country", await signIn(page, ADMIN_EMAIL, ADMIN_PASSWORD), await page.url());
+  check("company country set to US", await changeCountry(page, "US"), "");
+  check("the UI is now English", await isEnglish(page), "");
+  check("admin signed out again", await signOut(page), await page.url());
+
+  // =====================================================================
   // As the MANAGER (the report owner)
   // =====================================================================
   check("manager signed in", await signIn(page, MANAGER_EMAIL, MANAGER_PASSWORD), await page.url());
-  check("switched to English for the assertions", await switchToEnglish(page), "");
+  check("the manager sees the same language", await isEnglish(page), "");
 
   await page.goto(`${BASE}/hoohr/expenses`);
   await waitForReact(page, 'input[name="title"]');
@@ -366,7 +363,7 @@ try {
   // =====================================================================
   check("manager signed out", await signOut(page), await page.url());
   check("admin signed in", await signIn(page, ADMIN_EMAIL, ADMIN_PASSWORD), await page.url());
-  check("admin switched to English", await switchToEnglish(page), "");
+  check("admin sees the same language", await isEnglish(page), "");
 
   await page.goto(`${BASE}/hoohr/expenses`);
   await sleep(2000);
@@ -461,7 +458,7 @@ try {
   // The decisions land on the owner's view, so verify them there.
   await signOut(page);
   await signIn(page, MANAGER_EMAIL, MANAGER_PASSWORD);
-  await switchToEnglish(page);
+  check("owner still sees English", await isEnglish(page), "");
   await page.goto(`${BASE}/hoohr/expenses`);
   await sleep(2000);
 
@@ -487,6 +484,13 @@ try {
   check("CSV export responds", csv.status === 200, `status=${csv.status}`);
   check("CSV headers follow the English locale",
     csv.header === "Date,Category,Employee,Title,Status,Amount,Currency,Description,Receipts", csv.header);
+
+  // Leave the install the way it was found: this suite is allowed to change the
+  // country, but only for its own duration.
+  await signOut(page);
+  await signIn(page, ADMIN_EMAIL, ADMIN_PASSWORD);
+  check("country restored to KR", await changeCountry(page, "KR"), "");
+  check("the UI is Korean again", !(await isEnglish(page)), "");
 
   await cdp.close();
 } finally {

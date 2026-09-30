@@ -8,6 +8,7 @@ import {
   parseWeekendDays,
 } from "./src/lib/company-defaults";
 import { isWorkday, isoDateKey, toWeekendSet } from "./src/lib/holidays";
+import { COUNTRIES, COUNTRY_DEFAULTS, DEFAULT_COUNTRY } from "./src/lib/country";
 import { computeLeaveDays, countWorkdays } from "./src/lib/leave";
 import { settingsKo } from "./src/i18n/dictionaries/settings";
 import { commonKo } from "./src/i18n/dictionaries/common";
@@ -134,7 +135,10 @@ async function main() {
     ...settingsKo,
     required: commonKo.validation.required,
   });
-  const base = { name: "ACME", timezone: "Asia/Seoul", currency: "KRW" };
+  // 통화·시간대는 국가에서 파생되므로 더 이상 자유 입력 필드가 아니다. base 에
+  // currency 를 넣어두면 "unknown currency is rejected" 같은 검사가 country 누락
+  // 때문에 그냥 통과해버리는(거짓 초록) 검사가 된다.
+  const base = { name: "ACME", country: "KR" };
 
   const zero = schema.safeParse({ ...base, weekend: [] });
   ok("no days off is rejected", !zero.success);
@@ -145,8 +149,10 @@ async function main() {
   ok("all seven days off is rejected", !all.success);
   const dupes = schema.safeParse({ ...base, weekend: ["0", "0"] });
   ok("duplicate days are rejected", !dupes.success);
-  const badCurrency = schema.safeParse({ ...base, weekend: ["0"], currency: "ZZZ" });
-  ok("unknown currency is rejected", !badCurrency.success);
+  const badCountry = schema.safeParse({ ...base, weekend: ["0"], country: "ZZ" });
+  ok("unknown country is rejected", !badCountry.success);
+  const noCountry = schema.safeParse({ name: "ACME", weekend: ["0", "6"] });
+  ok("missing country is rejected", !noCountry.success);
   const good = schema.safeParse({ ...base, weekend: ["0", "6"] });
   ok("Sat+Sun off is accepted", good.success);
   const six = schema.safeParse({
@@ -154,6 +160,9 @@ async function main() {
     weekend: ["0", "1", "2", "3", "4", "6"],
   });
   ok("six days off is accepted", six.success);
+  for (const code of COUNTRIES) {
+    ok(`${code} is accepted`, schema.safeParse({ ...base, country: code, weekend: ["0", "6"] }).success);
+  }
 
   // --- 7) DB round-trip: the settings action's write path -------------------
   await dbRoundTrip();
@@ -172,7 +181,9 @@ async function dbRoundTrip(): Promise<void> {
     data: { name: "ZZ-WeekendProbe" },
   });
   try {
-    check("default currency is USD", company.currency, "USD");
+    check("default currency matches the default country", company.currency, COUNTRY_DEFAULTS[DEFAULT_COUNTRY].currency);
+    check("default timezone matches the default country", company.timezone, COUNTRY_DEFAULTS[DEFAULT_COUNTRY].timezone);
+    check("default country is KR", company.country, DEFAULT_COUNTRY);
     check("default weekend is Sat+Sun", company.weekendDays, "0,6");
 
     const updated = await prisma.company.update({

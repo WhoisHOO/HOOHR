@@ -6,11 +6,12 @@
 // never exercised. A page can render perfectly and its submit button can still
 // be broken.
 //
-// The test switches the UI to English right after login and asserts only
-// against English copy. That is deliberate: it keeps Korean string literals
-// out of this file, where a stray encoding round-trip can silently corrupt
-// them (a PowerShell Get-Content/WriteAllText pass already did that once), and
-// it cross-checks that the forms work in the non-default locale too.
+// The assertions below run against English copy. That is deliberate: it keeps
+// Korean string literals out of this file, where a stray encoding round-trip can
+// silently corrupt them (a PowerShell Get-Content/WriteAllText pass already did
+// that once), and it cross-checks that the forms work under the non-default
+// country too. The suite sets the company to the US up front and restores it
+// before it exits.
 //
 // Requires the dev server:
 //   npm run dev               # in one terminal
@@ -20,14 +21,15 @@
 // to sweep anything an interrupted previous run left behind.
 
 import { launch, connect, sleep, waitForReact } from "./cdp.mjs";
+import { E2E_PASSWORD, E2E_EMAIL, setCountry, isEnglish } from "./country.mjs";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const BASE = process.env.E2E_BASE || "http://localhost:3000";
-const EMAIL = process.env.E2E_EMAIL || "admin@example.com";
-const PASSWORD = process.env.E2E_PASSWORD || "Admin1234!";
+const EMAIL = E2E_EMAIL;
+const PASSWORD = E2E_PASSWORD;
 const PORT = Number(process.env.E2E_PORT || 9223);
 const HEADLESS = process.env.E2E_HEADFUL !== "1";
 const REASON = "E2E-FORM-HARNESS";
@@ -98,16 +100,13 @@ try {
   await sleep(2500);
   check("logged in", (await page.url()).startsWith(`${BASE}/hoohr`), (await page.url()).replace(BASE, ""));
 
-  // ---------- switch to English, then assert only English copy ----------
-  await page.eval(`
-    const el = [...document.querySelectorAll("button, a, [role=button]")]
-      .find((n) => (n.textContent || "").trim() === "English");
-    if (!el) return null;
-    el.click();
-    return 1;
-  `);
-  await sleep(2500);
-  check("switched to English for the assertions", (await page.text()).includes("Sign out"), "");
+  // ---------- put the UI in English, then assert only English copy ----------
+  // The language is the company's country, so this sets the country rather than
+  // clicking a switcher. Mechanics in ./country.mjs.
+  check("company country set to US", await setCountry(page, BASE, "US"), "");
+  check("the UI is now English", await isEnglish(page), "");
+  await page.goto(`${BASE}/hoohr/attendance`);
+  await sleep(1500);
 
   // =====================================================================
   // Attendance: check in, then check out
@@ -272,6 +271,11 @@ try {
 
   const afterCancel = await page.text();
   check("the request now reads Canceled", /Canceled/.test(afterCancel), "");
+
+  // Leave the install the way it was found: this suite may change the country,
+  // but only for its own duration.
+  check("country restored to KR", await setCountry(page, BASE, "KR"), "");
+  check("the UI is Korean again", !(await isEnglish(page)), "");
 
   await cdp.close();
 } finally {
