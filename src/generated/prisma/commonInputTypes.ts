@@ -270,40 +270,6 @@ export type EnumLeaveStatusWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedEnumLeaveStatusFilter<$PrismaModel>
 }
 
-export type EnumCorrectionStatusFilter<$PrismaModel = never> = {
-  equals?: $Enums.CorrectionStatus | Prisma.EnumCorrectionStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.CorrectionStatus[] | Prisma.ListEnumCorrectionStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.CorrectionStatus[] | Prisma.ListEnumCorrectionStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumCorrectionStatusFilter<$PrismaModel> | $Enums.CorrectionStatus
-}
-
-export type EnumCorrectionStatusWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.CorrectionStatus | Prisma.EnumCorrectionStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.CorrectionStatus[] | Prisma.ListEnumCorrectionStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.CorrectionStatus[] | Prisma.ListEnumCorrectionStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumCorrectionStatusWithAggregatesFilter<$PrismaModel> | $Enums.CorrectionStatus
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumCorrectionStatusFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumCorrectionStatusFilter<$PrismaModel>
-}
-
-export type EnumAttendanceEventKindFilter<$PrismaModel = never> = {
-  equals?: $Enums.AttendanceEventKind | Prisma.EnumAttendanceEventKindFieldRefInput<$PrismaModel>
-  in?: $Enums.AttendanceEventKind[] | Prisma.ListEnumAttendanceEventKindFieldRefInput<$PrismaModel>
-  notIn?: $Enums.AttendanceEventKind[] | Prisma.ListEnumAttendanceEventKindFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumAttendanceEventKindFilter<$PrismaModel> | $Enums.AttendanceEventKind
-}
-
-export type EnumAttendanceEventKindWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.AttendanceEventKind | Prisma.EnumAttendanceEventKindFieldRefInput<$PrismaModel>
-  in?: $Enums.AttendanceEventKind[] | Prisma.ListEnumAttendanceEventKindFieldRefInput<$PrismaModel>
-  notIn?: $Enums.AttendanceEventKind[] | Prisma.ListEnumAttendanceEventKindFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumAttendanceEventKindWithAggregatesFilter<$PrismaModel> | $Enums.AttendanceEventKind
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumAttendanceEventKindFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumAttendanceEventKindFilter<$PrismaModel>
-}
-
 export type EnumExpenseStatusFilter<$PrismaModel = never> = {
   equals?: $Enums.ExpenseStatus | Prisma.EnumExpenseStatusFieldRefInput<$PrismaModel>
   in?: $Enums.ExpenseStatus[] | Prisma.ListEnumExpenseStatusFieldRefInput<$PrismaModel>
@@ -628,40 +594,6 @@ export type NestedEnumLeaveStatusWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedEnumLeaveStatusFilter<$PrismaModel>
   _max?: Prisma.NestedEnumLeaveStatusFilter<$PrismaModel>
-}
-
-export type NestedEnumCorrectionStatusFilter<$PrismaModel = never> = {
-  equals?: $Enums.CorrectionStatus | Prisma.EnumCorrectionStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.CorrectionStatus[] | Prisma.ListEnumCorrectionStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.CorrectionStatus[] | Prisma.ListEnumCorrectionStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumCorrectionStatusFilter<$PrismaModel> | $Enums.CorrectionStatus
-}
-
-export type NestedEnumCorrectionStatusWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.CorrectionStatus | Prisma.EnumCorrectionStatusFieldRefInput<$PrismaModel>
-  in?: $Enums.CorrectionStatus[] | Prisma.ListEnumCorrectionStatusFieldRefInput<$PrismaModel>
-  notIn?: $Enums.CorrectionStatus[] | Prisma.ListEnumCorrectionStatusFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumCorrectionStatusWithAggregatesFilter<$PrismaModel> | $Enums.CorrectionStatus
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumCorrectionStatusFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumCorrectionStatusFilter<$PrismaModel>
-}
-
-export type NestedEnumAttendanceEventKindFilter<$PrismaModel = never> = {
-  equals?: $Enums.AttendanceEventKind | Prisma.EnumAttendanceEventKindFieldRefInput<$PrismaModel>
-  in?: $Enums.AttendanceEventKind[] | Prisma.ListEnumAttendanceEventKindFieldRefInput<$PrismaModel>
-  notIn?: $Enums.AttendanceEventKind[] | Prisma.ListEnumAttendanceEventKindFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumAttendanceEventKindFilter<$PrismaModel> | $Enums.AttendanceEventKind
-}
-
-export type NestedEnumAttendanceEventKindWithAggregatesFilter<$PrismaModel = never> = {
-  equals?: $Enums.AttendanceEventKind | Prisma.EnumAttendanceEventKindFieldRefInput<$PrismaModel>
-  in?: $Enums.AttendanceEventKind[] | Prisma.ListEnumAttendanceEventKindFieldRefInput<$PrismaModel>
-  notIn?: $Enums.AttendanceEventKind[] | Prisma.ListEnumAttendanceEventKindFieldRefInput<$PrismaModel>
-  not?: Prisma.NestedEnumAttendanceEventKindWithAggregatesFilter<$PrismaModel> | $Enums.AttendanceEventKind
-  _count?: Prisma.NestedIntFilter<$PrismaModel>
-  _min?: Prisma.NestedEnumAttendanceEventKindFilter<$PrismaModel>
-  _max?: Prisma.NestedEnumAttendanceEventKindFilter<$PrismaModel>
 }
 
 export type NestedEnumExpenseStatusFilter<$PrismaModel = never> = {

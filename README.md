@@ -1,10 +1,13 @@
 # HOOHR
 
-**Lightweight HR toolkit for startups and small teams** — attendance, leave, and expense claims in one self-hosted app.
+**Lightweight HR toolkit for startups and small teams** — leave and expense claims in one self-hosted app.
 
 Built for a team of ~20 people, not for an enterprise HR suite. Open source under [Apache-2.0](./LICENSE).
 
-> UI language is **Korean or English**, switchable at runtime from the sidebar (defaults to Korean). All documentation is in English.
+> The install asks which country the company is in, and that single answer picks the
+> currency, the timezone and the UI language (**Korean** for 대한민국, **English** for
+> the United States). There is no language switcher at runtime. All documentation is in
+> English.
 
 ---
 
@@ -12,17 +15,16 @@ Built for a team of ~20 people, not for an enterprise HR suite. Open source unde
 
 | Module | Features |
 |---|---|
-| **Attendance** (근태) | Check-in / check-out with server time, multiple work segments per day (lunch breaks), live worked-time total, correction requests with manager approval, own daily/monthly history, team view for reviewers |
 | **Leave** (휴가) | PTO / sick / unpaid requests, full or half-day, live balance with over-request blocking, manager approval (reject requires a reason), self-cancel before approval, monthly company schedule, admin CSV balance import, **holiday-aware day counting** |
 | **Expenses** (경비) | Draft reports with multiple line items, per-item receipt upload, submit → approve → pay workflow, protected receipt downloads, **CSV export** for accounting |
 | **Employee & org admin** | Departments with managers, employee profiles, activate/deactivate, re-invite pending employees, **team-scoped approval inboxes** |
-| **Settings** | Company name + timezone, leave policy management (annual days, carry-over, paid/approval flags), holiday calendar, expense categories |
+| **Settings** | Company name + country, leave policy management (annual days, carry-over, paid/approval flags), holiday calendar, expense categories |
 
 ### Roles
 
 | Role | Sees | Can approve |
 |---|---|---|
-| **EMPLOYEE** | Own attendance, leave, expenses | — |
+| **EMPLOYEE** | Own leave, expenses | — |
 | **MANAGER** | Own + direct team | Own team's requests only |
 | **ADMIN** | Whole company | Everything, plus invites, settings, CSV import/export |
 
@@ -37,7 +39,6 @@ leave:    requested -> PENDING  -> APPROVED / REJECTED   (CANCELED by owner)
 expense:  DRAFT -> SUBMITTED -> APPROVED -> PAID
                       |                     ^
                       +-----> REJECTED      +-- (ADMIN confirms payment)
-attendance event:  CHECK_IN <-> CHECK_OUT  (many segments per day)
 ```
 
 ---
@@ -171,7 +172,7 @@ docker compose up -d --build  # migrates and seeds via docker/entrypoint.sh
 ├── prisma/               schema, migrations, seed
 ├── src/
 │   ├── app/
-│   │   ├── actions/      server actions (auth, attendance, leave, expense, employees, settings)
+│   │   ├── actions/      server actions (auth, leave, expense, employees, settings)
 │   │   ├── hoohr/        authenticated app shell + all pages
 │   │   ├── invite/       invite acceptance
 │   │   ├── login/
@@ -179,7 +180,6 @@ docker compose up -d --build  # migrates and seeds via docker/entrypoint.sh
 │   ├── lib/              prisma, session, DAL, validation schemas, pure domain helpers
 │   └── proxy.ts          route protection
 ├── scripts/              cron entry point for the approval digest
-├── pipelines/            Airflow DAG + PySpark job (later phases)
 ├── deploy/               EKS / external-access notes
 ├── docs/                 REQUIREMENTS.md, UX_RESEARCH.md
 ├── docker-compose.yml
@@ -208,8 +208,8 @@ Authenticated routes live under **`/hoohr`**. The pre-rename `/app` prefix still
 | `npm run build` / `npm start` | Production build / serve |
 | `npm run lint` | ESLint |
 | `npx tsc --noEmit` | Type check |
-| `npm run test:e2e` | Browser E2E: locale switcher (needs `npm run dev`) |
-| `npm run test:e2e:forms` | Browser E2E: attendance + leave forms |
+| `npm run test:e2e` | Browser E2E: country → language (needs `npm run dev`) |
+| `npm run test:e2e:forms` | Browser E2E: leave request/cancel forms |
 | `npm run test:e2e:expenses` | Browser E2E: expense create → submit → decide → pay |
 | `npm run db:migrate` | Create/apply a development migration |
 | `npm run db:seed` | Seed the bootstrap company, policies, and admin |
@@ -292,17 +292,20 @@ probe that reported healthy because `fetch` had followed a 307 to `/login`).
 
 | Command | Covers |
 |---|---|
-| `npm run test:e2e` | Login + locale switcher (20 checks) |
-| `npm run test:e2e:forms` | Attendance check-in/out + leave request/cancel (21 checks) |
-| `npm run test:e2e:expenses` | Expense create/submit/approve/reject/pay/delete (33 checks) |
+| `npm run test:e2e` | Login + country→language derivation (18 checks) |
+| `npm run test:e2e:forms` | Leave request/cancel round trip (16 checks) |
+| `npm run test:e2e:expenses` | Expense create/submit/approve/reject/pay/delete (40 checks) |
 | `npm run test:e2e:all` | All three |
 
-The switcher suite logs in with a real typed-in form, clicks **English** and
-**한국어**, and asserts the `httpOnly` `locale` cookie, the switched UI, persistence
-across reloads, `<html lang>`, and sign-out. The forms suite exercises attendance
-check-in/check-out and the leave request/cancel round trip. The expenses suite
-walks the full expense lifecycle across two accounts, which is the only way to
-reach it: self-review is forbidden and a second admin cannot be invited. See
+The country suite logs in with a real typed-in form, changes the company country
+in Settings, and asserts that the UI and `<html lang>` follow, that no language
+control exists anywhere, and that there is no locale cookie. It also checks the
+endonym labels survive the flip, so a Korean admin who just moved the company to
+the US can still find 대한민국 and switch back. The forms suite exercises the
+leave request/cancel round trip. The expenses suite walks the full expense
+lifecycle across two accounts, which is the only way to reach it: self-review is
+forbidden and a second admin cannot be invited. The two suites that assert
+English copy set the country to the US and restore it before they exit. See
 [`_e2e/README.md`](./_e2e/README.md).
 
 ---
@@ -314,7 +317,7 @@ The MVP feature set is implemented. Not done yet:
 - **Email notifications** — SMTP is configured but no send path exists yet
 - **OCR receipt extraction** — deferred to v0.2
 - **Grant-on-hire / leave carry-over automation** — balances are currently granted explicitly
-- **EKS + Airflow + Spark deployment** — see [`pipelines/`](./pipelines) and [`deploy/`](./deploy)
+- **EKS deployment** — see [`deploy/`](./deploy)
 
 ## Contributing
 

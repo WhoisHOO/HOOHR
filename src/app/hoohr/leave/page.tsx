@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/dal";
 import { getCompanyTimezone, getCompanyWeekendRaw } from "@/lib/company";
-import { addMonths, monthBounds, monthLabel, parseIsoDate, zonedToday } from "@/lib/attendance";
+import { addMonths, monthBounds, monthLabel, parseIsoDate, zonedToday } from "@/lib/date";
 import { formatLeaveDay, formatLeaveRange, remainingDays } from "@/lib/leave";
 import { isoDateKey } from "@/lib/holidays";
 import { getDict, getLocale, interpolate, INTL_LOCALES } from "@/i18n/server";

@@ -53,21 +53,6 @@ export type LeaveBalance = Prisma.LeaveBalanceModel
  */
 export type LeaveRequest = Prisma.LeaveRequestModel
 /**
- * Model AttendanceRecord
- * 
- */
-export type AttendanceRecord = Prisma.AttendanceRecordModel
-/**
- * Model AttendanceCorrection
- * 
- */
-export type AttendanceCorrection = Prisma.AttendanceCorrectionModel
-/**
- * Model AttendanceEvent
- * 
- */
-export type AttendanceEvent = Prisma.AttendanceEventModel
-/**
  * Model ExpenseCategory
  * 
  */

@@ -9,11 +9,6 @@ export const dashboardKo = {
   stats: {
     ptoRemaining: "연차 잔여",
     ptoGrantedUsed: "발생 {granted}일 · 사용 {used}일",
-    attendanceToday: "오늘 근태",
-    notRecorded: "미기록",
-    checkIn: "체크인 {time}",
-    checkOut: "체크아웃 {time}",
-    beforeCheckOut: "체크아웃 전",
     pendingLeave: "승인 대기 휴가",
     myRequests: "본인 신청",
     submittedExpenses: "제출 경비",
@@ -21,7 +16,7 @@ export const dashboardKo = {
   },
   next: {
     title: "다음 단계",
-    body: "근태 · 휴가 · 경비 모듈이 모두 열렸습니다. 이제 출근 체크, 휴가 신청, 경비 정산을 이용할 수 있습니다.",
+    body: "휴가 · 경비 모듈이 모두 열렸습니다. 이제 휴가 신청과 경비 정산을 이용할 수 있습니다.",
   },
 };
 
@@ -36,11 +31,6 @@ export const dashboardEn: DashboardMessages = {
   stats: {
     ptoRemaining: "Annual leave left",
     ptoGrantedUsed: "Granted {granted} days · Used {used} days",
-    attendanceToday: "Today",
-    notRecorded: "Not recorded",
-    checkIn: "Check-in {time}",
-    checkOut: "Check-out {time}",
-    beforeCheckOut: "Not checked out",
     pendingLeave: "Leave awaiting approval",
     myRequests: "Your requests",
     submittedExpenses: "Expenses submitted",
@@ -48,6 +38,6 @@ export const dashboardEn: DashboardMessages = {
   },
   next: {
     title: "Next steps",
-    body: "Attendance, leave and expenses are all live. You can now check in, request leave and file expense claims.",
+    body: "Leave and expenses are both live. You can now request leave and file expense claims.",
   },
 };

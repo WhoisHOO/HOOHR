@@ -37,9 +37,9 @@ npm run test:e2e:all     # terminal 2
 
 | Command | Covers |
 |---|---|
-| `npm run test:e2e` | Login + the locale switcher (20 checks) |
-| `npm run test:e2e:forms` | Attendance check-in/out + leave request/cancel (21 checks) |
-| `npm run test:e2e:expenses` | Expense create/submit/approve/reject/pay/delete (33 checks) |
+| `npm run test:e2e` | Login + the country→language derivation (18 checks) |
+| `npm run test:e2e:forms` | Leave request/cancel round trip (16 checks) |
+| `npm run test:e2e:expenses` | Expense create/submit/approve/reject/pay/delete (40 checks) |
 | `npm run test:e2e:all` | All three, in order |
 
 Each exits non-zero on failure and exits early with a clear message if the dev
@@ -49,7 +49,7 @@ server is not up, so they are usable in CI later.
 |---|---|---|
 | `E2E_BASE` | `http://localhost:3000` | App under test |
 | `E2E_EMAIL` | `admin@example.com` | Reviewer login, defaults to the public seed admin |
-| `E2E_PASSWORD` | `Admin1234!` | Reviewer login |
+| `E2E_PASSWORD` | from `.env` | Reviewer login. The install generates its own admin password, so the suites read `BOOTSTRAP_ADMIN_PASSWORD` out of `.env`; you only need to export it to test against a different account |
 | `E2E_MANAGER_EMAIL` | `e2e-manager@example.com` | Report owner, created by the fixture |
 | `E2E_MANAGER_PASSWORD` | `E2eManager1234!` | Report owner login |
 | `E2E_PORT` | `9222` / `9223` / `9224` | DevTools port, per suite |
@@ -62,36 +62,39 @@ E2E_HEADFUL=1 npm run test:e2e:forms
 
 ## The two suites
 
-`locale-switcher.mjs` proves the `setLocale` **write** path, which no HTTP check
-can reach, because every one of them would pass a `locale=en` cookie by hand:
+`country-language.mjs` proves that the language follows the company's country.
+There is no switcher to click, so the **write** path is the interesting one, and
+no HTTP-only check can reach it: every one of those would pass a `locale=en`
+cookie by hand, which is exactly the mechanism that no longer exists.
 
-1. Login with a real typed-in form, not a pre-minted cookie
-2. Dashboard renders Korean by default, and sets no `locale` cookie at all
-3. Clicks **English** in the sidebar
-4. Confirms the server action wrote `locale=en`, and that the cookie is `httpOnly`
-   with `path=/`
-5. Confirms the UI switched, then that English survives a hard reload and carries
-   across `/hoohr/leave` and `/hoohr/expenses`
-6. Clicks **한국어**, confirms the cookie flips to `ko`
-7. Confirms `<html lang>` follows the active locale
-8. Signs out and lands on `/login`
+1. Login with a real typed-in form
+2. Dashboard renders Korean, because the company is `KR`
+3. Confirms **no** `locale` cookie exists anywhere, in any form
+4. Confirms no language control exists in the app, and none on the login screen
+5. Confirms the language carries across `/hoohr/leave` and `/hoohr/expenses`
+6. Changes the country to `US` in Settings, and confirms the UI and
+   `<html lang>` both follow
+7. Confirms the country options are still labelled by endonym, so a Korean admin
+   who just moved the company to the US can still find 대한민국 and switch back
+8. Changes the country back, and signs out to `/login`
 
-`forms.mjs` exercises the real forms. It switches the UI to English right after
+The three mechanics that are easy to get wrong live in `country.mjs`, which the
+other two suites import: the first `<form>` on the Settings page is the sidebar's
+sign-out, a `<select>` has to go through the prototype value setter to reach
+React, and the sign-out label is in the language being switched away from.
+
+`forms.mjs` exercises the real forms. It sets the country to the US right after
 login and asserts only English copy, which keeps Korean literals out of the file
 (a `Get-Content`/write round-trip already corrupted them once) and cross-checks the
-non-default locale. It covers:
+non-default country. It covers:
 
-1. Attendance starts not-checked-in, with check-in enabled and check-out disabled.
-   Both buttons are always in the DOM and are toggled with `disabled`, so the
-   assertions are about disabled state, not about which button exists.
-2. Check in, then check out, asserting the disabled flags swap, the panel goes to
-   on-work and back to checked-out, both events are listed, and timestamps render.
-3. The leave policy dropdown is populated.
-4. The form accepts typed dates and a reason, and the live day-count preview shows
+1. The leave policy dropdown is populated.
+2. The form accepts typed dates and a reason, and the live day-count preview shows
    the right number of workdays.
-5. Submit: the request appears with the reason that was typed, reads
+3. Submit: the request appears with the reason that was typed, reads
    *Awaiting approval*, and shows under *My leave requests*.
-6. Cancel it through the UI, and confirm it reads *Canceled*.
+4. Cancel it through the UI, and confirm it reads *Canceled*.
+5. The country is restored to `KR`, so the suite leaves the install as it found it.
 
 `expenses.mjs` walks the whole expense lifecycle, and it exists because
 `_test-expense.ts` cannot. That script writes every status transition straight
@@ -130,10 +133,8 @@ reaches every transition. The suite covers:
 
 ## Cleanup
 
-`forms.mjs` creates real records, so it removes them. `cleanup.ts` deletes leave
-requests tagged with the harness reason and today's attendance record for the
-login user (`AttendanceEvent` and `AttendanceCorrection` cascade from
-`AttendanceRecord`).
+`forms.mjs` creates real records, so it removes them. `cleanup.ts` deletes the
+leave requests tagged with the harness reason for the login user.
 
 `expense-fixture.ts` creates the MANAGER account the expense suite needs and
 removes the reports and the account again:
@@ -152,9 +153,9 @@ as an orphan. `Employee` is unique on `(companyId, email)`, so that orphan makes
 the next `setup` fail with `P2002`. Delete the employee first, then the user.
 
 Every fixture runs before *and* after its suite, so an interrupted run cannot
-poison the next one: a leftover attendance row leaves the check-in button
-disabled, a leftover leave request double-spends the balance, and a leftover
-`SUBMITTED` report sits in the approval inbox and breaks the expected counts.
+poison the next one: a leftover leave request double-spends the balance, and a
+leftover `SUBMITTED` report sits in the approval inbox and breaks the expected
+counts.
 
 ## Adding a case
 
@@ -212,8 +213,9 @@ case-insensitively.
 **Trim what you compare.** The CSV export is written with CRLF line endings, so
 splitting on `\n` leaves a trailing `\r` on the header.
 
-Cookies are read with `Network.getAllCookies`, which is how the `httpOnly` `locale`
-cookie is asserted even though `document.cookie` cannot see it.
+Cookies are read with `Network.getAllCookies`, which is how the absence of any
+`locale` cookie is asserted — `document.cookie` cannot see `httpOnly` ones, and
+the point of that check is that none should exist in either place.
 
 ## Debugging a failure
 

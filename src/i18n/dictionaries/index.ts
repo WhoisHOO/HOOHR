@@ -3,7 +3,6 @@ import { commonKo, commonEn } from "./common";
 import { navKo, navEn } from "./nav";
 import { authKo, authEn } from "./auth";
 import { dashboardKo, dashboardEn } from "./dashboard";
-import { attendanceKo, attendanceEn } from "./attendance";
 import { leaveKo, leaveEn } from "./leave";
 import { expensesKo, expensesEn } from "./expenses";
 import { adminKo, adminEn } from "./admin";
@@ -15,7 +14,6 @@ const dictKo = {
   nav: navKo,
   auth: authKo,
   dashboard: dashboardKo,
-  attendance: attendanceKo,
   leave: leaveKo,
   expenses: expensesKo,
   admin: adminKo,
@@ -30,7 +28,6 @@ const dictEn: typeof dictKo = {
   nav: navEn,
   auth: authEn,
   dashboard: dashboardEn,
-  attendance: attendanceEn,
   leave: leaveEn,
   expenses: expensesEn,
   admin: adminEn,

@@ -67,22 +67,14 @@ export const commonKo = {
     PAID: "지급 완료",
     REJECTED: "반려",
   },
-  correctionStatus: {
-    PENDING: "승인 대기",
-    APPROVED: "승인됨",
-    REJECTED: "반려",
-  },
   leaveKind: {
     PTO: "연차",
     SICK: "병가",
     UNPAID: "무급휴직",
   },
   units: {
-    minutes: "{n}분",
-    hoursMinutes: "{h}시간 {m}분",
     days: "{n}일",
     count: "{n}건",
-    won: "{amount}원",
   },
   /** Returned by every decide* action; the wording is identical on purpose. */
   decide: {
@@ -178,22 +170,14 @@ export const commonEn: CommonMessages = {
     PAID: "Paid",
     REJECTED: "Rejected",
   },
-  correctionStatus: {
-    PENDING: "Awaiting approval",
-    APPROVED: "Approved",
-    REJECTED: "Rejected",
-  },
   leaveKind: {
     PTO: "Annual leave",
     SICK: "Sick leave",
     UNPAID: "Unpaid leave",
   },
   units: {
-    minutes: "{n} min",
-    hoursMinutes: "{h}h {m}m",
     days: "{n} day(s)",
     count: "{n} item(s)",
-    won: "{amount} KRW",
   },
   decide: {
     approveDone: "Approved.",

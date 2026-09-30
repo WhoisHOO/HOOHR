@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     default: "HOOHR",
     template: "%s · HOOHR",
   },
-  description: "HR management for small teams: attendance, leave, expenses",
+  description: "Leave and expense management for small teams",
 };
 
 // The language comes from the company's country row in the database, not from a

@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin, requireUser } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
 import { getCompanyTimezone, getCompanyWeekend } from "@/lib/company";
-import { parseIsoDate, zonedToday } from "@/lib/attendance";
+import { parseIsoDate, zonedToday } from "@/lib/date";
 import { computeLeaveDays, remainingDays } from "@/lib/leave";
 import { isWorkday } from "@/lib/holidays";
 import { getCompanyHolidayName, getCompanyHolidays } from "@/lib/holiday-store";

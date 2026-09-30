@@ -2,7 +2,7 @@ import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "./src/generated/prisma/client";
 import { computeLeaveDays, countWorkdays, remainingDays } from "./src/lib/leave";
-import { zonedToday } from "./src/lib/attendance";
+import { zonedToday } from "./src/lib/date";
 
 const prisma = new PrismaClient({
   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL! }),

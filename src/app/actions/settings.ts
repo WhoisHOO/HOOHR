@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
-import { parseIsoDate, zonedToday } from "@/lib/attendance";
+import { parseIsoDate, zonedToday } from "@/lib/date";
 import { getCompanyTimezone } from "@/lib/company";
 import { formatWeekendDays } from "@/lib/company-defaults";
 import { countryDefaults } from "@/lib/country";
@@ -52,7 +52,6 @@ function revalidateSettingsPages(): void {
   revalidatePath("/hoohr/admin/settings");
   revalidatePath("/hoohr");
   revalidatePath("/hoohr/leave");
-  revalidatePath("/hoohr/attendance");
   revalidatePath("/hoohr/expenses");
 }
 

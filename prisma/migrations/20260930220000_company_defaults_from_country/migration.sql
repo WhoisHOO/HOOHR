@@ -2,7 +2,7 @@
 -- column defaults still described a US company while `country` defaulted to
 -- "KR". A Company created without the seed or the settings action (a probe, a
 -- future tenant bootstrap) would therefore claim to be Korean while billing in
--- USD and computing attendance days in New York time.
+-- USD and computing workday dates in New York time.
 --
 -- Only the DEFAULTs change. Existing rows keep whatever they already have: the
 -- backfill in 20260930120000_company_country deliberately left real expense
