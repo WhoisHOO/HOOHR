@@ -60,6 +60,41 @@ services:
       retries: 30
       start_period: 20s
 
+  # ---------------------------------------------------------------------------
+  # Public access, opt-in via `start-tunnel.bat`. Behind the `tunnel` profile so
+  # an ordinary `start.bat` never exposes the app to the internet.
+  #
+  # Two services rather than one with a conditional command, because the two
+  # modes need different arguments and a readable compose file beats a computed
+  # one. They share a container_name on purpose: only one can run at a time, and
+  # a clash is a clearer error than two half-working tunnels.
+  # ---------------------------------------------------------------------------
+  tunnel-quick:
+    image: cloudflare/cloudflared:2026.9.2
+    profiles: ["tunnel"]
+    container_name: hoohr_tunnel
+    restart: unless-stopped
+    # No account, no domain, no cost - but the hostname is random and changes
+    # every time the tunnel restarts, so it is for showing the app to someone,
+    # not for a link you put in an email.
+    command: tunnel --no-autoupdate --url http://app:3000
+    depends_on:
+      app:
+        condition: service_healthy
+
+  tunnel-named:
+    image: cloudflare/cloudflared:2026.9.2
+    profiles: ["tunnel"]
+    container_name: hoohr_tunnel
+    restart: unless-stopped
+    # Stable hostname. Needs a Cloudflare account, a domain on the free plan, a
+    # tunnel created in the dashboard, and TUNNEL_TOKEN in .env.
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    depends_on:
+      app:
+        condition: service_healthy
+
 volumes:
   pgdata:
   uploads:
+
