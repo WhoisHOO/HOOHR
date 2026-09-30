@@ -55,59 +55,93 @@ attendance event:  CHECK_IN <-> CHECK_OUT  (many segments per day)
 
 ---
 
-## Quick start
+## Quick start (Windows - one click)
 
-### Prerequisites
+### 1. Install Docker Desktop
 
-- Node.js 24+ and npm 11+
-- Docker Desktop (for PostgreSQL)
+The only prerequisite. <https://www.docker.com/products/docker-desktop/>
 
-### 1. Configure the environment
+### 2. Get the code
 
-```bash
-cp .env.example .env
+**Code → Download ZIP**, then extract it anywhere (e.g. `C:\hoohr`).
+<a name="windows-1"></a> *You do not need Git for this path.*
+
+### 3. Double-click `start.bat`
+
+That is the whole procedure. The window walks through it:
+
+1. Starts Docker Desktop if it is not already running, and waits for the engine.
+2. Creates a `.env` with a random session secret and a random admin password.
+3. Builds the image, applies the database migrations, and creates the first
+   admin account.
+4. Waits until the app answers a real readiness check - not merely until the
+   port is listening, so it never opens a browser onto a page that will 500.
+5. Opens your browser and prints the login credentials.
+
+The first run takes 2-5 minutes (it downloads and builds a Node image); later
+runs take seconds because the image is cached. Running `start.bat` again is
+always safe: your data and your admin password are left alone.
+
+```
+==========================================================
+  HOOHR 설치가 완료되었습니다.
+==========================================================
+  주소          : http://localhost:3000
+  관리자 이메일  : admin@example.com
+  관리자 비밀번호: sk3rdChE2vgNkDjL
+==========================================================
 ```
 
-Generate a session secret and put it in `.env`:
+The password is random per install and is also stored in `.env`, so you can
+always recover it. **Change it in Settings after your first login.**
+
+### 4. Watch the logs
+
+Double-click **`start-logs.bat`**. It opens a second window that follows both
+containers live, and simultaneously appends everything to `logs/hoohr.log` so
+you can read back a message you missed. Closing that window does not stop the
+app.
+
+### 5. Stop it
 
 ```bash
-node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+docker compose down
 ```
 
-At minimum set `AUTH_SECRET` (app will refuse to start without it) and
-`BOOTSTRAP_ADMIN_EMAIL` / `BOOTSTRAP_ADMIN_PASSWORD` (used by the seed script).
+### Where things live
 
-### 2. Start PostgreSQL
+| Path | |
+|---|---|
+| `.env` | Generated on first run. Your secret and admin password. Do not share it. |
+| `logs/hoohr.log` | Log history; each session overwrites the previous one into `hoohr.prev.log` |
+| Receipt images | In the `uploads` Docker volume, not in the repo |
+
+To wipe everything and start over (this deletes all data), add `-v`:
+`docker compose down -v`.
+
+---
+
+## Quick start (developer - manual)
+
+<details>
+<summary>Node + local PostgreSQL, no Docker for the app</summary>
 
 ```bash
-docker compose up -d db
-```
-
-### 3. Install, migrate, seed
-
-```bash
+cp .env.example .env          # then set AUTH_SECRET and BOOTSTRAP_ADMIN_PASSWORD
+docker compose up -d db       # PostgreSQL only
 npm ci
-npx prisma migrate deploy   # or: npm run db:migrate
+npx prisma migrate deploy
 npm run db:seed
-```
-
-The seed creates the company, the leave policies, and the bootstrap admin.
-
-### 4. Run the app
-
-```bash
 npm run dev
 ```
 
-Open <http://localhost:3000> and log in with the bootstrap admin credentials.
-
-### Run it all in Docker
+Or run the whole stack in Docker directly, skipping the `.bat` wrappers:
 
 ```bash
-docker compose up -d --build
+docker compose up -d --build  # migrates and seeds via docker/entrypoint.sh
 ```
 
-This builds the app image and starts it alongside PostgreSQL (app on `:3000`, DB on `:5432`).
+</details>
 
 ---
 
@@ -248,6 +282,13 @@ npm run test:e2e:all   # terminal 2
 `_e2e/` drives the Chrome or Edge already on the machine over the DevTools Protocol
 using Node's built-in `WebSocket`, so it adds **no dependencies** and needs no
 browser download.
+
+The suite is also run against the **containerized** build (`docker compose up
+-d --build`) - the artifact a user actually downloads - and against a cold
+start with an empty volume. That is deliberate: the packaging layer has its own
+class of break that unit tests cannot see, and it has had real instances (a seed
+script importing a build artifact the runner stage did not copy, and a readiness
+probe that reported healthy because `fetch` had followed a 307 to `/login`).
 
 | Command | Covers |
 |---|---|
