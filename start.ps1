@@ -236,9 +236,67 @@ if (-not $ready) {
 Say ("    준비 완료 ({0}초)" -f $waited)
 
 # ---------------------------------------------------------------------------
-Step "5/5" "브라우저 열기"
+# Q2 was "personal or server". A server is only a server if other people can
+# reach it, so that answer is acted on here instead of being written to .env
+# and then ignored - which is what this step used to do. The tunnel publishes
+# the app, points APP_URL at it, and re-creates the app so that invite and
+# notification links carry the public address.
+$tunnelUrl = $null
 
-Start-Process $url | Out-Null
+if ($targetOut -eq "server") {
+  Step "5/5" "공개 주소 열기 (서버 모드)"
+
+  $tunnelScript = Join-Path $root "start-tunnel.ps1"
+  if (-not (Test-Path -LiteralPath $tunnelScript)) {
+    Die "start-tunnel.ps1 이 없습니다. 저장소가 온전하지 않은 것 같습니다."
+  }
+  Unblock-File -LiteralPath $tunnelScript -ErrorAction SilentlyContinue
+
+  # -Mode is what keeps the install a two-question setup. Without it a fresh
+  # server install would stop for a third question here, and the only answer
+  # open to someone who has no Cloudflare account is "quick" anyway. A mode
+  # already saved in .env is honoured, so switching to a named tunnel later
+  # sticks.
+  $tunnelMode = Read-EnvValue $envPath "TUNNEL_MODE"
+  if (-not $tunnelMode) { $tunnelMode = "quick" }
+  Say ("    터널 모드: " + $tunnelMode)
+
+  # Deliberately not Invoke-Native. That helper captures the output, and this
+  # takes up to two minutes of waiting for a hostname - the window would look
+  # frozen the whole time. -NoNewWindow leaves the child on this console so its
+  # progress appears as it happens, and -PassThru still gives the exit code.
+  # -Quiet stops the child printing a summary banner, since the summary below is
+  # this script's to print and two stacked banners read as two separate events.
+  $tunnelArgs = '-NoProfile -ExecutionPolicy Bypass -File "' + $tunnelScript + '" -Mode ' + $tunnelMode + ' -NoPause -Quiet'
+  $tunnelProc = Start-Process -FilePath "powershell" -ArgumentList $tunnelArgs -Wait -PassThru -NoNewWindow
+  Record ("  tunnel exit=" + $tunnelProc.ExitCode + " mode=" + $tunnelMode)
+
+  # The tunnel script leaves the address in APP_URL, which is also how the
+  # standalone start-tunnel.bat path works. Re-reading it here keeps the two
+  # entry points from having to agree on anything else. It also verified the
+  # public address itself and reported the result in its exit code, so there is
+  # no second probe here to wait on.
+  $tunnelUrl = Read-EnvValue $envPath "APP_URL"
+  if (-not $tunnelUrl -or $tunnelUrl -match "localhost") {
+    $tunnelUrl = $null
+    if ($tunnelProc.ExitCode -ne 0) {
+      Warn "공개 주소를 만들지 못했습니다."
+      Warn ("  이 컴퓨터에서는 http://localhost:" + $appPortOut + " 로 그대로 사용할 수 있습니다.")
+      Warn ("  원인은 logs\tunnel.log 와 start-logs.bat 에서 보세요.")
+    } else {
+      Warn "공개 주소가 .env 에 반영되지 않았습니다. start-tunnel.bat 으로 다시 시도해 주세요."
+    }
+  } elseif ($tunnelProc.ExitCode -ne 0) {
+    # The tunnel is up and APP_URL points at it, but the last check through the
+    # public address did not come back clean. Still worth showing the address.
+    Warn ("  공개 주소가 아직 응답하지 않습니다. 위 주소를 브라우저에서 새로고침해 보세요.")
+  }
+} else {
+  Step "5/5" "브라우저 열기"
+}
+
+$openUrl = if ($tunnelUrl) { $tunnelUrl } else { $url }
+Start-Process $openUrl | Out-Null
 
 $line = "=" * 58
 Say ""
@@ -247,6 +305,16 @@ if ($freshInstall) { Say "  HOOHR 설치가 완료되었습니다." -ForegroundC
 else               { Say "  HOOHR 가 실행 중입니다." -ForegroundColor Green }
 Say $line -ForegroundColor Green
 Say  ("  주소          : " + $url)
+if ($tunnelUrl) {
+  Say  ("  공개 주소     : " + $tunnelUrl) -ForegroundColor Green
+  Say  "                  (다른 사람은 이 주소로 접속합니다)" -ForegroundColor DarkGray
+  # Worth repeating here, since -Quiet suppressed the tunnel script's own copy
+  # of this warning. A quick tunnel's hostname is new every run, so an address
+  # pasted into an email stops working after the next restart.
+  if ($tunnelMode -eq "quick") {
+    Say  "  [중요] 이 주소는 start.bat 을 다시 켤 때마다 바뀝니다." -ForegroundColor Yellow
+  }
+}
 Say  ("  국가          : " + $countryOut)
 Say  ("  관리자 이메일  : " + $adminEmailOut)
 Say  ("  관리자 비밀번호: " + $adminPwOut)
@@ -259,11 +327,17 @@ if ($freshInstall) {
 }
 Say ""
 Say "  로그 실시간 보기 : start-logs.bat  더블클릭"
+if ($tunnelUrl) {
+  # `docker compose down` does not reliably reclaim the tunnel, because it
+  # sits behind a profile and carries a fixed container name. Name it outright.
+  Say "  공개 닫기         : docker rm -f hoohr_tunnel" -ForegroundColor DarkGray
+}
 Say "  정지하기         : docker compose down"
 Say ""
 Say $line -ForegroundColor Green
 
 Record ("ready at " + $url + " as " + $adminEmailOut)
+if ($tunnelUrl) { Record ("public at " + $tunnelUrl) }
 
 Write-Host ""
 $null = Read-Host "Enter 를 누르면 이 창이 닫힙니다 (앱은 계속 실행됩니다)"
