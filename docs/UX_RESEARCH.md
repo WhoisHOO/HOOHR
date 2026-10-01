@@ -2,6 +2,12 @@
 
 > Purpose: before designing HOOHR (attendance + leave + expense tool for ~20 people), collect proven UX patterns as a reference baseline.
 > Studied: open-source (Frappe HR, OpenHRApp, DutyDuke, Receipt Wrangler, open-expense, CogniClaim) + paid (BambooHR, Gusto, Rippling, Expensify, SAP Concur)
+>
+> **This is a snapshot of competitor patterns, kept as a reference.** The attendance
+> section below describes what these tools do, not what HOOHR does: attendance was
+> dropped from scope on 2026-10-01 and the app is now leave and expenses. The
+> attendance patterns are left in place because they informed the approval-inbox
+> and module-navigation patterns that the two remaining modules use.
 
 ---
 

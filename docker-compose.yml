@@ -91,8 +91,10 @@ services:
     container_name: hoohr_tunnel
     restart: unless-stopped
     # Stable hostname. Needs a Cloudflare account, a domain on the free plan, a
-    # tunnel created in the dashboard, and TUNNEL_TOKEN in .env.
-    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    # tunnel created in the dashboard, and TUNNEL_TOKEN in .env. The :- default
+    # is only here so that a personal install, which never runs this service,
+    # does not get a "variable is not set" warning on every compose command.
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN:-}
     depends_on:
       app:
         condition: service_healthy

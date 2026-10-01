@@ -8,6 +8,16 @@
 # (src/app/actions/auth.ts, src/lib/notifications.ts), so leaving it at
 # http://localhost:3000 means every link you email points at the recipient's
 # own machine. That failure is silent, so this script does not skip it.
+#
+# Can also be run by start.ps1, which passes -Mode (so that answering "server"
+# to the installer stays a two-question setup) and -NoPause (start.ps1 prints
+# its own banner and its own prompt, and a second pause here looks like a hang).
+
+param(
+  [string]$Mode = "",
+  [switch]$NoPause,
+  [switch]$Quiet
+)
 
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $root
@@ -65,7 +75,10 @@ if (-not (Test-Path -LiteralPath $envPath)) {
   Die ".env 가 없습니다. start.bat 을 먼저 실행해 주세요."
 }
 
-$mode = Read-EnvValue "TUNNEL_MODE"
+# An explicit -Mode wins, then whatever is already saved in .env, then ask.
+# The saved value is written back either way, so the choice sticks: after a
+# one-off start.bat the second run should not ask again.
+$mode = if ($Mode) { $Mode } else { Read-EnvValue "TUNNEL_MODE" }
 if (-not $mode) {
   Say "    터널 방식을 선택해 주세요:"
   Say "      1) 빠른 터널  - 무료, 계정/도메인 불필요. 지금 바로 공유할 때."
@@ -73,13 +86,17 @@ if (-not $mode) {
   Say "      2) 고정 주소    - 주소가 변하지 않음. Cloudflare 계정 + 도메인 + TUNNEL_TOKEN 필요."
   $choice = Read-Host "    선택 (1 또는 2)"
   $mode = if ($choice -eq "2") { "named" } else { "quick" }
-  [void](Set-EnvValue "TUNNEL_MODE" $mode)
-  Say ("    선택됨: " + $mode)
 }
 
 if ($mode -ne "quick" -and $mode -ne "named") {
   Die ("알 수 없는 TUNNEL_MODE: '" + $mode + "'. quick 또는 named 여야 합니다.")
 }
+
+if ((Read-EnvValue "TUNNEL_MODE") -ne $mode) {
+  [void](Set-EnvValue "TUNNEL_MODE" $mode)
+  Say ("    저장됨: TUNNEL_MODE=" + $mode)
+}
+
 
 if ($mode -eq "named") {
   $token = Read-EnvValue "TUNNEL_TOKEN"
@@ -163,36 +180,87 @@ if ($prev -ne $publicUrl) {
   Say "    APP_URL 이 이미 올바릅니다 (변경 없음)."
 }
 
-# Verify through the tunnel, not locally. Checking http://localhost here would
-# pass even if the tunnel were broken, which is the whole thing being tested.
+# Two different things can be "not ready" here, and they need different
+# answers, so they are waited on separately.
+#
+# First, the app. When APP_URL changed, the line above just re-created the
+# container, and `docker compose up -d` returns as soon as it is *started*, not
+# when it serves. A local probe settles that in seconds and, more to the point,
+# says so plainly - a user who cannot get the app running at all is a very
+# different problem from one whose tunnel is slow to appear.
+$appPort = Read-EnvValue "APP_PORT"
+if (-not $appPort) { $appPort = "3000" }
+$localHealth = "http://localhost:" + $appPort + "/api/health"
+Say "    앱이 준비될 때까지 대기 중..."
+$localCode  = ""
+$localWait  = 0
+while ($localWait -lt 120) {
+  $localCode = (& curl.exe -s -o NUL -w "%{http_code}" --max-time 5 $localHealth 2>$null | Select-Object -First 1)
+  if ($localCode -eq "200") { break }
+  Start-Sleep -Seconds 3
+  $localWait += 3
+  Write-Host ("    ... 대기 중 (HTTP {0}, {1}초)" -f $localCode, $localWait) -ForegroundColor DarkGray
+}
+Record ("  local probe: http=" + $localCode + " waited=" + $localWait + "s")
+if ($localCode -ne "200") {
+  Die ("앱이 이 컴퓨터에서 응답하지 않습니다 (HTTP " + $localCode + ").`n" +
+       "   터널 문제가 아니라 앱 문제입니다. start-logs.bat 으로 원인을 보세요.")
+}
+Say ("    앱 준비 완료 ({0}초)" -f $localWait)
+
+# Then the public address. This is the check that actually matters - a local
+# probe would pass even with a broken tunnel. A freshly issued trycloudflare
+# hostname also needs a moment to become routable at Cloudflare's edge, which is
+# why the first attempts here can come back as no response at all rather than
+# as an error page.
 Say "    공개 주소를 통해 확인 중..."
-$probe = (& curl.exe -s -o NUL -w "%{http_code}" --max-time 20 "$publicUrl/api/health" 2>$null | Select-Object -First 1)
+$probe     = ""
+$probeWait = 0
+while ($probeWait -lt 60) {
+  $probe = (& curl.exe -s -o NUL -w "%{http_code}" --max-time 15 "$publicUrl/api/health" 2>$null | Select-Object -First 1)
+  if ($probe -eq "200") { break }
+  Start-Sleep -Seconds 3
+  $probeWait += 3
+  Write-Host ("    ... 대기 중 (HTTP {0}, {1}초)" -f $probe, $probeWait) -ForegroundColor DarkGray
+}
+Record ("  public probe: http=" + $probe + " waited=" + $probeWait + "s")
 if ($probe -eq "200") {
-  Say "    정상 (HTTP 200)" -ForegroundColor Green
+  Say ("    정상 (HTTP 200, {0}초)" -f $probeWait) -ForegroundColor Green
 } else {
+  # A non-zero exit even though the tunnel is up, because the whole promise of
+  # this script is that the app is reachable at that address. start.ps1 reads
+  # the exit code to decide whether to call the install a success.
   Warn ("    HTTP " + $probe + " - 아직 준비되지 않았을 수 있습니다. 10초 뒤에 직접 열어보세요.")
+  Record "  public probe failed"
+  exit 1
 }
 
-$line = "=" * 58
-Say ""
-Say $line -ForegroundColor Green
-Say "  HOOHR 가 인터넷에 공개되었습니다." -ForegroundColor Green
-Say $line -ForegroundColor Green
-Say ("  공개 주소 : " + $publicUrl)
-Say ""
-if ($mode -eq "quick") {
-  Say "  [중요] 이 주소는 터널을 다시 켤 때마다 바뀝니다." -ForegroundColor Yellow
-  Say "          이메일 등에 넣을 주소가 필요하면 고정 주소 모드로 바꾸세요." -ForegroundColor Yellow
-} else {
-  Say "  이 주소는 고정되어 있습니다. 초대 링크에 그대로 사용하세요." -ForegroundColor Green
+# -Quiet is for start.ps1, which prints its own summary afterwards. Two stacked
+# banners in one window read as two separate things having happened.
+if (-not $Quiet) {
+  $line = "=" * 58
+  Say ""
+  Say $line -ForegroundColor Green
+  Say "  HOOHR 가 인터넷에 공개되었습니다." -ForegroundColor Green
+  Say $line -ForegroundColor Green
+  Say ("  공개 주소 : " + $publicUrl)
+  Say ""
+  if ($mode -eq "quick") {
+    Say "  [중요] 이 주소는 터널을 다시 켤 때마다 바뀝니다." -ForegroundColor Yellow
+    Say "          이메일 등에 넣을 주소가 필요하면 고정 주소 모드로 바꾸세요." -ForegroundColor Yellow
+  } else {
+    Say "  이 주소는 고정되어 있습니다. 초대 링크에 그대로 사용하세요." -ForegroundColor Green
+  }
+  Say ""
+  Say "  초대 링크와 알림 링크는 위 주소로 생성됩니다 (APP_URL)." -ForegroundColor DarkGray
+  Say "  로그 실시간 보기 : start-logs.bat"
+  Say "  공개 닫기         : docker rm -f hoohr_tunnel"
+  Say ""
+  Say $line -ForegroundColor Green
 }
-Say ""
-Say "  초대 링크와 알림 링크는 위 주소로 생성됩니다 (APP_URL)." -ForegroundColor DarkGray
-Say "  로그 실시간 보기 : start-logs.bat"
-Say "  공개 닫기         : docker rm -f hoohr_tunnel"
-Say ""
-Say $line -ForegroundColor Green
 
 Record ("public: " + $publicUrl)
 Write-Host ""
-$null = Read-Host "Enter 를 누르면 이 창이 닫힙니다 (터널은 계속 실행됩니다)"
+if (-not $NoPause) {
+  $null = Read-Host "Enter 를 누르면 이 창이 닫힙니다 (터널은 계속 실행됩니다)"
+}

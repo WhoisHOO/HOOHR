@@ -60,6 +60,21 @@ server is not up, so they are usable in CI later.
 E2E_HEADFUL=1 npm run test:e2e:forms
 ```
 
+### Running them against a public address
+
+`E2E_BASE` is not limited to `localhost`. If the app is published through a
+tunnel, the same suites are the honest test of that claim, because they drive a
+real browser over the public route rather than a container port:
+
+```bash
+E2E_BASE=https://something.trycloudflare.com npm run test:e2e:all
+```
+
+Worth doing once after any change to the tunnel setup, since a mistake there
+fails *silently*: the app works perfectly on `localhost` and every emailed link
+is dead. Note that the suites write to the database, so a public run against
+anything real is not a good idea.
+
 ## The two suites
 
 `country-language.mjs` proves that the language follows the company's country.

@@ -72,22 +72,28 @@ The only prerequisite. <https://www.docker.com/products/docker-desktop/>
 That is the whole procedure. The window walks through it:
 
 1. Starts Docker Desktop if it is not already running, and waits for the engine.
-2. Creates a `.env` with a random session secret and a random admin password.
+2. Asks two questions — **which country** this is used in, and whether it is a
+   **personal computer or a server** — then creates a `.env` with a random
+   session secret and a random admin password. Every question is two options,
+   so there is nothing to read up on.
 3. Builds the image, applies the database migrations, and creates the first
    admin account.
 4. Waits until the app answers a real readiness check - not merely until the
    port is listening, so it never opens a browser onto a page that will 500.
-5. Opens your browser and prints the login credentials.
+5. If you answered **server**, opens a public HTTPS address and checks the app
+   really answers through it. Otherwise just opens your browser.
+6. Prints the login credentials.
 
 The first run takes 2-5 minutes (it downloads and builds a Node image); later
 runs take seconds because the image is cached. Running `start.bat` again is
-always safe: your data and your admin password are left alone.
+always safe: your data, your settings and your admin password are left alone.
 
 ```
 ==========================================================
   HOOHR 설치가 완료되었습니다.
 ==========================================================
   주소          : http://localhost:3000
+  국가          : KR
   관리자 이메일  : admin@example.com
   관리자 비밀번호: sk3rdChE2vgNkDjL
 ==========================================================
@@ -109,12 +115,40 @@ app.
 docker compose down
 ```
 
+### Sharing it with your team
+
+Answering **server** to the second question publishes the app over a
+[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/):
+free, no static IP, no domain to buy, HTTPS included. The window prints the
+address, and the app is reachable at it from anywhere.
+
+Two things to know:
+
+- **A quick tunnel's address changes every time you restart.** It is for
+  showing the app to someone. If you need an address that survives restarts,
+  put it in a Cloudflare account and switch to a named tunnel: set
+  `TUNNEL_MODE="named"` and `TUNNEL_TOKEN` in `.env`.
+- **The address is written into `APP_URL`** so that the links in your invite
+  emails and approval notifications point at the public address instead of
+  `http://localhost:3000`. That is the step that is easy to forget and quietly
+  breaks every link you send, so the script does it for you and then verifies
+  the address from the outside before reporting success.
+
+You can also do this later without reinstalling — double-click
+**`start-tunnel.bat`**, which runs the same routine. To close the public
+address again:
+
+```bash
+docker rm -f hoohr_tunnel
+```
+
 ### Where things live
 
 | Path | |
 |---|---|
 | `.env` | Generated on first run. Your secret and admin password. Do not share it. |
 | `logs/hoohr.log` | Log history; each session overwrites the previous one into `hoohr.prev.log` |
+| `logs/tunnel.log` | History of public-address attempts, including the hostname each time |
 | Receipt images | In the `uploads` Docker volume, not in the repo |
 
 To wipe everything and start over (this deletes all data), add `-v`:
@@ -152,7 +186,11 @@ docker compose up -d --build  # migrates and seeds via docker/entrypoint.sh
 |---|---|---|---|
 | `DATABASE_URL` | yes | — | PostgreSQL connection string |
 | `AUTH_SECRET` | yes | — | Session cookie signing key. **The app throws at startup if unset** |
-| `APP_URL` | no | `http://localhost:3000` | Public base URL; used to build invite links |
+| `COMPANY_COUNTRY` | no | `KR` | `KR` or `US`. Decides the currency, the timezone **and** the on-screen language — there is no separate language setting |
+| `RUNTIME_TARGET` | no | `personal` | `personal` keeps the app on this machine; `server` also opens a public HTTPS address via a Cloudflare Tunnel |
+| `APP_URL` | no | `http://localhost:3000` | Public base URL; used to build invite links. The tunnel writes it for you |
+| `TUNNEL_MODE` | no | — | `quick` (free, random hostname) or `named` (stable hostname, needs a Cloudflare account). `start.bat` picks `quick` when this is unset |
+| `TUNNEL_TOKEN` | for `named` | — | The connector token from Cloudflare's "Install and run a connector" command |
 | `BOOTSTRAP_ADMIN_EMAIL` | for seed | — | Initial admin account |
 | `BOOTSTRAP_ADMIN_PASSWORD` | for seed | — | Initial admin password |
 | `SMTP_HOST` / `SMTP_PORT` | no | — / `587` | SMTP server. **Leaving `SMTP_HOST` empty disables all mail and the app works normally** |
@@ -183,7 +221,11 @@ docker compose up -d --build  # migrates and seeds via docker/entrypoint.sh
 ├── deploy/               EKS / external-access notes
 ├── docs/                 REQUIREMENTS.md, UX_RESEARCH.md
 ├── docker-compose.yml
-└── Dockerfile
+├── Dockerfile
+├── start.ps1             one-click start: asks the two setup questions
+├── start-tunnel.ps1      public HTTPS address (called by start.ps1 in server mode)
+├── start-tunnel.bat      ...or run it on its own later
+└── logs/                 start.log, tunnel.log
 ```
 
 Authenticated routes live under **`/hoohr`**. The pre-rename `/app` prefix still redirects there.
@@ -194,7 +236,7 @@ Authenticated routes live under **`/hoohr`**. The pre-rename `/app` prefix still
 - **Pure domain helpers** — day counting, timezone boundaries, money formatting, and approval rules are plain functions in `src/lib/`, unit-testable without a database. The leave form's live preview and the server action deliberately share the same holiday set so they cannot disagree.
 - **Status-guarded writes** — approvals use a status-conditioned `updateMany` inside a transaction, so a lost race cannot double-deduct a leave balance.
 - **Times are stored in UTC** and rendered in the company timezone configured in settings.
-- **i18n without a dependency** (`src/i18n/`) — a `locale` cookie (`ko` default, `en` available) is read server-side, so `<html lang>`, dates, numbers and CSV headers all follow it. Copy lives in `src/i18n/dictionaries/`; the English dictionary is typed as `typeof` the Korean one, so a missing or extra key is a compile error rather than a runtime `undefined`. User-entered data (names, departments, leave policies, expense categories) is deliberately never translated.
+- **i18n without a dependency** (`src/i18n/`) — the language is not a setting. It is derived from the company's country, so `<html lang>`, dates, numbers and CSV headers all follow `COMPANY_COUNTRY`, and there is no per-browser override that can go stale. Copy lives in `src/i18n/dictionaries/`; the English dictionary is typed as `typeof` the Korean one, so a missing or extra key is a compile error rather than a runtime `undefined`. User-entered data (names, departments, leave policies, expense categories) is deliberately never translated.
 - **Email notifications are best-effort by design** (`src/lib/mail.ts`) — three properties are load-bearing. It is a **no-op when `SMTP_HOST` is unset**, so a fresh clone runs with no mail configured. It **never throws**: an approval is already committed by the time mail goes out, so an SMTP outage must not turn a successful decision into an error, and must not invite a retry that would double-approve. And it **cannot hang a request**: a blackholed SMTP port would otherwise pin a server action for the default 120s, so the timeouts are 10s/10s/20s.
 - **The approval digest reuses the inbox query** (`src/lib/approval-digest.ts`) — `collectDigestPlans` calls the same `approvalInboxEmployeeWhere` predicate the leave and expense pages use, so the email cannot list something the inbox hides or miss something it shows. Each (recipient, request) pair is claimed by inserting a `Notification` row whose `(userId, link)` is unique, which makes a duplicate digest impossible under concurrent runs; a failed send releases its claim so the next run retries. The scope is deliberately *per recipient* — an admin's inbox overlaps a manager's, so both are legitimately notified about the same request.
 
@@ -268,9 +310,10 @@ and the real ledger without needing a credential or an external relay.
 ### Browser E2E
 
 Some flows cannot be reached over `curl` because a Next.js **server action** is not
-callable with a plain `POST`. The locale switcher was the notable case: setting the
-cookie by hand only proves the read path, so the `setLocale` write path stayed
-unverified. Forms were the other: a hand-rolled action POST returns
+callable with a plain `POST`. The country change is the notable case: the language
+is derived from the country, so the only way to prove the derivation is to change
+the country through the real form and watch the UI follow — no HTTP-only check can
+do that. Forms were the other: a hand-rolled action POST returns
 `500 Connection closed.`, which is a framework restriction rather than an app bug,
 so no real form interaction had been tested since Session 5.
 

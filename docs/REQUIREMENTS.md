@@ -132,7 +132,7 @@ Employee (1) ── (N) Notification
 |---|---|
 | Deployment | Single command `docker compose up` |
 | Data backup | Daily automatic: Postgres dump + receipt files → external storage (rclone, etc.) |
-| Remote access | Cloudflare Tunnel → HTTPS domain |
+| Remote access | Cloudflare Tunnel → HTTPS address. Two modes: a free quick tunnel (random hostname, changes on restart) and a named tunnel (stable, needs a Cloudflare account). `RUNTIME_TARGET=server` wires it into the one-click start |
 | Monitoring | MVP: simple status page/health checks. Logs via Docker logs |
 | Security | Secrets (e.g., S3 keys) as env vars, HTTPS enforced, password hashing (bcrypt) |
 | Timezone | Store UTC, display in company-configured timezone |
@@ -141,14 +141,19 @@ Employee (1) ── (N) Notification
 
 **MVP (v0.1):**
 1. Auth + employee invites
-3. Leave (annual/sick/half-day) request·approval·balance calculation
-4. Expense claims + receipt attachments + approval + payment confirmation
-5. Email notifications, team calendar, CSV export
-6. Docker Compose deployment + Cloudflare Tunnel integration docs
+2. Leave (annual/sick/half-day) request·approval·balance calculation
+3. Expense claims + receipt attachments + approval + payment confirmation
+4. Email notifications, team calendar, CSV export
+5. Docker Compose deployment + Cloudflare Tunnel integration docs
+6. Country-driven setup: one country answer sets currency, timezone and UI language
+
+> Attendance (clock-in/out, corrections, and the analytics pipeline over it) was
+> scoped out on 2026-10-01. The MVP is leave and expenses, and the module was
+> removed rather than left dormant.
 
 **v0.2 onwards:**
-- OCR (AI) receipt auto-extraction, PWA mobile, GPS clock-in/out
-- Multi-step approvals, multi-currency, i18n (EN/KO), training/notice module
+- OCR (AI) receipt auto-extraction, PWA mobile
+- Multi-step approvals, multi-currency, training/notice module
 
 ## 8. Open-Source Release Plan
 - License: **Apache-2.0** (supports both internal company use and community distribution; explicit patent grant makes enterprise adoption safer)
