@@ -219,7 +219,7 @@ docker compose up -d --build  # migrates and seeds via docker/entrypoint.sh
 │   └── proxy.ts          route protection
 ├── scripts/              cron entry point for the approval digest
 ├── deploy/               EKS / external-access notes
-├── docs/                 REQUIREMENTS.md, UX_RESEARCH.md
+├── docs/                 REQUIREMENTS.md, UX_RESEARCH.md, WORKFLOW.md
 ├── docker-compose.yml
 ├── Dockerfile
 ├── start.ps1             one-click start: asks the two setup questions
