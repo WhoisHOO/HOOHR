@@ -182,11 +182,13 @@ C:\apps\projects\hr-app\    → now C:\apps\projects\hr-app (folder name unchang
 ```
 
 ## 💡 Dev Conventions
-- Korean-first UI, i18n in v0.2
+- **Work with the user in Korean; write code in English.** Identifiers, comments, commit messages and the repo's written artifacts stay English. The full rule and where work gets recorded live in [`AGENTS.md`](AGENTS.md), which is also what `CLAUDE.md` points at.
+- UI language **follows the company country** (Session 20) — there is no runtime switcher and no `locale` cookie. Dictionaries are still structured ko/en, and dates/numbers/CSV are still locale-aware.
 - Store times in UTC, display in company timezone
 - Status pipelines: leave `requested→pending→approved/rejected`, expense `draft→submitted→approved→paid`
 - Only deduct balance / mark paid at final status after approval
-- Reference files: `AGENTS.md` (command guidance); `CLAUDE.md` already created
+- **Verify, do not assert** — a feature is done when it was actually run, not when it compiles
+- Reference files: `AGENTS.md` (commands + conventions, read by every agent); `LOG.md` (session memory)
 
 ---
 
