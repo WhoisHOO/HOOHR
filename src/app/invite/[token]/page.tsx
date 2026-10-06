@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
 import { AcceptInviteForm } from "./accept-form";
 import { getDict, interpolate } from "@/i18n/server";
@@ -60,7 +61,8 @@ async function Shell({ children }: { children: ReactNode }) {
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
       <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
         <div className="mb-6 text-center">
-          <h1 className="text-xl font-semibold text-zinc-900">
+          <Image src="/logo.png" alt="HOOHR" width={48} height={48} className="mx-auto" priority />
+          <h1 className="mt-3 text-xl font-semibold text-zinc-900">
             {auth.accept.heading}
           </h1>
           <p className="mt-1 text-sm text-zinc-500">{auth.accept.subtitle}</p>
