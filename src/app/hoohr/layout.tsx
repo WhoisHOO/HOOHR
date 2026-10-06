@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { requireUser } from "@/lib/dal";
 import { logout } from "@/app/actions/auth";
 import { getDict } from "@/i18n/server";
@@ -18,7 +19,8 @@ export default async function AppLayout({ children }: LayoutProps<"/hoohr">) {
       {/* 사이드바 */}
       <aside className="flex w-56 flex-col border-r border-zinc-200 bg-white">
         <div className="border-b border-zinc-200 px-5 py-4">
-          <Link href="/hoohr" className="text-lg font-semibold text-zinc-900">
+          <Link href="/hoohr" className="flex items-center gap-2 text-lg font-semibold text-zinc-900">
+            <Image src="/logo.png" alt="HOOHR" width={28} height={28} priority />
             HOOHR
           </Link>
         </div>

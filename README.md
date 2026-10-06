@@ -1,5 +1,7 @@
 # HOOHR
 
+<img src="HOO_Logo.jpg" alt="HOOHR logo" width="96" align="right" />
+
 **Lightweight HR toolkit for startups and small teams** — leave and expense claims in one self-hosted app.
 
 Built for a team of ~20 people, not for an enterprise HR suite. Open source under [Apache-2.0](./LICENSE).
