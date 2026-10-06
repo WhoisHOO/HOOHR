@@ -11,25 +11,37 @@
 ## 0. The shape of the whole thing
 
 ```
-                     install (start.bat)
-                            |
-                     2 questions: country? personal PC or server?
-                            |
-                            v
-   LOGIN  <---------------- EMPLOYEE (onboards via emailed invite link)
-     |                              |
-     v                              v
-  DASHBOARD (2 cards) --------> LEAVE / EXPENSES  (own requests)
-     |
-     +--> EMPLOYEES & ORG, INVITE, BALANCES, SETTINGS  (ADMIN only)
+                      install (start.bat): 2 questions
+                             |
+                             v
+                      /setup (first run only) --- create company + admin
+                             |
+                             v
+    LOGIN  <---------------- EMPLOYEE (onboards via emailed invite link)
+      |                              |
+      v                              v
+   DASHBOARD (2 cards) --------> LEAVE / EXPENSES  (own requests)
+      |
+      +--> EMPLOYEES & ORG, INVITE, BALANCES, SETTINGS  (ADMIN only)
 
-   a MANAGER or the ADMIN sees other people's pending items inline
-   on the same LEAVE / EXPENSES pages, not in a separate inbox.
+    a MANAGER or the ADMIN sees other people's pending items inline
+    on the same LEAVE / EXPENSES pages, not in a separate inbox.
 ```
 
 One company per deployment (multi-tenant by `companyId`, but a single install
 serves one company). The country chosen at install decides the UI language, the
 currency, the timezone and the weekend, and there is no switcher afterwards.
+
+### First run, end to end
+
+| Step | What happens | Failure / edge behavior |
+|---|---|---|
+| `start.bat` | Docker builds, migrations apply, the seed creates the company + default departments/policies/categories | No admin is ever created by the installer; secrets other than `AUTH_SECRET` are never generated. Re-running keeps the existing `.env` |
+| First visit to any page | No account exists → redirected to `/setup`. `/login` and `/` behave the same | The setup screen is the only reachable page for a fresh install, other than `/api/health` and `/invite/*` |
+| Create the first account | One transaction: company name (editable), admin `User` (ADMIN) + `Employee`, paid-leave balances seeded from the company's policies, then a session cookie. Redirect to `/hoohr` | The action refuses to run once any account exists, and `/setup` redirects to `/login` after that. Weak passwords are refused by the same rules as invites (8+ chars, letter + digit) |
+| First dashboard | A "getting started" panel lists the next three steps: invite the team, review leave policies/holidays, check company settings | It disappears automatically once more than one employee exists |
+| Admin invites employees | Email with a 7-day link when SMTP is configured; the link is also shown for copying when mail is not set up | Employees set their own password; an accepted invite can never be re-issued (re-invite refuses them) |
+| New hire logs in | Dashboard renders with "no balance tracked" leave cards; they can file leave immediately (a warning, not a block, if it exceeds a tracked balance) | The first approval auto-creates their balance row, so nothing can roll back with a missing balance |
 
 ## 1. Authentication
 
