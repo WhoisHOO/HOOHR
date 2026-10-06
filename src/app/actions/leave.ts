@@ -6,7 +6,7 @@ import { requireAdmin, requireUser } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
 import { getCompanyTimezone, getCompanyWeekend } from "@/lib/company";
 import { parseIsoDate, zonedToday } from "@/lib/date";
-import { computeLeaveDays, remainingDays } from "@/lib/leave";
+import { computeLeaveDays } from "@/lib/leave";
 import { isWorkday } from "@/lib/holidays";
 import { getCompanyHolidayName, getCompanyHolidays } from "@/lib/holiday-store";
 import {
@@ -102,29 +102,6 @@ export async function requestLeave(
             d: start.getUTCDate(),
           }),
     };
-  }
-
-  if (policy.kind !== "UNPAID") {
-    const year = start.getUTCFullYear();
-    const bal = await prisma.leaveBalance.findUnique({
-      where: {
-        employeeId_policyId_year: {
-          employeeId: user.employeeId,
-          policyId: policy.id,
-          year,
-        },
-      },
-    });
-    const available = bal ? remainingDays(bal) : 0;
-    if (days > available) {
-      return {
-        message: interpolate(leave.messages.insufficientBalance, {
-          policy: policy.name,
-          available,
-          days,
-        }),
-      };
-    }
   }
 
   await prisma.leaveRequest.create({
@@ -226,7 +203,7 @@ export async function decideLeave(
       if (result.count !== 1) return null;
 
       if (status === "APPROVED" && fresh.policy.kind !== "UNPAID") {
-        await tx.leaveBalance.update({
+        await tx.leaveBalance.upsert({
           where: {
             employeeId_policyId_year: {
               employeeId: fresh.employeeId,
@@ -234,7 +211,15 @@ export async function decideLeave(
               year: fresh.startDate.getUTCFullYear(),
             },
           },
-          data: { usedDays: { increment: fresh.days } },
+          update: { usedDays: { increment: fresh.days } },
+          create: {
+            employeeId: fresh.employeeId,
+            policyId: fresh.policyId,
+            year: fresh.startDate.getUTCFullYear(),
+            grantedDays: 0,
+            usedDays: fresh.days,
+            adjustDays: 0,
+          },
         });
       }
 

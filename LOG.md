@@ -61,8 +61,8 @@
 | Holiday-aware leave day counting | ✅ Done (Session 10) |
 | Email notifications (NOT-1/2) | ✅ **Done (Session 16)** — SMTP transport, ko/en templates, decision + invite + digest mail. **Real delivery verified 2026-10-01** against a local SMTP server: invite + digest both arrived, correct Korean, links, HTML part |
 | **Click-level workflow doc** | ✅ **Done (Session 20)** — `docs/WORKFLOW.md`: every user/admin action, what it guarantees, what it refuses, plus a "Known gaps" table (G1–G7) that the UI hides. Writing it is what surfaced G7 |
-| **New hire can get leave (G1)** | ❌ **Bug (Session 20)** — `acceptInvitation` creates no `LeaveBalance` row, so a new hire sees 0 days, cannot file a PTO/sick request, and approving one throws `P2025` and rolls the decision back. Unpaid leave is the only type that works. Found by running the real invite flow. Unfixed pending a decision |
-| **Draft expense report can be edited (G7)** | ❌ **Bug (Session 20)** — there is no update action at all, yet the form hint promises "제출 전까지 수정·삭제가 가능합니다" / "You can edit or delete until you submit" in both languages. The UI misdescribes its own capabilities. Unfixed pending a decision |
+| **New hire can get leave (G1)** | ✅ **Fixed (Session 21)** — `decideLeave` now upserts the balance row; the request form warns instead of blocking on a missing/zero balance; a new-hire leaves with "잔여 없음" and can file/approve PTO + sick. Covered by `_e2e/resilience.ts` (29) and `_e2e/newhire.mjs` (20) |
+| **Draft expense report can be edited (G7)** | ✅ **Fixed (Session 21)** — copy corrected: the form hint no longer promises editing. Delete-and-recreate remains the only path for fixes |
 | Checkpoint commit (Session 5–9) | ✅ `98f7ab8` + `e1cc5b3` |
 | **GitHub public repo** | ✅ **Done — https://github.com/WhoisHOO/HOOHR** (`main`, renamed in Session 11) |
 | Brand rename `hr-app` → `HOOHR` (routes/DB/containers/docs) | ✅ Done (Session 11) |
@@ -962,10 +962,18 @@ Four commits on `feature/first-run-setup`, plus a merge of `feature/public-tunne
 - **`docs/WORKFLOW.md`** — a click-level map of every user/admin action, written from the flows as *run* rather than the code as read: login/invite/accept, request → approve/reject → balance, DRAFT → SUBMITTED → APPROVED → PAID, the settings actions, the mails that fire, and a **"Known gaps" table (G1–G7)** that the happy-path UI hides. Every guarantee in it was checked against the code rather than recalled, which is what produced the two corrections during drafting (re-invite is **not** a reset — it refuses an employee who already accepted, `auth.ts:182`; and the CSV export is a bare `GET` route that returns **401**, not a login redirect).
 - **Result/next**: the app now matches its own description — install, answer two questions, get a working leave-and-expenses tool, optionally reachable from anywhere. The top remaining item is now **gap G1**: a new hire cannot get leave, which undermines the whole leave flow for exactly the users the invite feature exists for. **G7** is a five-minute fix if the copy is the thing that is wrong (drop "edit" from both hint strings), or a real feature if editing is wanted. Then, in priority order: a **stable domain** (a quick tunnel's hostname changes on every restart, so a real deployment needs a named tunnel — the code path exists and is untested, since it needs a Cloudflare account and a `TUNNEL_TOKEN`); the Docker `SMTP_HOST` note in `.env.example`; an in-app notification list (NOT-3); `output: "standalone"` to shrink the runtime image; and the dead `isValidCurrency`/`currencyOptions` helpers.
 
+### Session 21 (2026-10-06): G1 redesigned — balance is no longer a hard quota; G7 copy fixed
+
+- **Product direction (user)**: leave is a request → approve flow, and each company's quota policy differs, so the app must not hard-block a request on a fixed day count. A balance row is optional bookkeeping, not a gate.
+- **G1 fix (already drafted in the working tree, completed here)**:
+  - `decideLeave` uses `leaveBalance.upsert` (create on first approval with `grantedDays: 0` + used days) instead of `update` → no more `P2025` rollback; approval always commits. (`src/app/actions/leave.ts`)
+  - `requestLeave` no longer refuses when days exceed remaining balance; the form shows an amber warning and lets the approver decide. UNPAID unchanged. (`leave.ts`, `leave-form.tsx`, `dictionaries/leave.ts`)
+  - Leave page: a missing balance renders as "잔여 없음" (`remaining: null`) instead of a blocking "0 days". (`page.tsx`)
+- **G7 fix**: the expense form hint no longer promises editing — ko `제출 전까지 삭제가 가능합니다`, en `You can delete this until you submit`. (`dictionaries/expenses.ts`)
+- **New coverage**: `_e2e/resilience.ts` (29 checks, DB-level: balance-less approval upsert, page sweep, anon 307s, orphan employee reviewer, invited-employee edge) and `_e2e/newhire.mjs` (20 checks, real browser: new hire login → no balance → request PTO + unpaid → admin approves → balance row created). Both pass against the rebuilt Docker image. Scripts added: `test:e2e:resilience`, `test:e2e:newhire`.
+- **Housekeeping**: removed unused `remainingDays` import in `leave.ts` and the dead `company` query in `resilience.ts` so lint is clean. `docs/WORKFLOW.md` gap table updated (G1/G7 marked fixed).
+- **Verification**: `npm run lint` 0, `npx tsc --noEmit` 0, `docker compose up -d --build app` rebuilt and re-verified; resilience 29/29, newhire 20/20.
+- **Remaining (unchanged)**: stable domain (named tunnel), Docker `SMTP_HOST` note in `.env.example` (G4), in-app notifications UI (G3/NOT-3), `output: "standalone"`, optional draft-expense editing if wanted.
+- **Not committed yet** — working tree holds the Session 21 changes for review.
+
 <!-- ====== Template for next sessions (copy & use) ======
-### Session 5 (2026-09-24): <title>
-- **Goal**: ...
-- **Done**: ...
-- **Result**: ...
-- **Issues/notes**: ...
--->

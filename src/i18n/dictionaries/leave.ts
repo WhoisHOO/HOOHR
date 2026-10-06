@@ -17,7 +17,8 @@ export const leaveKo = {
     submit: "휴가 신청",
     submitting: "신청 중...",
     halfDayBlocked: "선택한 날짜는 주말 또는 공휴일이므로 반차를 신청할 수 없습니다.",
-    overBalance: "잔여 일수를 초과했습니다 ({days}일 > 잔여 {remaining}일).",
+    overBalance:
+      "잔여 일수를 초과합니다 ({days}일 > 잔여 {remaining}일). 신청은 가능하며 승인자의 판단에 따릅니다.",
   },
   sections: {
     request: "휴가 신청",
@@ -103,7 +104,7 @@ export const leaveEn: LeaveMessages = {
     halfDayBlocked:
       "Half day is not available on weekends or public holidays.",
     overBalance:
-      "Exceeds the remaining balance ({days} day(s) requested, {remaining} day(s) left).",
+      "Exceeds the remaining balance ({days} day(s) requested, {remaining} day(s) left). You can still submit; the approver decides.",
   },
   sections: {
     request: "Request leave",

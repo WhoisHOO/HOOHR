@@ -56,10 +56,14 @@ export function LeaveRequestForm({
         : 0;
   const remaining = selected?.remaining ?? null;
   const remainingAfter = remaining !== null ? Math.max(0, remaining - days) : null;
+  // A warning, not a block. The employee filing the request is not the person who
+  // decides it, and the company may not track a balance at all (`remaining` is
+  // null then). Blocking here is what made a brand-new hire unable to request
+  // leave: the button was disabled on "0 days" that nobody had ever set.
   const over = remaining !== null && days > remaining;
   // Server refuses a half-day on a weekend/holiday; mirror it so the button state matches.
   const halfDayBlocked = isHalfDay && start !== null && !isWorkday(start, holidaySet, weekend);
-  const blocked = over || halfDayBlocked || days <= 0;
+  const blocked = halfDayBlocked || days <= 0;
 
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -197,7 +201,7 @@ export function LeaveRequestForm({
       )}
 
       {over && (
-        <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700">
           {interpolate(d.leave.form.overBalance, { days, remaining: remaining ?? 0 })}
         </p>
       )}
