@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { redirect } from "next/navigation";
+import { hasAnyUser } from "@/lib/bootstrap";
 import { LoginForm } from "./login-form";
 import { getDict } from "@/i18n/server";
 
@@ -9,6 +11,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function LoginPage() {
+  if (!(await hasAnyUser())) redirect("/setup");
   const { auth } = await getDict();
 
   return (

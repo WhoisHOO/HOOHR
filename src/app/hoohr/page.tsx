@@ -59,8 +59,35 @@ export default async function DashboardPage() {
     ? ptoBalance.grantedDays - ptoBalance.usedDays + ptoBalance.adjustDays
     : null;
 
+  const isFreshInstall =
+    user.role === "ADMIN" &&
+    (await prisma.employee.count({
+      where: { companyId: user.companyId },
+    })) <= 1;
+
   return (
     <div className="mx-auto max-w-4xl">
+      {isFreshInstall && (
+        <div className="mb-8 rounded-xl border border-blue-200 bg-blue-50 p-5">
+          <h2 className="text-sm font-semibold text-blue-900">
+            {dashboard.gettingStarted.title}
+          </h2>
+          <p className="mt-1 text-xs text-blue-700">
+            {dashboard.gettingStarted.subtitle}
+          </p>
+          <div className="mt-3 flex flex-col gap-1.5">
+            <Link href="/hoohr/admin/invite" className="text-sm font-medium text-blue-800 hover:underline">
+              1. {dashboard.gettingStarted.invite} →
+            </Link>
+            <Link href="/hoohr/admin/settings" className="text-sm font-medium text-blue-800 hover:underline">
+              2. {dashboard.gettingStarted.policies} →
+            </Link>
+            <Link href="/hoohr/admin/settings" className="text-sm font-medium text-blue-800 hover:underline">
+              3. {dashboard.gettingStarted.settings} →
+            </Link>
+          </div>
+        </div>
+      )}
       <h1 className="text-2xl font-semibold text-zinc-900">
         {interpolate(dashboard.greeting, { name: user.name })}
       </h1>

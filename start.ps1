@@ -141,9 +141,8 @@ function Read-EnvValue([string]$path, [string]$key) {
 $freshInstall = $false
 if (Test-Path -LiteralPath $envPath) {
   $secret = Read-EnvValue $envPath "AUTH_SECRET"
-  $adminPw = Read-EnvValue $envPath "BOOTSTRAP_ADMIN_PASSWORD"
-  if (-not ($secret -and $adminPw)) {
-    Die ".env 가 불완전합니다 (AUTH_SECRET 또는 BOOTSTRAP_ADMIN_PASSWORD 가 비어 있음).`n   .env 파일을 지운 뒤 start.bat 을 다시 실행해 주세요."
+  if (-not $secret) {
+    Die ".env 가 불완전합니다 (AUTH_SECRET 가 비어 있음).`n   .env 파일을 지운 뒤 start.bat 을 다시 실행해 주세요."
   }
   $countryOut = Read-EnvValue $envPath "COMPANY_COUNTRY"
   $targetOut  = Read-EnvValue $envPath "RUNTIME_TARGET"
@@ -153,7 +152,6 @@ if (Test-Path -LiteralPath $envPath) {
 } else {
   $freshInstall = $true
   $secret = New-RandomHex 32
-  $adminPw = New-RandomPassword 16
 
   # Q1. The country decides the currency, the timezone and the language.
   if ((Ask-Choice "어느 국가로 사용하시겠습니까?" "대한민국" "미국") -eq "1") {
@@ -174,18 +172,15 @@ if (Test-Path -LiteralPath $envPath) {
   # only the blank secrets and the two answers get real values.
   $written = "# HOOHR - start.bat 이 자동 생성했습니다. 수정 후 다시 실행하면 이 값들이 유지됩니다.`r`n" +
     $template.Replace('AUTH_SECRET=""',                    ('AUTH_SECRET="' + $secret + '"')).
-            Replace('BOOTSTRAP_ADMIN_PASSWORD=""',         ('BOOTSTRAP_ADMIN_PASSWORD="' + $adminPw + '"')).
-            Replace('BOOTSTRAP_ADMIN_EMAIL="admin@example.com"', 'BOOTSTRAP_ADMIN_EMAIL="admin@example.com"').
             Replace('COMPANY_COUNTRY="KR"',                ('COMPANY_COUNTRY="' + $country + '"')).
             Replace('RUNTIME_TARGET="personal"',          ('RUNTIME_TARGET="' + $target + '"'))
   [System.IO.File]::WriteAllText($envPath, $written, $Utf8Bom)
   $countryOut = $country
   $targetOut  = $target
-  Say ("    새 .env 를 만들었습니다 (국가 " + $country + ", " + $target + " / 시크릿·비밀번호 자동 생성).")
+  Say ("    새 .env 를 만들었습니다 (국가 " + $country + ", " + $target + " / 시크릿 자동 생성).")
 }
 
 $adminEmailOut = Read-EnvValue $envPath "BOOTSTRAP_ADMIN_EMAIL"
-$adminPwOut    = Read-EnvValue $envPath "BOOTSTRAP_ADMIN_PASSWORD"
 $appPortOut    = Read-EnvValue $envPath "APP_PORT"
 if (-not $appPortOut) { $appPortOut = "3000" }
 
@@ -316,14 +311,9 @@ if ($tunnelUrl) {
   }
 }
 Say  ("  국가          : " + $countryOut)
-Say  ("  관리자 이메일  : " + $adminEmailOut)
-Say  ("  관리자 비밀번호: " + $adminPwOut)
 Say $line -ForegroundColor Green
 if ($freshInstall) {
-  Say "  이 비밀번호는 .env 에 저장되어 있습니다." -ForegroundColor DarkGray
-  Say "  로그인 후 Settings 화면에서 바로 변경하세요." -ForegroundColor DarkGray
-} else {
-  Say "  (비밀번호를 잊으셨으면 .env 의 BOOTSTRAP_ADMIN_PASSWORD 를 확인하세요)" -ForegroundColor DarkGray
+  Say "  첫 실행 화면에서 관리자 계정을 만들어 주세요." -ForegroundColor DarkGray
 }
 Say ""
 Say "  로그 실시간 보기 : start-logs.bat  더블클릭"

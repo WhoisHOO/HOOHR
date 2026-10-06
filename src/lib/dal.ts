@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { decrypt } from "@/lib/session";
+import { hasAnyUser } from "@/lib/bootstrap";
 import {
   approvalReviewerFromUser,
   approvalReviewerSelect,
@@ -28,8 +29,9 @@ export const getSession = cache(async () => {
   return decrypt(token);
 });
 
-/** 인증된 세션 보장 (미로그인 시 /login으로 리다이렉트). */
+/** 인증된 세션 보장 (미로그인 시 /login으로 리다이렉트, 계정이 없으면 /setup으로). */
 export async function verifySession() {
+  if (!(await hasAnyUser())) redirect("/setup");
   const session = await getSession();
   if (!session?.userId) {
     redirect("/login");
@@ -70,6 +72,7 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
 
 /** 인증 + 사용자 정보 보장 (미로그인 시 /login으로 리다이렉트). */
 export async function requireUser(): Promise<SessionUser> {
+  if (!(await hasAnyUser())) redirect("/setup");
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   return user;

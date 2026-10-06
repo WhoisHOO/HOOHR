@@ -6,6 +6,13 @@ export const dashboardKo = {
   },
   greeting: "안녕하세요, {name}님",
   profile: "{department} · {position} · 입사 {date}",
+  gettingStarted: {
+    title: "시작하기",
+    subtitle: "처음이라면 아래 순서대로 진행하세요.",
+    invite: "직원 초대하기",
+    policies: "휴가 정책 · 공휴일 확인",
+    settings: "회사 정보 확인",
+  },
   stats: {
     leave: {
       title: "휴가 · 병가",
@@ -28,6 +35,13 @@ export const dashboardEn: DashboardMessages = {
   },
   greeting: "Hello, {name}",
   profile: "{department} · {position} · Joined {date}",
+  gettingStarted: {
+    title: "Getting started",
+    subtitle: "New here? Work through these in order.",
+    invite: "Invite your team",
+    policies: "Review leave policies & holidays",
+    settings: "Check company settings",
+  },
   stats: {
     leave: {
       title: "Leave & sick days",

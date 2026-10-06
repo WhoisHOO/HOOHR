@@ -18,6 +18,7 @@ export async function proxy(request: NextRequest) {
   const isPublic =
     pathname === "/" ||
     pathname === "/login" ||
+    pathname === "/setup" ||
     pathname.startsWith("/invite") ||
     // Readiness probe used by the compose healthcheck and start.bat. It reads
     // no user data and returns only {status, database, schema} - the reach of

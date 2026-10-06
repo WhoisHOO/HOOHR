@@ -76,19 +76,19 @@ That is the whole procedure. The window walks through it:
 1. Starts Docker Desktop if it is not already running, and waits for the engine.
 2. Asks two questions — **which country** this is used in, and whether it is a
    **personal computer or a server** — then creates a `.env` with a random
-   session secret and a random admin password. Every question is two options,
-   so there is nothing to read up on.
-3. Builds the image, applies the database migrations, and creates the first
-   admin account.
+   session secret. Every question is two options, so there is nothing to read
+   up on.
+3. Builds the image, applies the database migrations, and seeds the company
+   defaults (departments, leave policies, expense categories).
 4. Waits until the app answers a real readiness check - not merely until the
    port is listening, so it never opens a browser onto a page that will 500.
 5. If you answered **server**, opens a public HTTPS address and checks the app
    really answers through it. Otherwise just opens your browser.
-6. Prints the login credentials.
+6. Prints the address.
 
 The first run takes 2-5 minutes (it downloads and builds a Node image); later
 runs take seconds because the image is cached. Running `start.bat` again is
-always safe: your data, your settings and your admin password are left alone.
+always safe: your data and settings are left alone.
 
 ```
 ==========================================================
@@ -96,13 +96,12 @@ always safe: your data, your settings and your admin password are left alone.
 ==========================================================
   주소          : http://localhost:3000
   국가          : KR
-  관리자 이메일  : admin@example.com
-  관리자 비밀번호: sk3rdChE2vgNkDjL
 ==========================================================
 ```
 
-The password is random per install and is also stored in `.env`, so you can
-always recover it. **Change it in Settings after your first login.**
+Then the browser opens **your setup screen**: pick a company name and create
+the first admin account. That screen appears only once - after the first
+account exists it is gone, and from then on you land on the login page.
 
 ### 4. Watch the logs
 
@@ -164,7 +163,7 @@ To wipe everything and start over (this deletes all data), add `-v`:
 <summary>Node + local PostgreSQL, no Docker for the app</summary>
 
 ```bash
-cp .env.example .env          # then set AUTH_SECRET and BOOTSTRAP_ADMIN_PASSWORD
+cp .env.example .env          # then set AUTH_SECRET (seed admin optional, dev only)
 docker compose up -d db       # PostgreSQL only
 npm ci
 npx prisma migrate deploy
@@ -193,8 +192,7 @@ docker compose up -d --build  # migrates and seeds via docker/entrypoint.sh
 | `APP_URL` | no | `http://localhost:3000` | Public base URL; used to build invite links. The tunnel writes it for you |
 | `TUNNEL_MODE` | no | — | `quick` (free, random hostname) or `named` (stable hostname, needs a Cloudflare account). `start.bat` picks `quick` when this is unset |
 | `TUNNEL_TOKEN` | for `named` | — | The connector token from Cloudflare's "Install and run a connector" command |
-| `BOOTSTRAP_ADMIN_EMAIL` | for seed | — | Initial admin account |
-| `BOOTSTRAP_ADMIN_PASSWORD` | for seed | — | Initial admin password |
+| `BOOTSTRAP_ADMIN_EMAIL` / `BOOTSTRAP_ADMIN_PASSWORD` | dev only | — | Set both to have `db:seed` create a ready admin for development and the E2E suites. Leave empty for a real install: the first admin is created on the setup screen |
 | `SMTP_HOST` / `SMTP_PORT` | no | — / `587` | SMTP server. **Leaving `SMTP_HOST` empty disables all mail and the app works normally** |
 | `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | no | — / — | SMTP credentials and sender. Auth is attached only when both user *and* pass are set |
 | `SMTP_SECURE` | no | derived | Implicit TLS. Defaults to true on port 465, false elsewhere (STARTTLS) |
@@ -256,7 +254,8 @@ Authenticated routes live under **`/hoohr`**. The pre-rename `/app` prefix still
 | `npm run test:e2e:forms` | Browser E2E: leave request/cancel forms |
 | `npm run test:e2e:expenses` | Browser E2E: expense create → submit → decide → pay |
 | `npm run db:migrate` | Create/apply a development migration |
-| `npm run db:seed` | Seed the bootstrap company, policies, and admin |
+| `npm run db:seed` | Seed the company defaults; creates the bootstrap admin only when `BOOTSTRAP_ADMIN_PASSWORD` is set |
+| `npm run test:e2e:first-run` | Browser E2E: the very first setup screen flow |
 | `npm run db:studio` | Prisma Studio |
 | `npm run digest` | Send the batched approval digest (NOT-2) — intended for cron |
 | `npm run digest:dry` | Show what the digest *would* send, without writing or sending |
