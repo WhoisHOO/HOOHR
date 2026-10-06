@@ -154,8 +154,12 @@ export default async function LeavePage({
       id: p.id,
       name: p.name,
       kind: p.kind,
-      remaining:
-        p.kind === "UNPAID" ? null : bal ? remainingDays(bal) : 0,
+      // `null` means "this company does not track a balance for this person",
+      // which is the normal case: nothing creates a LeaveBalance row except the
+      // seed and the CSV import. It must NOT collapse to 0, because 0 is a real
+      // number here - a granted-and-spent balance - and showing it as "0 days
+      // left" blocked a new hire from filing at all (see WORKFLOW.md G1).
+      remaining: p.kind === "UNPAID" || !bal ? null : remainingDays(bal),
     };
   });
 
@@ -182,9 +186,11 @@ export default async function LeavePage({
                   <p className="mt-1 text-2xl font-semibold text-zinc-900">
                     {p.kind === "UNPAID"
                       ? "-"
-                      : interpolate(common.units.days, {
-                          n: bal ? Math.max(0, remainingDays(bal)) : 0,
-                        })}
+                      : bal
+                        ? interpolate(common.units.days, {
+                            n: Math.max(0, remainingDays(bal)),
+                          })
+                        : "-"}
                   </p>
                   {bal && (
                     <p className="mt-1 text-xs text-zinc-400">

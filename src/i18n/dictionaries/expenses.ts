@@ -16,7 +16,7 @@ export const expensesKo = {
    */
   sections: {
     newReport: "새 경비 신청서",
-    newReportHint: "제출 전까지 수정·삭제가 가능합니다. 제출 후 승인/반려 처리됩니다.",
+    newReportHint: "제출 전까지 삭제가 가능합니다. 제출 후 승인/반려 처리됩니다.",
     myReports: "내 경비 신청서",
     noReports: "신청 내역이 없습니다.",
     items: "항목",
@@ -114,7 +114,7 @@ export const expensesEn: ExpenseMessages = {
   sections: {
     newReport: "New expense report",
     newReportHint:
-      "You can edit or delete this until you submit. After submission it is approved or rejected.",
+      "You can delete this until you submit. After submission it is approved or rejected.",
     myReports: "My expense reports",
     noReports: "No reports yet.",
     items: "Items",
