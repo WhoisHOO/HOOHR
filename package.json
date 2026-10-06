@@ -13,6 +13,7 @@
     "test:e2e:expenses": "node _e2e/expenses.mjs",
     "test:e2e:resilience": "tsx _e2e/resilience.ts",
     "test:e2e:newhire": "tsx _e2e/newhire.mjs",
+    "test:e2e:first-run": "node _e2e/first-run.mjs",
     "test:e2e:all": "node _e2e/country-language.mjs && node _e2e/forms.mjs && node _e2e/expenses.mjs",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",

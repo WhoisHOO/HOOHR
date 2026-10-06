@@ -44,7 +44,7 @@
 | pipelines/ scaffolding (DAG + Spark) | ❌ **Deleted (Session 20)** — both jobs read `AttendanceRecord` and nothing else, so attendance's removal took them. The design is kept as a note in REQUIREMENTS.md |
 | deploy/ scaffolding | 🔄 External access (tunnel) live. EKS config after MVP |
 | Prisma + migration | ✅ Done |
-| Seed (bootstrap admin) | ✅ Done — **random** password per install, stored in `.env`; the old `Admin1234!` fallback was removed in Session 19 as a published credential |
+| Seed | ✅ Done — company defaults always; bootstrap admin only when `BOOTSTRAP_ADMIN_PASSWORD` is set (Session 22). First admin is created on the web setup screen |
 | lint + tsc | ✅ Done (re-verified Session 20) |
 | Auth implementation | ✅ Done (login/logout/invite/accept-invite) |
 | Auth verification | ✅ Done — browser login confirmed (2026-09-24). prisma/bcrypt/jose/DAL/guard all OK |
@@ -976,4 +976,15 @@ Four commits on `feature/first-run-setup`, plus a merge of `feature/public-tunne
 - **Remaining (unchanged)**: stable domain (named tunnel), Docker `SMTP_HOST` note in `.env.example` (G4), in-app notifications UI (G3/NOT-3), `output: "standalone"`, optional draft-expense editing if wanted.
 - **Not committed yet** — working tree holds the Session 21 changes for review.
 
+### Session 22 (2026-10-06): first-run setup screen — the app now onboards like an application
+
+- **Product direction (user)**: a non-developer double-clicks `start.bat` and should experience an app, not a demo that is pre-logged-in. The first account is created in the browser, the dashboard teaches the next steps, and an admin invites the rest over email.
+- **New: `/setup`** — shown only while zero accounts exist. Fields: company name (prefilled from the seed), admin name/email/password (reuses the auth validation schemas). `createFirstAdmin` (`src/app/actions/setup.ts`) runs one transaction: find-or-create the company from country defaults, ensure a department, create the admin `User` + `Employee`, grant the admin's paid-leave balances, then a session. Every later `/setup` visit is rejected, and every page that needs a user (`requireUser`/`verifySession`/`/login`/`/`) bounces to `/setup` while no account exists.
+- **Seed now creates the company only.** `prisma/seed.ts` still seeds departments/policies/categories from `COMPANY_COUNTRY`, and creates the bootstrap admin **only when `BOOTSTRAP_ADMIN_PASSWORD` is set** — which is the dev path for the E2E suites and local development, deliberately off for a real install. Shared seed logic extracted to `src/lib/company-seed.ts`.
+- **start.bat/start.ps1 no longer generates an admin password.** `.env` keeps only `AUTH_SECRET` + country + target; the closing banner now says "첫 실행 화면에서 관리자 계정을 만들어 주세요" instead of printing credentials. `.env.example` marks the bootstrap admin as dev-only.
+- **Dashboard "starting out" checklist** for a fresh admin (employee count == 1): invite team, review policies/holidays, check company settings.
+- **E2E**: `_e2e/first-run.mjs` (7 checks) — `/login` bounces to `/setup`, the form renders, the admin is created through the real UI, the dashboard greets them with the checklist, `/setup` locks again, and the created admin can log in. Passes against the containerized image.
+- **Verified**: lint 0, tsc 0, container rebuilt, first-run suite 7/7; the DB was reset to the clean "seeded but no users" state for the user to experience first-run themselves.
+
 <!-- ====== Template for next sessions (copy & use) ======
+
