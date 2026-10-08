@@ -1,15 +1,11 @@
-"use client";
+﻿"use client";
 
-import Link from "next/link";
 import { useActionState, useState } from "react";
 import { parseWeekendDays, WEEKDAY_KEYS } from "@/lib/company-defaults";
 import { COUNTRIES, COUNTRY_DEFAULTS, COUNTRY_LABELS } from "@/lib/country";
 import {
-  applyPolicyToCurrentYear,
   createExpenseCategory,
-  createHoliday,
   deleteExpenseCategory,
-  deleteHoliday,
   updateCompanySettings,
   updateExpenseCategory,
   updateLeavePolicy,
@@ -18,7 +14,6 @@ import type { FieldErrors } from "@/lib/auth-validation";
 import type {
   CompanySettingsState,
   ExpenseCategoryState,
-  HolidayState,
   LeavePolicyState,
 } from "@/lib/settings-validation";
 import { interpolate, useI18n } from "@/i18n/client";
@@ -33,15 +28,6 @@ export type PolicyView = {
   isPaid: boolean;
   requiresApproval: boolean;
   active: boolean;
-  balanceCount: number;
-};
-
-export type HolidayView = {
-  id: string;
-  date: string;
-  label: string;
-  year: number;
-  name: string;
 };
 
 export type CategoryView = {
@@ -225,14 +211,10 @@ function CompanySection(props: CompanyFormProps) {
 
 // ---- SET-2 ----
 
-function PolicyRow({ policy, currentYear }: { policy: PolicyView; currentYear: number }) {
+function PolicyRow({ policy }: { policy: PolicyView }) {
   const { d } = useI18n();
   const [state, action, pending] = useActionState<LeavePolicyState, FormData>(
     updateLeavePolicy,
-    undefined,
-  );
-  const [applyState, applyAction, applyPending] = useActionState<LeavePolicyState, FormData>(
-    applyPolicyToCurrentYear,
     undefined,
   );
 
@@ -325,30 +307,14 @@ function PolicyRow({ policy, currentYear }: { policy: PolicyView; currentYear: n
           <button type="submit" disabled={pending} className={primaryButtonClass}>
             {pending ? d.common.buttons.saving : d.settings.actions.savePolicy}
           </button>
-          <span className="text-xs text-zinc-400">
-            {interpolate(d.settings.counts.balanceRows, { n: policy.balanceCount })}
-          </span>
           <Message state={state} />
         </div>
       </form>
-
-      <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-zinc-100 pt-3">
-        <form action={applyAction}>
-          <input type="hidden" name="id" value={policy.id} />
-          <button type="submit" disabled={applyPending} className={secondaryButtonClass}>
-            {applyPending
-              ? d.settings.pending.applying
-              : interpolate(d.settings.actions.applyToYear, { year: currentYear })}
-          </button>
-        </form>
-        <p className="text-xs text-zinc-500">{d.settings.hints.applyToYear}</p>
-        <Message state={applyState} />
-      </div>
     </article>
   );
 }
 
-function PolicySection({ policies, currentYear }: { policies: PolicyView[]; currentYear: number }) {
+function PolicySection({ policies }: { policies: PolicyView[] }) {
   const { d } = useI18n();
 
   return (
@@ -358,149 +324,8 @@ function PolicySection({ policies, currentYear }: { policies: PolicyView[]; curr
       count={interpolate(d.settings.counts.items, { n: policies.length })}
     >
       {policies.map((policy) => (
-        <PolicyRow key={policy.id} policy={policy} currentYear={currentYear} />
+        <PolicyRow key={policy.id} policy={policy} />
       ))}
-    </Section>
-  );
-}
-
-// ---- SET-3 ----
-
-function HolidayDeleteForm({ holiday }: { holiday: HolidayView }) {
-  const { d } = useI18n();
-  const [state, action, pending] = useActionState<HolidayState, FormData>(
-    deleteHoliday,
-    undefined,
-  );
-
-  return (
-    <form action={action} className="flex items-center gap-2">
-      <input type="hidden" name="id" value={holiday.id} />
-      <button
-        type="submit"
-        disabled={pending}
-        className={dangerButtonClass}
-        aria-label={interpolate(d.settings.a11y.deleteHoliday, { name: holiday.name })}
-      >
-        {pending ? d.settings.pending.deleting : d.common.actions.delete}
-      </button>
-      <Message state={state} />
-    </form>
-  );
-}
-
-function HolidaySection({
-  holidays,
-  year,
-  prevYear,
-  nextYear,
-  currentYear,
-}: {
-  holidays: HolidayView[];
-  year: number;
-  prevYear: number;
-  nextYear: number;
-  currentYear: number;
-}) {
-  const { d } = useI18n();
-  const [createState, createAction, createPending] = useActionState<HolidayState, FormData>(
-    createHoliday,
-    undefined,
-  );
-  const yearHolidays = holidays.filter((holiday) => holiday.year === year);
-
-  return (
-    <Section
-      title={d.settings.sections.holiday.title}
-      description={d.settings.sections.holiday.description}
-      count={interpolate(d.settings.counts.holidays, {
-        year,
-        n: yearHolidays.length,
-      })}
-    >
-      <div className="flex flex-wrap items-center gap-2 text-sm">
-        <Link
-          href={`/hoohr/admin/settings?year=${prevYear}`}
-          className={secondaryButtonClass}
-        >
-          {interpolate(d.settings.actions.yearPrev, { year: prevYear })}
-        </Link>
-        <span className="font-medium text-zinc-800">
-          {interpolate(d.settings.actions.yearCurrent, { year })}
-        </span>
-        <Link
-          href={`/hoohr/admin/settings?year=${nextYear}`}
-          className={secondaryButtonClass}
-        >
-          {interpolate(d.settings.actions.yearNext, { year: nextYear })}
-        </Link>
-        {year !== currentYear && (
-          <Link
-            href="/hoohr/admin/settings"
-            className="text-xs font-medium text-blue-600 hover:underline"
-          >
-            {d.settings.actions.thisYear}
-          </Link>
-        )}
-      </div>
-
-      <form action={createAction} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="holiday-date" className="text-xs font-medium text-zinc-500">
-            {d.common.fields.date}
-          </label>
-          <input
-            id="holiday-date"
-            name="date"
-            type="date"
-            required
-            defaultValue={`${year}-01-01`}
-            className={inputClass}
-          />
-          <FieldError state={createState} name="date" />
-        </div>
-        <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor="holiday-name" className="text-xs font-medium text-zinc-500">
-            {d.settings.labels.holidayName}
-          </label>
-          <input
-            id="holiday-name"
-            name="name"
-            type="text"
-            required
-            placeholder={d.settings.placeholders.holidayName}
-            className={inputClass}
-          />
-          <FieldError state={createState} name="name" />
-        </div>
-        <button type="submit" disabled={createPending} className={primaryButtonClass}>
-          {createPending ? d.settings.pending.addingHoliday : d.settings.actions.addHoliday}
-        </button>
-        <div className="w-full sm:w-auto">
-          <Message state={createState} />
-        </div>
-      </form>
-
-      {yearHolidays.length === 0 ? (
-        <p className="text-sm text-zinc-500">
-          {interpolate(d.settings.empty.holidays, { year })}
-        </p>
-      ) : (
-        <ul className="divide-y divide-zinc-100">
-          {yearHolidays.map((holiday) => (
-            <li
-              key={holiday.id}
-              className="flex flex-wrap items-center gap-3 py-2 text-sm text-zinc-700"
-            >
-              <span className="w-28 font-mono text-xs text-zinc-500">{holiday.date}</span>
-              <span>{holiday.name}</span>
-              <div className="ml-auto">
-                <HolidayDeleteForm holiday={holiday} />
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
     </Section>
   );
 }
@@ -623,23 +448,13 @@ export function SettingsClient({
   companyName,
   country,
   weekendDays,
-  currentYear,
-  year,
-  prevYear,
-  nextYear,
   policies,
-  holidays,
   categories,
 }: {
   companyName: string;
   country: string;
   weekendDays: string;
-  currentYear: number;
-  year: number;
-  prevYear: number;
-  nextYear: number;
   policies: PolicyView[];
-  holidays: HolidayView[];
   categories: CategoryView[];
 }) {
   return (
@@ -649,14 +464,7 @@ export function SettingsClient({
         country={country}
         weekendDays={weekendDays}
       />
-      <PolicySection policies={policies} currentYear={currentYear} />
-      <HolidaySection
-        holidays={holidays}
-        year={year}
-        prevYear={prevYear}
-        nextYear={nextYear}
-        currentYear={currentYear}
-      />
+      <PolicySection policies={policies} />
       <CategorySection categories={categories} />
     </div>
   );

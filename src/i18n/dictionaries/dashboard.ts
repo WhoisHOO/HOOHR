@@ -5,7 +5,7 @@ export const dashboardKo = {
     title: "대시보드",
   },
   greeting: "안녕하세요, {name}님",
-  profile: "{department} · {position} · 입사 {date}",
+  profile: "{position} · 입사 {date}",
   gettingStarted: {
     title: "시작하기",
     subtitle: "처음이라면 아래 순서대로 진행하세요.",
@@ -34,7 +34,7 @@ export const dashboardEn: DashboardMessages = {
     title: "Dashboard",
   },
   greeting: "Hello, {name}",
-  profile: "{department} · {position} · Joined {date}",
+  profile: "{position} · Joined {date}",
   gettingStarted: {
     title: "Getting started",
     subtitle: "New here? Work through these in order.",

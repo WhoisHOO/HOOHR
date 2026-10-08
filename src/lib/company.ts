@@ -3,7 +3,7 @@ import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { DEFAULT_COUNTRY, countryDefaults } from "@/lib/country";
 import type { Locale } from "@/i18n/config";
-import { toWeekendSet, type WeekendSet } from "@/lib/holidays";
+import { toWeekendSet, type WeekendSet } from "@/lib/weekend";
 
 /**
  * 설치할 때 고른 국가 (단일 회사 기준). 통화·시간대·화면 언어가 모두 여기서

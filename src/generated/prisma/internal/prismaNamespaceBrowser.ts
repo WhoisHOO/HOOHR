@@ -52,11 +52,9 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Company: 'Company',
-  Department: 'Department',
   Employee: 'Employee',
   User: 'User',
   LeavePolicy: 'LeavePolicy',
-  LeaveBalance: 'LeaveBalance',
   LeaveRequest: 'LeaveRequest',
   ExpenseCategory: 'ExpenseCategory',
   ExpenseReport: 'ExpenseReport',
@@ -64,7 +62,6 @@ export const ModelName = {
   ReceiptFile: 'ReceiptFile',
   Approval: 'Approval',
   Notification: 'Notification',
-  Holiday: 'Holiday',
   Invitation: 'Invitation'
 } as const
 
@@ -98,27 +95,15 @@ export const CompanyScalarFieldEnum = {
 export type CompanyScalarFieldEnum = (typeof CompanyScalarFieldEnum)[keyof typeof CompanyScalarFieldEnum]
 
 
-export const DepartmentScalarFieldEnum = {
-  id: 'id',
-  companyId: 'companyId',
-  name: 'name',
-  managerId: 'managerId'
-} as const
-
-export type DepartmentScalarFieldEnum = (typeof DepartmentScalarFieldEnum)[keyof typeof DepartmentScalarFieldEnum]
-
-
 export const EmployeeScalarFieldEnum = {
   id: 'id',
   companyId: 'companyId',
   userId: 'userId',
-  departmentId: 'departmentId',
   name: 'name',
   email: 'email',
   position: 'position',
   hireDate: 'hireDate',
   status: 'status',
-  leaveApproverId: 'leaveApproverId',
   createdAt: 'createdAt'
 } as const
 
@@ -154,21 +139,6 @@ export const LeavePolicyScalarFieldEnum = {
 } as const
 
 export type LeavePolicyScalarFieldEnum = (typeof LeavePolicyScalarFieldEnum)[keyof typeof LeavePolicyScalarFieldEnum]
-
-
-export const LeaveBalanceScalarFieldEnum = {
-  id: 'id',
-  employeeId: 'employeeId',
-  policyId: 'policyId',
-  year: 'year',
-  grantedDays: 'grantedDays',
-  usedDays: 'usedDays',
-  adjustDays: 'adjustDays',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type LeaveBalanceScalarFieldEnum = (typeof LeaveBalanceScalarFieldEnum)[keyof typeof LeaveBalanceScalarFieldEnum]
 
 
 export const LeaveRequestScalarFieldEnum = {
@@ -276,16 +246,6 @@ export const NotificationScalarFieldEnum = {
 } as const
 
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
-
-
-export const HolidayScalarFieldEnum = {
-  id: 'id',
-  companyId: 'companyId',
-  date: 'date',
-  name: 'name'
-} as const
-
-export type HolidayScalarFieldEnum = (typeof HolidayScalarFieldEnum)[keyof typeof HolidayScalarFieldEnum]
 
 
 export const InvitationScalarFieldEnum = {

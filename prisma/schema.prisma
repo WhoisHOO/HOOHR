@@ -11,7 +11,6 @@ datasource db {
 
 enum Role {
   ADMIN
-  MANAGER
   EMPLOYEE
 }
 
@@ -82,51 +81,29 @@ model Company {
   updatedAt DateTime @updatedAt
 
   users             User[]
-  departments       Department[]
   employees         Employee[]
   leavePolicies     LeavePolicy[]
   expenseCategories ExpenseCategory[]
-  holidays          Holiday[]
   invitations       Invitation[]
   notifications     Notification[]
   leaveRequests     LeaveRequest[]
   expenseReports    ExpenseReport[]
 }
 
-model Department {
-  id        String   @id @default(cuid())
-  companyId String
-  name      String
-  managerId String?
-
-  company  Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  manager  Employee? @relation("DeptManager", fields: [managerId], references: [id])
-  employees Employee[]
-
-  @@unique([companyId, name])
-}
-
 model Employee {
   id               String         @id @default(cuid())
   companyId        String
   userId           String?        @unique
-  departmentId     String?
   name             String
   email            String
   position         String?
   hireDate         DateTime?      @db.Date
   status           EmployeeStatus @default(INVITED)
-  leaveApproverId  String?
   createdAt        DateTime       @default(now())
 
   company        Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
   user           User?        @relation(fields: [userId], references: [id])
-  department     Department?  @relation(fields: [departmentId], references: [id])
-  leaveApprover  Employee?    @relation("LeaveApprover", fields: [leaveApproverId], references: [id])
-  manages        Employee[]   @relation("LeaveApprover")
-  managesDept    Department[] @relation("DeptManager")
 
-  leaveBalances      LeaveBalance[]
   leaveRequests      LeaveRequest[]
   expenseReports     ExpenseReport[]
 
@@ -167,27 +144,9 @@ model LeavePolicy {
   createdAt DateTime @default(now())
 
   company  Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  balances LeaveBalance[]
   requests LeaveRequest[]
 
   @@unique([companyId, kind])
-}
-
-model LeaveBalance {
-  id         String   @id @default(cuid())
-  employeeId String
-  policyId   String
-  year       Int
-  grantedDays Float   @default(0)
-  usedDays    Float   @default(0)
-  adjustDays  Float   @default(0)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  employee Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  policy   LeavePolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
-
-  @@unique([employeeId, policyId, year])
 }
 
 model LeaveRequest {
@@ -310,17 +269,6 @@ model Notification {
   // the same request and a global unique on `link` would let the first claim
   // silence everyone else. NULL links stay distinct under this constraint.
   @@unique([userId, link])
-}
-
-model Holiday {
-  id        String   @id @default(cuid())
-  companyId String
-  date      DateTime @db.Date
-  name      String
-
-  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
-
-  @@unique([companyId, date])
 }
 
 model Invitation {

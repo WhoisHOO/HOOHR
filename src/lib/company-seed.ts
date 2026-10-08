@@ -6,8 +6,8 @@ import { LeaveTypeKind, type Prisma } from "@/generated/prisma/client";
 
 /**
  * Seed text per locale. Country is the single install-time answer, so the
- * seed data (department names, policy names, category names) comes out in
- * that country's language - a US company should not boot into "교통/식비".
+ * seed data (policy names, category names) comes out in that country's
+ * language - a US company should not boot into "교통/식비".
  * Leave day counts are starting values the admin edits in Settings, not a
  * legal entitlement for the country.
  */
@@ -17,7 +17,6 @@ export const SEED_TEXT: Record<
     companyName: string;
     adminName: string;
     adminPosition: string;
-    departments: string[];
     policies: {
       name: string;
       kind: LeaveTypeKind;
@@ -32,7 +31,6 @@ export const SEED_TEXT: Record<
     companyName: "내 회사",
     adminName: "관리자",
     adminPosition: "대표",
-    departments: ["관리", "개발", "영업", "디자인"],
     policies: [
       { name: "연차", kind: LeaveTypeKind.PTO, annualDays: 10, maxCarryOverDays: 5, isPaid: true },
       { name: "병가", kind: LeaveTypeKind.SICK, annualDays: 5, maxCarryOverDays: 0, isPaid: true },
@@ -44,7 +42,6 @@ export const SEED_TEXT: Record<
     companyName: "My Company",
     adminName: "Admin",
     adminPosition: "CEO",
-    departments: ["Admin", "Engineering", "Sales", "Design"],
     policies: [
       { name: "PTO", kind: LeaveTypeKind.PTO, annualDays: 10, maxCarryOverDays: 5, isPaid: true },
       { name: "Sick day", kind: LeaveTypeKind.SICK, annualDays: 5, maxCarryOverDays: 0, isPaid: true },
@@ -54,7 +51,7 @@ export const SEED_TEXT: Record<
   },
 };
 
-/** Create the company plus its starter departments, policies and categories. */
+/** Create the company plus its starter policies and categories. */
 export async function createCompanyWithDefaults(
   tx: Prisma.TransactionClient,
   { name, country }: { name: string; country: CountryCode },
@@ -65,14 +62,6 @@ export async function createCompanyWithDefaults(
   const company = await tx.company.create({
     data: { name, country, currency, timezone },
   });
-
-  const departments: { id: string; name: string }[] = [];
-  for (const name of text.departments) {
-    const d = await tx.department.create({
-      data: { companyId: company.id, name },
-    });
-    departments.push(d);
-  }
 
   for (const policy of text.policies) {
     await tx.leavePolicy.create({
@@ -93,5 +82,5 @@ export async function createCompanyWithDefaults(
     });
   }
 
-  return { company, departments, text };
+  return { company, text };
 }

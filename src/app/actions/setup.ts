@@ -2,7 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
-import { Role, EmployeeStatus, LeaveTypeKind } from "@/generated/prisma/client";
+import { Role, EmployeeStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getDict } from "@/i18n/server";
 import { fieldErrors } from "@/lib/form-utils";
@@ -27,38 +27,31 @@ export async function createFirstAdmin(
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
+    country: formData.get("country"),
   });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
   }
 
-  const { companyName, name, email, password } = parsed.data;
+  const { companyName, name, email, password, country } = parsed.data;
   const passwordHash = await bcrypt.hash(password, 10);
 
   const user = await prisma.$transaction(async (tx) => {
     let company = await tx.company.findFirst();
-    let firstDepartmentId: string | undefined;
 
     if (company) {
       await tx.company.update({
         where: { id: company.id },
-        data: { name: companyName },
+        data: { name: companyName, country: country ?? company.country },
       });
-      const dept = await tx.department.findFirst({
-        where: { companyId: company.id },
-        orderBy: { id: "asc" },
-      });
-      firstDepartmentId = dept?.id;
     } else {
-      const country = isCountry(process.env.COMPANY_COUNTRY)
-        ? process.env.COMPANY_COUNTRY
-        : DEFAULT_COUNTRY;
+      const rawCountry = country ?? process.env.COMPANY_COUNTRY;
+      const finalCountry = isCountry(rawCountry) ? rawCountry : DEFAULT_COUNTRY;
       const created = await createCompanyWithDefaults(tx, {
         name: companyName,
-        country,
+        country: finalCountry,
       });
       company = created.company;
-      firstDepartmentId = created.departments[0]?.id;
     }
 
     const createdUser = await tx.user.create({
@@ -75,7 +68,6 @@ export async function createFirstAdmin(
       data: {
         companyId: company.id,
         userId: createdUser.id,
-        departmentId: firstDepartmentId,
         name,
         email,
         position: "",
@@ -83,28 +75,8 @@ export async function createFirstAdmin(
       },
     });
 
-    // The admin's own paid-leave balances start from the seeded policies so
-    // the admin's own dashboard behaves exactly like the seed admin's did.
-    const year = new Date().getFullYear();
-    const policies = await tx.leavePolicy.findMany({
-      where: { companyId: company.id, kind: { in: [LeaveTypeKind.PTO, LeaveTypeKind.SICK] } },
-      select: { id: true, annualDays: true },
-    });
-    const adminEmployee = await tx.employee.findFirst({
-      where: { userId: createdUser.id },
-    });
-    if (adminEmployee) {
-      for (const p of policies) {
-        await tx.leaveBalance.create({
-          data: {
-            employeeId: adminEmployee.id,
-            policyId: p.id,
-            year,
-            grantedDays: p.annualDays,
-          },
-        });
-      }
-    }
+    // Note: Leave balances are no longer pre-created. They are derived from
+    // policy annualDays and approved request days at runtime.
 
     return createdUser;
   });

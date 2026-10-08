@@ -72,7 +72,7 @@ async function setup() {
       email: MANAGER_EMAIL,
       name: "E2E Manager",
       passwordHash,
-      role: "MANAGER",
+      role: "EMPLOYEE",
       isActive: true,
     },
   });

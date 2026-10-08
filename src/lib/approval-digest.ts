@@ -25,11 +25,6 @@ import "server-only";
  */
 
 import { prisma } from "@/lib/prisma";
-import {
-  approvalInboxEmployeeWhere,
-  approvalReviewerFromUser,
-  isApprovalReviewer,
-} from "@/lib/team";
 import { getCompanyLocale } from "@/lib/company";
 import { INTL_LOCALES, type Locale } from "@/i18n/config";
 import { dictionaries } from "@/i18n/dictionaries";
@@ -102,16 +97,14 @@ export async function collectDigestPlans(opts?: {
     where: {
       ...(opts?.companyId ? { companyId: opts.companyId } : {}),
       isActive: true,
-      role: { in: ["MANAGER", "ADMIN"] },
+      role: "ADMIN",
     },
     select: {
       id: true,
       companyId: true,
       name: true,
       email: true,
-      role: true,
-      isActive: true,
-      employee: { select: { id: true, companyId: true, status: true } },
+      employee: { select: { id: true } },
     },
     orderBy: { id: "asc" },
   });
@@ -119,20 +112,23 @@ export async function collectDigestPlans(opts?: {
   const plans: DigestPlan[] = [];
 
   for (const reviewer of reviewers) {
-    // Same gate the pages use; a MANAGER with no active employee record cannot
-    // review anything, so their inbox is empty and they need no digest.
-    const flat = approvalReviewerFromUser(reviewer);
-    if (!isApprovalReviewer(flat)) continue;
-
-    const scope = approvalInboxEmployeeWhere(flat);
     const [leaves, reports] = await Promise.all([
       prisma.leaveRequest.findMany({
-        where: { companyId: reviewer.companyId, status: "PENDING", employee: scope },
+        where: {
+          companyId: reviewer.companyId,
+          status: "PENDING",
+          // The admin cannot approve their own request, so it is excluded.
+          ...(reviewer.employee ? { employeeId: { not: reviewer.employee.id } } : {}),
+        },
         include: { policy: true, employee: { select: { name: true } } },
         orderBy: { createdAt: "asc" },
       }),
       prisma.expenseReport.findMany({
-        where: { companyId: reviewer.companyId, status: "SUBMITTED", employee: scope },
+        where: {
+          companyId: reviewer.companyId,
+          status: "SUBMITTED",
+          ...(reviewer.employee ? { employeeId: { not: reviewer.employee.id } } : {}),
+        },
         include: { employee: { select: { name: true } } },
         orderBy: { createdAt: "asc" },
       }),

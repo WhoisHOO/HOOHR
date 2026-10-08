@@ -28,14 +28,16 @@ export function inviteFormSchema(v: AuthValidationMessages) {
       .min(1, { error: v.emailRequired })
       .email({ error: v.emailInvalid }),
     name: z.string().trim().min(2, { error: interpolate(v.nameMin, { min: 2 }) }),
-    role: z.enum(["EMPLOYEE", "MANAGER"], { error: v.roleRequired }),
+    // Role is now fixed to EMPLOYEE; no MANAGER role in the simplified model.
+    role: z.literal("EMPLOYEE"),
   });
 }
 
 export function reinviteEmployeeFormSchema(v: AuthValidationMessages) {
   return z.object({
     employeeId: z.string().trim().min(1, { error: v.roleRequired }),
-    role: z.enum(["EMPLOYEE", "MANAGER"], { error: v.roleRequired }),
+    // Role is fixed to EMPLOYEE; MANAGER role removed.
+    role: z.literal("EMPLOYEE"),
   });
 }
 

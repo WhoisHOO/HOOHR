@@ -25,5 +25,6 @@ export function setupFormSchema(v: typeof commonKo.validation) {
       .min(8, { error: interpolate(v.passwordMin, { min: 8 }) })
       .regex(/[a-zA-Z]/, { error: v.passwordNeedsLetter })
       .regex(/[0-9]/, { error: v.passwordNeedsDigit }),
+    country: z.enum(["KR", "US"], { error: "국가를 선택해주세요" }).optional(),
   });
 }

@@ -9,13 +9,6 @@ import { parseAmountToCents } from "@/lib/expense";
 import { getCompanyCurrency } from "@/lib/company";
 import { removeReceipt, saveReceipt, type ReceiptError } from "@/lib/storage";
 import {
-  approvalReviewerFromUser,
-  approvalReviewerSelect,
-  approvalTargetInclude,
-  canActAsAdmin,
-  canReviewEmployee,
-} from "@/lib/team";
-import {
   expenseItemFormSchema,
   expenseReportCreateSchema,
   MAX_EXPENSE_ITEMS,
@@ -278,7 +271,7 @@ export async function decideExpense(
 ): Promise<ExpenseDecideState> {
   const user = await requireUser();
   const { common, expenses } = await getDict();
-  if (user.role !== "MANAGER" && user.role !== "ADMIN") {
+  if (user.role !== "ADMIN") {
     return { message: common.decide.noPermission };
   }
 
@@ -294,21 +287,16 @@ export async function decideExpense(
   if (decision === "REJECT" && comment.length < 2) {
     return { message: common.decide.rejectReasonRequired };
   }
-  if (decision === "PAY" && user.role !== "ADMIN") {
-    return { message: expenses.messages.payAdminOnly };
-  }
 
   const expected = decision === "PAY" ? "APPROVED" : "SUBMITTED";
   const report = await prisma.expenseReport.findFirst({
     where: { id, companyId: user.companyId, status: expected },
-    include: approvalTargetInclude,
+    include: { employee: { select: { id: true, companyId: true, name: true, email: true } } },
   });
   if (
     !report ||
     report.employee.companyId !== user.companyId ||
-    (decision === "PAY"
-      ? !canActAsAdmin(user)
-      : !canReviewEmployee(user, report))
+    report.employeeId === user.employeeId
   ) {
     return { message: unavailableMessage };
   }
@@ -323,20 +311,18 @@ export async function decideExpense(
     decided = await prisma.$transaction(async (tx) => {
       const reviewer = await tx.user.findFirst({
         where: { id: user.id, companyId: user.companyId, isActive: true },
-        select: approvalReviewerSelect,
+        select: { id: true },
       });
       if (!reviewer) return null;
 
       const fresh = await tx.expenseReport.findFirst({
         where: { id, companyId: user.companyId, status: expected },
-        include: approvalTargetInclude,
+        include: { employee: { select: { id: true, companyId: true, name: true, email: true } } },
       });
       if (
         !fresh ||
         fresh.employee.companyId !== user.companyId ||
-        (decision === "PAY"
-          ? !canActAsAdmin(approvalReviewerFromUser(reviewer))
-          : !canReviewEmployee(approvalReviewerFromUser(reviewer), fresh))
+        fresh.employeeId === user.employeeId
       ) {
         return null;
       }

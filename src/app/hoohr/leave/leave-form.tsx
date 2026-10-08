@@ -3,7 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import { requestLeave } from "@/app/actions/leave";
 import { countWorkdays } from "@/lib/leave";
-import { isWorkday, toWeekendSet } from "@/lib/holidays";
+import { isWorkday, toWeekendSet } from "@/lib/weekend";
 import type { LeaveRequestState } from "@/lib/leave-validation";
 import { useI18n, interpolate } from "@/i18n/client";
 
@@ -22,12 +22,10 @@ function parseIso(value: string): Date | null {
 export function LeaveRequestForm({
   policies,
   today,
-  holidays,
   weekendDays,
 }: {
   policies: LeavePolicyOption[];
   today: string;
-  holidays: string[];
   /** Company-configured days off; falls back to Sat+Sun when absent. */
   weekendDays: string;
 }) {
@@ -45,12 +43,11 @@ export function LeaveRequestForm({
   const selected = policies.find((p) => p.id === policyId);
   const start: Date | null = parseIso(startDate);
   const end: Date | null = isHalfDay ? start : parseIso(endDate);
-  const holidaySet = useMemo(() => new Set(holidays), [holidays]);
   // Same fallback the server applies, so the disabled state matches the rejection.
   const weekend = useMemo(() => toWeekendSet(weekendDays), [weekendDays]);
   const days =
     start && end && start.getTime() <= end.getTime() && !isHalfDay
-      ? countWorkdays(start, end, holidaySet, weekend)
+      ? countWorkdays(start, end, weekend)
       : isHalfDay && start
         ? 0.5
         : 0;
@@ -61,8 +58,8 @@ export function LeaveRequestForm({
   // null then). Blocking here is what made a brand-new hire unable to request
   // leave: the button was disabled on "0 days" that nobody had ever set.
   const over = remaining !== null && days > remaining;
-  // Server refuses a half-day on a weekend/holiday; mirror it so the button state matches.
-  const halfDayBlocked = isHalfDay && start !== null && !isWorkday(start, holidaySet, weekend);
+  // Server refuses a half-day on a weekend; mirror it so the button state matches.
+  const halfDayBlocked = isHalfDay && start !== null && !isWorkday(start, weekend);
   const blocked = halfDayBlocked || days <= 0;
 
   return (

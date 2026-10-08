@@ -28,13 +28,11 @@ export type EmployeeMinAggregateOutputType = {
   id: string | null
   companyId: string | null
   userId: string | null
-  departmentId: string | null
   name: string | null
   email: string | null
   position: string | null
   hireDate: Date | null
   status: $Enums.EmployeeStatus | null
-  leaveApproverId: string | null
   createdAt: Date | null
 }
 
@@ -42,13 +40,11 @@ export type EmployeeMaxAggregateOutputType = {
   id: string | null
   companyId: string | null
   userId: string | null
-  departmentId: string | null
   name: string | null
   email: string | null
   position: string | null
   hireDate: Date | null
   status: $Enums.EmployeeStatus | null
-  leaveApproverId: string | null
   createdAt: Date | null
 }
 
@@ -56,13 +52,11 @@ export type EmployeeCountAggregateOutputType = {
   id: number
   companyId: number
   userId: number
-  departmentId: number
   name: number
   email: number
   position: number
   hireDate: number
   status: number
-  leaveApproverId: number
   createdAt: number
   _all: number
 }
@@ -72,13 +66,11 @@ export type EmployeeMinAggregateInputType = {
   id?: true
   companyId?: true
   userId?: true
-  departmentId?: true
   name?: true
   email?: true
   position?: true
   hireDate?: true
   status?: true
-  leaveApproverId?: true
   createdAt?: true
 }
 
@@ -86,13 +78,11 @@ export type EmployeeMaxAggregateInputType = {
   id?: true
   companyId?: true
   userId?: true
-  departmentId?: true
   name?: true
   email?: true
   position?: true
   hireDate?: true
   status?: true
-  leaveApproverId?: true
   createdAt?: true
 }
 
@@ -100,13 +90,11 @@ export type EmployeeCountAggregateInputType = {
   id?: true
   companyId?: true
   userId?: true
-  departmentId?: true
   name?: true
   email?: true
   position?: true
   hireDate?: true
   status?: true
-  leaveApproverId?: true
   createdAt?: true
   _all?: true
 }
@@ -187,13 +175,11 @@ export type EmployeeGroupByOutputType = {
   id: string
   companyId: string
   userId: string | null
-  departmentId: string | null
   name: string
   email: string
   position: string | null
   hireDate: Date | null
   status: $Enums.EmployeeStatus
-  leaveApproverId: string | null
   createdAt: Date
   _count: EmployeeCountAggregateOutputType | null
   _min: EmployeeMinAggregateOutputType | null
@@ -222,21 +208,14 @@ export type EmployeeWhereInput = {
   id?: Prisma.StringFilter<"Employee"> | string
   companyId?: Prisma.StringFilter<"Employee"> | string
   userId?: Prisma.StringNullableFilter<"Employee"> | string | null
-  departmentId?: Prisma.StringNullableFilter<"Employee"> | string | null
   name?: Prisma.StringFilter<"Employee"> | string
   email?: Prisma.StringFilter<"Employee"> | string
   position?: Prisma.StringNullableFilter<"Employee"> | string | null
   hireDate?: Prisma.DateTimeNullableFilter<"Employee"> | Date | string | null
   status?: Prisma.EnumEmployeeStatusFilter<"Employee"> | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.StringNullableFilter<"Employee"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Employee"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-  department?: Prisma.XOR<Prisma.DepartmentNullableScalarRelationFilter, Prisma.DepartmentWhereInput> | null
-  leaveApprover?: Prisma.XOR<Prisma.EmployeeNullableScalarRelationFilter, Prisma.EmployeeWhereInput> | null
-  manages?: Prisma.EmployeeListRelationFilter
-  managesDept?: Prisma.DepartmentListRelationFilter
-  leaveBalances?: Prisma.LeaveBalanceListRelationFilter
   leaveRequests?: Prisma.LeaveRequestListRelationFilter
   expenseReports?: Prisma.ExpenseReportListRelationFilter
 }
@@ -245,21 +224,14 @@ export type EmployeeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
-  departmentId?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   position?: Prisma.SortOrderInput | Prisma.SortOrder
   hireDate?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
-  leaveApproverId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
   user?: Prisma.UserOrderByWithRelationInput
-  department?: Prisma.DepartmentOrderByWithRelationInput
-  leaveApprover?: Prisma.EmployeeOrderByWithRelationInput
-  manages?: Prisma.EmployeeOrderByRelationAggregateInput
-  managesDept?: Prisma.DepartmentOrderByRelationAggregateInput
-  leaveBalances?: Prisma.LeaveBalanceOrderByRelationAggregateInput
   leaveRequests?: Prisma.LeaveRequestOrderByRelationAggregateInput
   expenseReports?: Prisma.ExpenseReportOrderByRelationAggregateInput
 }
@@ -272,21 +244,14 @@ export type EmployeeWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.EmployeeWhereInput[]
   NOT?: Prisma.EmployeeWhereInput | Prisma.EmployeeWhereInput[]
   companyId?: Prisma.StringFilter<"Employee"> | string
-  departmentId?: Prisma.StringNullableFilter<"Employee"> | string | null
   name?: Prisma.StringFilter<"Employee"> | string
   email?: Prisma.StringFilter<"Employee"> | string
   position?: Prisma.StringNullableFilter<"Employee"> | string | null
   hireDate?: Prisma.DateTimeNullableFilter<"Employee"> | Date | string | null
   status?: Prisma.EnumEmployeeStatusFilter<"Employee"> | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.StringNullableFilter<"Employee"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Employee"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
   user?: Prisma.XOR<Prisma.UserNullableScalarRelationFilter, Prisma.UserWhereInput> | null
-  department?: Prisma.XOR<Prisma.DepartmentNullableScalarRelationFilter, Prisma.DepartmentWhereInput> | null
-  leaveApprover?: Prisma.XOR<Prisma.EmployeeNullableScalarRelationFilter, Prisma.EmployeeWhereInput> | null
-  manages?: Prisma.EmployeeListRelationFilter
-  managesDept?: Prisma.DepartmentListRelationFilter
-  leaveBalances?: Prisma.LeaveBalanceListRelationFilter
   leaveRequests?: Prisma.LeaveRequestListRelationFilter
   expenseReports?: Prisma.ExpenseReportListRelationFilter
 }, "id" | "userId" | "companyId_email">
@@ -295,13 +260,11 @@ export type EmployeeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
-  departmentId?: Prisma.SortOrderInput | Prisma.SortOrder
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   position?: Prisma.SortOrderInput | Prisma.SortOrder
   hireDate?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
-  leaveApproverId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.EmployeeCountOrderByAggregateInput
   _max?: Prisma.EmployeeMaxOrderByAggregateInput
@@ -315,13 +278,11 @@ export type EmployeeScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Employee"> | string
   companyId?: Prisma.StringWithAggregatesFilter<"Employee"> | string
   userId?: Prisma.StringNullableWithAggregatesFilter<"Employee"> | string | null
-  departmentId?: Prisma.StringNullableWithAggregatesFilter<"Employee"> | string | null
   name?: Prisma.StringWithAggregatesFilter<"Employee"> | string
   email?: Prisma.StringWithAggregatesFilter<"Employee"> | string
   position?: Prisma.StringNullableWithAggregatesFilter<"Employee"> | string | null
   hireDate?: Prisma.DateTimeNullableWithAggregatesFilter<"Employee"> | Date | string | null
   status?: Prisma.EnumEmployeeStatusWithAggregatesFilter<"Employee"> | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.StringNullableWithAggregatesFilter<"Employee"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Employee"> | Date | string
 }
 
@@ -335,11 +296,6 @@ export type EmployeeCreateInput = {
   createdAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutEmployeesInput
   user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
-  department?: Prisma.DepartmentCreateNestedOneWithoutEmployeesInput
-  leaveApprover?: Prisma.EmployeeCreateNestedOneWithoutManagesInput
-  manages?: Prisma.EmployeeCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
   leaveRequests?: Prisma.LeaveRequestCreateNestedManyWithoutEmployeeInput
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutEmployeeInput
 }
@@ -348,17 +304,12 @@ export type EmployeeUncheckedCreateInput = {
   id?: string
   companyId: string
   userId?: string | null
-  departmentId?: string | null
   name: string
   email: string
   position?: string | null
   hireDate?: Date | string | null
   status?: $Enums.EmployeeStatus
-  leaveApproverId?: string | null
   createdAt?: Date | string
-  manages?: Prisma.EmployeeUncheckedCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentUncheckedCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
   leaveRequests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutEmployeeInput
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutEmployeeInput
 }
@@ -373,11 +324,6 @@ export type EmployeeUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutEmployeesNestedInput
   user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
-  department?: Prisma.DepartmentUpdateOneWithoutEmployeesNestedInput
-  leaveApprover?: Prisma.EmployeeUpdateOneWithoutManagesNestedInput
-  manages?: Prisma.EmployeeUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
   leaveRequests?: Prisma.LeaveRequestUpdateManyWithoutEmployeeNestedInput
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutEmployeeNestedInput
 }
@@ -386,17 +332,12 @@ export type EmployeeUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   companyId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  manages?: Prisma.EmployeeUncheckedUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUncheckedUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
   leaveRequests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutEmployeeNestedInput
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutEmployeeNestedInput
 }
@@ -405,13 +346,11 @@ export type EmployeeCreateManyInput = {
   id?: string
   companyId: string
   userId?: string | null
-  departmentId?: string | null
   name: string
   email: string
   position?: string | null
   hireDate?: Date | string | null
   status?: $Enums.EmployeeStatus
-  leaveApproverId?: string | null
   createdAt?: Date | string
 }
 
@@ -429,13 +368,11 @@ export type EmployeeUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   companyId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -449,11 +386,6 @@ export type EmployeeOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
-export type EmployeeNullableScalarRelationFilter = {
-  is?: Prisma.EmployeeWhereInput | null
-  isNot?: Prisma.EmployeeWhereInput | null
-}
-
 export type EmployeeCompanyIdEmailCompoundUniqueInput = {
   companyId: string
   email: string
@@ -463,13 +395,11 @@ export type EmployeeCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  departmentId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   position?: Prisma.SortOrder
   hireDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  leaveApproverId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -477,13 +407,11 @@ export type EmployeeMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  departmentId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   position?: Prisma.SortOrder
   hireDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  leaveApproverId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -491,14 +419,17 @@ export type EmployeeMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   companyId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  departmentId?: Prisma.SortOrder
   name?: Prisma.SortOrder
   email?: Prisma.SortOrder
   position?: Prisma.SortOrder
   hireDate?: Prisma.SortOrder
   status?: Prisma.SortOrder
-  leaveApproverId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
+}
+
+export type EmployeeNullableScalarRelationFilter = {
+  is?: Prisma.EmployeeWhereInput | null
+  isNot?: Prisma.EmployeeWhereInput | null
 }
 
 export type EmployeeScalarRelationFilter = {
@@ -548,82 +479,8 @@ export type EmployeeUncheckedUpdateManyWithoutCompanyNestedInput = {
   deleteMany?: Prisma.EmployeeScalarWhereInput | Prisma.EmployeeScalarWhereInput[]
 }
 
-export type EmployeeCreateNestedOneWithoutManagesDeptInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutManagesDeptInput, Prisma.EmployeeUncheckedCreateWithoutManagesDeptInput>
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutManagesDeptInput
-  connect?: Prisma.EmployeeWhereUniqueInput
-}
-
-export type EmployeeCreateNestedManyWithoutDepartmentInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutDepartmentInput, Prisma.EmployeeUncheckedCreateWithoutDepartmentInput> | Prisma.EmployeeCreateWithoutDepartmentInput[] | Prisma.EmployeeUncheckedCreateWithoutDepartmentInput[]
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutDepartmentInput | Prisma.EmployeeCreateOrConnectWithoutDepartmentInput[]
-  createMany?: Prisma.EmployeeCreateManyDepartmentInputEnvelope
-  connect?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-}
-
-export type EmployeeUncheckedCreateNestedManyWithoutDepartmentInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutDepartmentInput, Prisma.EmployeeUncheckedCreateWithoutDepartmentInput> | Prisma.EmployeeCreateWithoutDepartmentInput[] | Prisma.EmployeeUncheckedCreateWithoutDepartmentInput[]
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutDepartmentInput | Prisma.EmployeeCreateOrConnectWithoutDepartmentInput[]
-  createMany?: Prisma.EmployeeCreateManyDepartmentInputEnvelope
-  connect?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-}
-
-export type EmployeeUpdateOneWithoutManagesDeptNestedInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutManagesDeptInput, Prisma.EmployeeUncheckedCreateWithoutManagesDeptInput>
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutManagesDeptInput
-  upsert?: Prisma.EmployeeUpsertWithoutManagesDeptInput
-  disconnect?: Prisma.EmployeeWhereInput | boolean
-  delete?: Prisma.EmployeeWhereInput | boolean
-  connect?: Prisma.EmployeeWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutManagesDeptInput, Prisma.EmployeeUpdateWithoutManagesDeptInput>, Prisma.EmployeeUncheckedUpdateWithoutManagesDeptInput>
-}
-
-export type EmployeeUpdateManyWithoutDepartmentNestedInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutDepartmentInput, Prisma.EmployeeUncheckedCreateWithoutDepartmentInput> | Prisma.EmployeeCreateWithoutDepartmentInput[] | Prisma.EmployeeUncheckedCreateWithoutDepartmentInput[]
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutDepartmentInput | Prisma.EmployeeCreateOrConnectWithoutDepartmentInput[]
-  upsert?: Prisma.EmployeeUpsertWithWhereUniqueWithoutDepartmentInput | Prisma.EmployeeUpsertWithWhereUniqueWithoutDepartmentInput[]
-  createMany?: Prisma.EmployeeCreateManyDepartmentInputEnvelope
-  set?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  disconnect?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  delete?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  connect?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  update?: Prisma.EmployeeUpdateWithWhereUniqueWithoutDepartmentInput | Prisma.EmployeeUpdateWithWhereUniqueWithoutDepartmentInput[]
-  updateMany?: Prisma.EmployeeUpdateManyWithWhereWithoutDepartmentInput | Prisma.EmployeeUpdateManyWithWhereWithoutDepartmentInput[]
-  deleteMany?: Prisma.EmployeeScalarWhereInput | Prisma.EmployeeScalarWhereInput[]
-}
-
-export type EmployeeUncheckedUpdateManyWithoutDepartmentNestedInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutDepartmentInput, Prisma.EmployeeUncheckedCreateWithoutDepartmentInput> | Prisma.EmployeeCreateWithoutDepartmentInput[] | Prisma.EmployeeUncheckedCreateWithoutDepartmentInput[]
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutDepartmentInput | Prisma.EmployeeCreateOrConnectWithoutDepartmentInput[]
-  upsert?: Prisma.EmployeeUpsertWithWhereUniqueWithoutDepartmentInput | Prisma.EmployeeUpsertWithWhereUniqueWithoutDepartmentInput[]
-  createMany?: Prisma.EmployeeCreateManyDepartmentInputEnvelope
-  set?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  disconnect?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  delete?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  connect?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  update?: Prisma.EmployeeUpdateWithWhereUniqueWithoutDepartmentInput | Prisma.EmployeeUpdateWithWhereUniqueWithoutDepartmentInput[]
-  updateMany?: Prisma.EmployeeUpdateManyWithWhereWithoutDepartmentInput | Prisma.EmployeeUpdateManyWithWhereWithoutDepartmentInput[]
-  deleteMany?: Prisma.EmployeeScalarWhereInput | Prisma.EmployeeScalarWhereInput[]
-}
-
-export type EmployeeCreateNestedOneWithoutManagesInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutManagesInput, Prisma.EmployeeUncheckedCreateWithoutManagesInput>
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutManagesInput
-  connect?: Prisma.EmployeeWhereUniqueInput
-}
-
-export type EmployeeCreateNestedManyWithoutLeaveApproverInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutLeaveApproverInput, Prisma.EmployeeUncheckedCreateWithoutLeaveApproverInput> | Prisma.EmployeeCreateWithoutLeaveApproverInput[] | Prisma.EmployeeUncheckedCreateWithoutLeaveApproverInput[]
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutLeaveApproverInput | Prisma.EmployeeCreateOrConnectWithoutLeaveApproverInput[]
-  createMany?: Prisma.EmployeeCreateManyLeaveApproverInputEnvelope
-  connect?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-}
-
-export type EmployeeUncheckedCreateNestedManyWithoutLeaveApproverInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutLeaveApproverInput, Prisma.EmployeeUncheckedCreateWithoutLeaveApproverInput> | Prisma.EmployeeCreateWithoutLeaveApproverInput[] | Prisma.EmployeeUncheckedCreateWithoutLeaveApproverInput[]
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutLeaveApproverInput | Prisma.EmployeeCreateOrConnectWithoutLeaveApproverInput[]
-  createMany?: Prisma.EmployeeCreateManyLeaveApproverInputEnvelope
-  connect?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
 }
 
 export type NullableDateTimeFieldUpdateOperationsInput = {
@@ -632,44 +489,6 @@ export type NullableDateTimeFieldUpdateOperationsInput = {
 
 export type EnumEmployeeStatusFieldUpdateOperationsInput = {
   set?: $Enums.EmployeeStatus
-}
-
-export type EmployeeUpdateOneWithoutManagesNestedInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutManagesInput, Prisma.EmployeeUncheckedCreateWithoutManagesInput>
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutManagesInput
-  upsert?: Prisma.EmployeeUpsertWithoutManagesInput
-  disconnect?: Prisma.EmployeeWhereInput | boolean
-  delete?: Prisma.EmployeeWhereInput | boolean
-  connect?: Prisma.EmployeeWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutManagesInput, Prisma.EmployeeUpdateWithoutManagesInput>, Prisma.EmployeeUncheckedUpdateWithoutManagesInput>
-}
-
-export type EmployeeUpdateManyWithoutLeaveApproverNestedInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutLeaveApproverInput, Prisma.EmployeeUncheckedCreateWithoutLeaveApproverInput> | Prisma.EmployeeCreateWithoutLeaveApproverInput[] | Prisma.EmployeeUncheckedCreateWithoutLeaveApproverInput[]
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutLeaveApproverInput | Prisma.EmployeeCreateOrConnectWithoutLeaveApproverInput[]
-  upsert?: Prisma.EmployeeUpsertWithWhereUniqueWithoutLeaveApproverInput | Prisma.EmployeeUpsertWithWhereUniqueWithoutLeaveApproverInput[]
-  createMany?: Prisma.EmployeeCreateManyLeaveApproverInputEnvelope
-  set?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  disconnect?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  delete?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  connect?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  update?: Prisma.EmployeeUpdateWithWhereUniqueWithoutLeaveApproverInput | Prisma.EmployeeUpdateWithWhereUniqueWithoutLeaveApproverInput[]
-  updateMany?: Prisma.EmployeeUpdateManyWithWhereWithoutLeaveApproverInput | Prisma.EmployeeUpdateManyWithWhereWithoutLeaveApproverInput[]
-  deleteMany?: Prisma.EmployeeScalarWhereInput | Prisma.EmployeeScalarWhereInput[]
-}
-
-export type EmployeeUncheckedUpdateManyWithoutLeaveApproverNestedInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutLeaveApproverInput, Prisma.EmployeeUncheckedCreateWithoutLeaveApproverInput> | Prisma.EmployeeCreateWithoutLeaveApproverInput[] | Prisma.EmployeeUncheckedCreateWithoutLeaveApproverInput[]
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutLeaveApproverInput | Prisma.EmployeeCreateOrConnectWithoutLeaveApproverInput[]
-  upsert?: Prisma.EmployeeUpsertWithWhereUniqueWithoutLeaveApproverInput | Prisma.EmployeeUpsertWithWhereUniqueWithoutLeaveApproverInput[]
-  createMany?: Prisma.EmployeeCreateManyLeaveApproverInputEnvelope
-  set?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  disconnect?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  delete?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  connect?: Prisma.EmployeeWhereUniqueInput | Prisma.EmployeeWhereUniqueInput[]
-  update?: Prisma.EmployeeUpdateWithWhereUniqueWithoutLeaveApproverInput | Prisma.EmployeeUpdateWithWhereUniqueWithoutLeaveApproverInput[]
-  updateMany?: Prisma.EmployeeUpdateManyWithWhereWithoutLeaveApproverInput | Prisma.EmployeeUpdateManyWithWhereWithoutLeaveApproverInput[]
-  deleteMany?: Prisma.EmployeeScalarWhereInput | Prisma.EmployeeScalarWhereInput[]
 }
 
 export type EmployeeCreateNestedOneWithoutUserInput = {
@@ -702,20 +521,6 @@ export type EmployeeUncheckedUpdateOneWithoutUserNestedInput = {
   delete?: Prisma.EmployeeWhereInput | boolean
   connect?: Prisma.EmployeeWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutUserInput, Prisma.EmployeeUpdateWithoutUserInput>, Prisma.EmployeeUncheckedUpdateWithoutUserInput>
-}
-
-export type EmployeeCreateNestedOneWithoutLeaveBalancesInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutLeaveBalancesInput, Prisma.EmployeeUncheckedCreateWithoutLeaveBalancesInput>
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutLeaveBalancesInput
-  connect?: Prisma.EmployeeWhereUniqueInput
-}
-
-export type EmployeeUpdateOneRequiredWithoutLeaveBalancesNestedInput = {
-  create?: Prisma.XOR<Prisma.EmployeeCreateWithoutLeaveBalancesInput, Prisma.EmployeeUncheckedCreateWithoutLeaveBalancesInput>
-  connectOrCreate?: Prisma.EmployeeCreateOrConnectWithoutLeaveBalancesInput
-  upsert?: Prisma.EmployeeUpsertWithoutLeaveBalancesInput
-  connect?: Prisma.EmployeeWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.EmployeeUpdateToOneWithWhereWithoutLeaveBalancesInput, Prisma.EmployeeUpdateWithoutLeaveBalancesInput>, Prisma.EmployeeUncheckedUpdateWithoutLeaveBalancesInput>
 }
 
 export type EmployeeCreateNestedOneWithoutLeaveRequestsInput = {
@@ -755,11 +560,6 @@ export type EmployeeCreateWithoutCompanyInput = {
   status?: $Enums.EmployeeStatus
   createdAt?: Date | string
   user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
-  department?: Prisma.DepartmentCreateNestedOneWithoutEmployeesInput
-  leaveApprover?: Prisma.EmployeeCreateNestedOneWithoutManagesInput
-  manages?: Prisma.EmployeeCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
   leaveRequests?: Prisma.LeaveRequestCreateNestedManyWithoutEmployeeInput
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutEmployeeInput
 }
@@ -767,17 +567,12 @@ export type EmployeeCreateWithoutCompanyInput = {
 export type EmployeeUncheckedCreateWithoutCompanyInput = {
   id?: string
   userId?: string | null
-  departmentId?: string | null
   name: string
   email: string
   position?: string | null
   hireDate?: Date | string | null
   status?: $Enums.EmployeeStatus
-  leaveApproverId?: string | null
   createdAt?: Date | string
-  manages?: Prisma.EmployeeUncheckedCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentUncheckedCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
   leaveRequests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutEmployeeInput
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutEmployeeInput
 }
@@ -815,314 +610,12 @@ export type EmployeeScalarWhereInput = {
   id?: Prisma.StringFilter<"Employee"> | string
   companyId?: Prisma.StringFilter<"Employee"> | string
   userId?: Prisma.StringNullableFilter<"Employee"> | string | null
-  departmentId?: Prisma.StringNullableFilter<"Employee"> | string | null
   name?: Prisma.StringFilter<"Employee"> | string
   email?: Prisma.StringFilter<"Employee"> | string
   position?: Prisma.StringNullableFilter<"Employee"> | string | null
   hireDate?: Prisma.DateTimeNullableFilter<"Employee"> | Date | string | null
   status?: Prisma.EnumEmployeeStatusFilter<"Employee"> | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.StringNullableFilter<"Employee"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Employee"> | Date | string
-}
-
-export type EmployeeCreateWithoutManagesDeptInput = {
-  id?: string
-  name: string
-  email: string
-  position?: string | null
-  hireDate?: Date | string | null
-  status?: $Enums.EmployeeStatus
-  createdAt?: Date | string
-  company: Prisma.CompanyCreateNestedOneWithoutEmployeesInput
-  user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
-  department?: Prisma.DepartmentCreateNestedOneWithoutEmployeesInput
-  leaveApprover?: Prisma.EmployeeCreateNestedOneWithoutManagesInput
-  manages?: Prisma.EmployeeCreateNestedManyWithoutLeaveApproverInput
-  leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
-  leaveRequests?: Prisma.LeaveRequestCreateNestedManyWithoutEmployeeInput
-  expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutEmployeeInput
-}
-
-export type EmployeeUncheckedCreateWithoutManagesDeptInput = {
-  id?: string
-  companyId: string
-  userId?: string | null
-  departmentId?: string | null
-  name: string
-  email: string
-  position?: string | null
-  hireDate?: Date | string | null
-  status?: $Enums.EmployeeStatus
-  leaveApproverId?: string | null
-  createdAt?: Date | string
-  manages?: Prisma.EmployeeUncheckedCreateNestedManyWithoutLeaveApproverInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
-  leaveRequests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutEmployeeInput
-  expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutEmployeeInput
-}
-
-export type EmployeeCreateOrConnectWithoutManagesDeptInput = {
-  where: Prisma.EmployeeWhereUniqueInput
-  create: Prisma.XOR<Prisma.EmployeeCreateWithoutManagesDeptInput, Prisma.EmployeeUncheckedCreateWithoutManagesDeptInput>
-}
-
-export type EmployeeCreateWithoutDepartmentInput = {
-  id?: string
-  name: string
-  email: string
-  position?: string | null
-  hireDate?: Date | string | null
-  status?: $Enums.EmployeeStatus
-  createdAt?: Date | string
-  company: Prisma.CompanyCreateNestedOneWithoutEmployeesInput
-  user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
-  leaveApprover?: Prisma.EmployeeCreateNestedOneWithoutManagesInput
-  manages?: Prisma.EmployeeCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
-  leaveRequests?: Prisma.LeaveRequestCreateNestedManyWithoutEmployeeInput
-  expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutEmployeeInput
-}
-
-export type EmployeeUncheckedCreateWithoutDepartmentInput = {
-  id?: string
-  companyId: string
-  userId?: string | null
-  name: string
-  email: string
-  position?: string | null
-  hireDate?: Date | string | null
-  status?: $Enums.EmployeeStatus
-  leaveApproverId?: string | null
-  createdAt?: Date | string
-  manages?: Prisma.EmployeeUncheckedCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentUncheckedCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
-  leaveRequests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutEmployeeInput
-  expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutEmployeeInput
-}
-
-export type EmployeeCreateOrConnectWithoutDepartmentInput = {
-  where: Prisma.EmployeeWhereUniqueInput
-  create: Prisma.XOR<Prisma.EmployeeCreateWithoutDepartmentInput, Prisma.EmployeeUncheckedCreateWithoutDepartmentInput>
-}
-
-export type EmployeeCreateManyDepartmentInputEnvelope = {
-  data: Prisma.EmployeeCreateManyDepartmentInput | Prisma.EmployeeCreateManyDepartmentInput[]
-  skipDuplicates?: boolean
-}
-
-export type EmployeeUpsertWithoutManagesDeptInput = {
-  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutManagesDeptInput, Prisma.EmployeeUncheckedUpdateWithoutManagesDeptInput>
-  create: Prisma.XOR<Prisma.EmployeeCreateWithoutManagesDeptInput, Prisma.EmployeeUncheckedCreateWithoutManagesDeptInput>
-  where?: Prisma.EmployeeWhereInput
-}
-
-export type EmployeeUpdateToOneWithWhereWithoutManagesDeptInput = {
-  where?: Prisma.EmployeeWhereInput
-  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutManagesDeptInput, Prisma.EmployeeUncheckedUpdateWithoutManagesDeptInput>
-}
-
-export type EmployeeUpdateWithoutManagesDeptInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  company?: Prisma.CompanyUpdateOneRequiredWithoutEmployeesNestedInput
-  user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
-  department?: Prisma.DepartmentUpdateOneWithoutEmployeesNestedInput
-  leaveApprover?: Prisma.EmployeeUpdateOneWithoutManagesNestedInput
-  manages?: Prisma.EmployeeUpdateManyWithoutLeaveApproverNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
-  leaveRequests?: Prisma.LeaveRequestUpdateManyWithoutEmployeeNestedInput
-  expenseReports?: Prisma.ExpenseReportUpdateManyWithoutEmployeeNestedInput
-}
-
-export type EmployeeUncheckedUpdateWithoutManagesDeptInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  companyId?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  manages?: Prisma.EmployeeUncheckedUpdateManyWithoutLeaveApproverNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
-  leaveRequests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutEmployeeNestedInput
-  expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutEmployeeNestedInput
-}
-
-export type EmployeeUpsertWithWhereUniqueWithoutDepartmentInput = {
-  where: Prisma.EmployeeWhereUniqueInput
-  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutDepartmentInput, Prisma.EmployeeUncheckedUpdateWithoutDepartmentInput>
-  create: Prisma.XOR<Prisma.EmployeeCreateWithoutDepartmentInput, Prisma.EmployeeUncheckedCreateWithoutDepartmentInput>
-}
-
-export type EmployeeUpdateWithWhereUniqueWithoutDepartmentInput = {
-  where: Prisma.EmployeeWhereUniqueInput
-  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutDepartmentInput, Prisma.EmployeeUncheckedUpdateWithoutDepartmentInput>
-}
-
-export type EmployeeUpdateManyWithWhereWithoutDepartmentInput = {
-  where: Prisma.EmployeeScalarWhereInput
-  data: Prisma.XOR<Prisma.EmployeeUpdateManyMutationInput, Prisma.EmployeeUncheckedUpdateManyWithoutDepartmentInput>
-}
-
-export type EmployeeCreateWithoutManagesInput = {
-  id?: string
-  name: string
-  email: string
-  position?: string | null
-  hireDate?: Date | string | null
-  status?: $Enums.EmployeeStatus
-  createdAt?: Date | string
-  company: Prisma.CompanyCreateNestedOneWithoutEmployeesInput
-  user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
-  department?: Prisma.DepartmentCreateNestedOneWithoutEmployeesInput
-  leaveApprover?: Prisma.EmployeeCreateNestedOneWithoutManagesInput
-  managesDept?: Prisma.DepartmentCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
-  leaveRequests?: Prisma.LeaveRequestCreateNestedManyWithoutEmployeeInput
-  expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutEmployeeInput
-}
-
-export type EmployeeUncheckedCreateWithoutManagesInput = {
-  id?: string
-  companyId: string
-  userId?: string | null
-  departmentId?: string | null
-  name: string
-  email: string
-  position?: string | null
-  hireDate?: Date | string | null
-  status?: $Enums.EmployeeStatus
-  leaveApproverId?: string | null
-  createdAt?: Date | string
-  managesDept?: Prisma.DepartmentUncheckedCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
-  leaveRequests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutEmployeeInput
-  expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutEmployeeInput
-}
-
-export type EmployeeCreateOrConnectWithoutManagesInput = {
-  where: Prisma.EmployeeWhereUniqueInput
-  create: Prisma.XOR<Prisma.EmployeeCreateWithoutManagesInput, Prisma.EmployeeUncheckedCreateWithoutManagesInput>
-}
-
-export type EmployeeCreateWithoutLeaveApproverInput = {
-  id?: string
-  name: string
-  email: string
-  position?: string | null
-  hireDate?: Date | string | null
-  status?: $Enums.EmployeeStatus
-  createdAt?: Date | string
-  company: Prisma.CompanyCreateNestedOneWithoutEmployeesInput
-  user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
-  department?: Prisma.DepartmentCreateNestedOneWithoutEmployeesInput
-  manages?: Prisma.EmployeeCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
-  leaveRequests?: Prisma.LeaveRequestCreateNestedManyWithoutEmployeeInput
-  expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutEmployeeInput
-}
-
-export type EmployeeUncheckedCreateWithoutLeaveApproverInput = {
-  id?: string
-  companyId: string
-  userId?: string | null
-  departmentId?: string | null
-  name: string
-  email: string
-  position?: string | null
-  hireDate?: Date | string | null
-  status?: $Enums.EmployeeStatus
-  createdAt?: Date | string
-  manages?: Prisma.EmployeeUncheckedCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentUncheckedCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
-  leaveRequests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutEmployeeInput
-  expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutEmployeeInput
-}
-
-export type EmployeeCreateOrConnectWithoutLeaveApproverInput = {
-  where: Prisma.EmployeeWhereUniqueInput
-  create: Prisma.XOR<Prisma.EmployeeCreateWithoutLeaveApproverInput, Prisma.EmployeeUncheckedCreateWithoutLeaveApproverInput>
-}
-
-export type EmployeeCreateManyLeaveApproverInputEnvelope = {
-  data: Prisma.EmployeeCreateManyLeaveApproverInput | Prisma.EmployeeCreateManyLeaveApproverInput[]
-  skipDuplicates?: boolean
-}
-
-export type EmployeeUpsertWithoutManagesInput = {
-  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutManagesInput, Prisma.EmployeeUncheckedUpdateWithoutManagesInput>
-  create: Prisma.XOR<Prisma.EmployeeCreateWithoutManagesInput, Prisma.EmployeeUncheckedCreateWithoutManagesInput>
-  where?: Prisma.EmployeeWhereInput
-}
-
-export type EmployeeUpdateToOneWithWhereWithoutManagesInput = {
-  where?: Prisma.EmployeeWhereInput
-  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutManagesInput, Prisma.EmployeeUncheckedUpdateWithoutManagesInput>
-}
-
-export type EmployeeUpdateWithoutManagesInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  company?: Prisma.CompanyUpdateOneRequiredWithoutEmployeesNestedInput
-  user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
-  department?: Prisma.DepartmentUpdateOneWithoutEmployeesNestedInput
-  leaveApprover?: Prisma.EmployeeUpdateOneWithoutManagesNestedInput
-  managesDept?: Prisma.DepartmentUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
-  leaveRequests?: Prisma.LeaveRequestUpdateManyWithoutEmployeeNestedInput
-  expenseReports?: Prisma.ExpenseReportUpdateManyWithoutEmployeeNestedInput
-}
-
-export type EmployeeUncheckedUpdateWithoutManagesInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  companyId?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  managesDept?: Prisma.DepartmentUncheckedUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
-  leaveRequests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutEmployeeNestedInput
-  expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutEmployeeNestedInput
-}
-
-export type EmployeeUpsertWithWhereUniqueWithoutLeaveApproverInput = {
-  where: Prisma.EmployeeWhereUniqueInput
-  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutLeaveApproverInput, Prisma.EmployeeUncheckedUpdateWithoutLeaveApproverInput>
-  create: Prisma.XOR<Prisma.EmployeeCreateWithoutLeaveApproverInput, Prisma.EmployeeUncheckedCreateWithoutLeaveApproverInput>
-}
-
-export type EmployeeUpdateWithWhereUniqueWithoutLeaveApproverInput = {
-  where: Prisma.EmployeeWhereUniqueInput
-  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutLeaveApproverInput, Prisma.EmployeeUncheckedUpdateWithoutLeaveApproverInput>
-}
-
-export type EmployeeUpdateManyWithWhereWithoutLeaveApproverInput = {
-  where: Prisma.EmployeeScalarWhereInput
-  data: Prisma.XOR<Prisma.EmployeeUpdateManyMutationInput, Prisma.EmployeeUncheckedUpdateManyWithoutLeaveApproverInput>
 }
 
 export type EmployeeCreateWithoutUserInput = {
@@ -1134,11 +627,6 @@ export type EmployeeCreateWithoutUserInput = {
   status?: $Enums.EmployeeStatus
   createdAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutEmployeesInput
-  department?: Prisma.DepartmentCreateNestedOneWithoutEmployeesInput
-  leaveApprover?: Prisma.EmployeeCreateNestedOneWithoutManagesInput
-  manages?: Prisma.EmployeeCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
   leaveRequests?: Prisma.LeaveRequestCreateNestedManyWithoutEmployeeInput
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutEmployeeInput
 }
@@ -1146,17 +634,12 @@ export type EmployeeCreateWithoutUserInput = {
 export type EmployeeUncheckedCreateWithoutUserInput = {
   id?: string
   companyId: string
-  departmentId?: string | null
   name: string
   email: string
   position?: string | null
   hireDate?: Date | string | null
   status?: $Enums.EmployeeStatus
-  leaveApproverId?: string | null
   createdAt?: Date | string
-  manages?: Prisma.EmployeeUncheckedCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentUncheckedCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
   leaveRequests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutEmployeeInput
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutEmployeeInput
 }
@@ -1186,11 +669,6 @@ export type EmployeeUpdateWithoutUserInput = {
   status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutEmployeesNestedInput
-  department?: Prisma.DepartmentUpdateOneWithoutEmployeesNestedInput
-  leaveApprover?: Prisma.EmployeeUpdateOneWithoutManagesNestedInput
-  manages?: Prisma.EmployeeUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
   leaveRequests?: Prisma.LeaveRequestUpdateManyWithoutEmployeeNestedInput
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutEmployeeNestedInput
 }
@@ -1198,105 +676,12 @@ export type EmployeeUpdateWithoutUserInput = {
 export type EmployeeUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   companyId?: Prisma.StringFieldUpdateOperationsInput | string
-  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  manages?: Prisma.EmployeeUncheckedUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUncheckedUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
-  leaveRequests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutEmployeeNestedInput
-  expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutEmployeeNestedInput
-}
-
-export type EmployeeCreateWithoutLeaveBalancesInput = {
-  id?: string
-  name: string
-  email: string
-  position?: string | null
-  hireDate?: Date | string | null
-  status?: $Enums.EmployeeStatus
-  createdAt?: Date | string
-  company: Prisma.CompanyCreateNestedOneWithoutEmployeesInput
-  user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
-  department?: Prisma.DepartmentCreateNestedOneWithoutEmployeesInput
-  leaveApprover?: Prisma.EmployeeCreateNestedOneWithoutManagesInput
-  manages?: Prisma.EmployeeCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentCreateNestedManyWithoutManagerInput
-  leaveRequests?: Prisma.LeaveRequestCreateNestedManyWithoutEmployeeInput
-  expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutEmployeeInput
-}
-
-export type EmployeeUncheckedCreateWithoutLeaveBalancesInput = {
-  id?: string
-  companyId: string
-  userId?: string | null
-  departmentId?: string | null
-  name: string
-  email: string
-  position?: string | null
-  hireDate?: Date | string | null
-  status?: $Enums.EmployeeStatus
-  leaveApproverId?: string | null
-  createdAt?: Date | string
-  manages?: Prisma.EmployeeUncheckedCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentUncheckedCreateNestedManyWithoutManagerInput
-  leaveRequests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutEmployeeInput
-  expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutEmployeeInput
-}
-
-export type EmployeeCreateOrConnectWithoutLeaveBalancesInput = {
-  where: Prisma.EmployeeWhereUniqueInput
-  create: Prisma.XOR<Prisma.EmployeeCreateWithoutLeaveBalancesInput, Prisma.EmployeeUncheckedCreateWithoutLeaveBalancesInput>
-}
-
-export type EmployeeUpsertWithoutLeaveBalancesInput = {
-  update: Prisma.XOR<Prisma.EmployeeUpdateWithoutLeaveBalancesInput, Prisma.EmployeeUncheckedUpdateWithoutLeaveBalancesInput>
-  create: Prisma.XOR<Prisma.EmployeeCreateWithoutLeaveBalancesInput, Prisma.EmployeeUncheckedCreateWithoutLeaveBalancesInput>
-  where?: Prisma.EmployeeWhereInput
-}
-
-export type EmployeeUpdateToOneWithWhereWithoutLeaveBalancesInput = {
-  where?: Prisma.EmployeeWhereInput
-  data: Prisma.XOR<Prisma.EmployeeUpdateWithoutLeaveBalancesInput, Prisma.EmployeeUncheckedUpdateWithoutLeaveBalancesInput>
-}
-
-export type EmployeeUpdateWithoutLeaveBalancesInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  company?: Prisma.CompanyUpdateOneRequiredWithoutEmployeesNestedInput
-  user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
-  department?: Prisma.DepartmentUpdateOneWithoutEmployeesNestedInput
-  leaveApprover?: Prisma.EmployeeUpdateOneWithoutManagesNestedInput
-  manages?: Prisma.EmployeeUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUpdateManyWithoutManagerNestedInput
-  leaveRequests?: Prisma.LeaveRequestUpdateManyWithoutEmployeeNestedInput
-  expenseReports?: Prisma.ExpenseReportUpdateManyWithoutEmployeeNestedInput
-}
-
-export type EmployeeUncheckedUpdateWithoutLeaveBalancesInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  companyId?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  manages?: Prisma.EmployeeUncheckedUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUncheckedUpdateManyWithoutManagerNestedInput
   leaveRequests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutEmployeeNestedInput
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutEmployeeNestedInput
 }
@@ -1311,11 +696,6 @@ export type EmployeeCreateWithoutLeaveRequestsInput = {
   createdAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutEmployeesInput
   user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
-  department?: Prisma.DepartmentCreateNestedOneWithoutEmployeesInput
-  leaveApprover?: Prisma.EmployeeCreateNestedOneWithoutManagesInput
-  manages?: Prisma.EmployeeCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
   expenseReports?: Prisma.ExpenseReportCreateNestedManyWithoutEmployeeInput
 }
 
@@ -1323,17 +703,12 @@ export type EmployeeUncheckedCreateWithoutLeaveRequestsInput = {
   id?: string
   companyId: string
   userId?: string | null
-  departmentId?: string | null
   name: string
   email: string
   position?: string | null
   hireDate?: Date | string | null
   status?: $Enums.EmployeeStatus
-  leaveApproverId?: string | null
   createdAt?: Date | string
-  manages?: Prisma.EmployeeUncheckedCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentUncheckedCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
   expenseReports?: Prisma.ExpenseReportUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
@@ -1363,11 +738,6 @@ export type EmployeeUpdateWithoutLeaveRequestsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutEmployeesNestedInput
   user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
-  department?: Prisma.DepartmentUpdateOneWithoutEmployeesNestedInput
-  leaveApprover?: Prisma.EmployeeUpdateOneWithoutManagesNestedInput
-  manages?: Prisma.EmployeeUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutEmployeeNestedInput
 }
 
@@ -1375,17 +745,12 @@ export type EmployeeUncheckedUpdateWithoutLeaveRequestsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   companyId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  manages?: Prisma.EmployeeUncheckedUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUncheckedUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
@@ -1399,11 +764,6 @@ export type EmployeeCreateWithoutExpenseReportsInput = {
   createdAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutEmployeesInput
   user?: Prisma.UserCreateNestedOneWithoutEmployeeInput
-  department?: Prisma.DepartmentCreateNestedOneWithoutEmployeesInput
-  leaveApprover?: Prisma.EmployeeCreateNestedOneWithoutManagesInput
-  manages?: Prisma.EmployeeCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceCreateNestedManyWithoutEmployeeInput
   leaveRequests?: Prisma.LeaveRequestCreateNestedManyWithoutEmployeeInput
 }
 
@@ -1411,17 +771,12 @@ export type EmployeeUncheckedCreateWithoutExpenseReportsInput = {
   id?: string
   companyId: string
   userId?: string | null
-  departmentId?: string | null
   name: string
   email: string
   position?: string | null
   hireDate?: Date | string | null
   status?: $Enums.EmployeeStatus
-  leaveApproverId?: string | null
   createdAt?: Date | string
-  manages?: Prisma.EmployeeUncheckedCreateNestedManyWithoutLeaveApproverInput
-  managesDept?: Prisma.DepartmentUncheckedCreateNestedManyWithoutManagerInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutEmployeeInput
   leaveRequests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutEmployeeInput
 }
 
@@ -1451,11 +806,6 @@ export type EmployeeUpdateWithoutExpenseReportsInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutEmployeesNestedInput
   user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
-  department?: Prisma.DepartmentUpdateOneWithoutEmployeesNestedInput
-  leaveApprover?: Prisma.EmployeeUpdateOneWithoutManagesNestedInput
-  manages?: Prisma.EmployeeUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
   leaveRequests?: Prisma.LeaveRequestUpdateManyWithoutEmployeeNestedInput
 }
 
@@ -1463,30 +813,23 @@ export type EmployeeUncheckedUpdateWithoutExpenseReportsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   companyId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  manages?: Prisma.EmployeeUncheckedUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUncheckedUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
   leaveRequests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutEmployeeNestedInput
 }
 
 export type EmployeeCreateManyCompanyInput = {
   id?: string
   userId?: string | null
-  departmentId?: string | null
   name: string
   email: string
   position?: string | null
   hireDate?: Date | string | null
   status?: $Enums.EmployeeStatus
-  leaveApproverId?: string | null
   createdAt?: Date | string
 }
 
@@ -1499,11 +842,6 @@ export type EmployeeUpdateWithoutCompanyInput = {
   status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
-  department?: Prisma.DepartmentUpdateOneWithoutEmployeesNestedInput
-  leaveApprover?: Prisma.EmployeeUpdateOneWithoutManagesNestedInput
-  manages?: Prisma.EmployeeUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
   leaveRequests?: Prisma.LeaveRequestUpdateManyWithoutEmployeeNestedInput
   expenseReports?: Prisma.ExpenseReportUpdateManyWithoutEmployeeNestedInput
 }
@@ -1511,17 +849,12 @@ export type EmployeeUpdateWithoutCompanyInput = {
 export type EmployeeUncheckedUpdateWithoutCompanyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  manages?: Prisma.EmployeeUncheckedUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUncheckedUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
   leaveRequests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutEmployeeNestedInput
   expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutEmployeeNestedInput
 }
@@ -1529,132 +862,6 @@ export type EmployeeUncheckedUpdateWithoutCompanyInput = {
 export type EmployeeUncheckedUpdateManyWithoutCompanyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type EmployeeCreateManyDepartmentInput = {
-  id?: string
-  companyId: string
-  userId?: string | null
-  name: string
-  email: string
-  position?: string | null
-  hireDate?: Date | string | null
-  status?: $Enums.EmployeeStatus
-  leaveApproverId?: string | null
-  createdAt?: Date | string
-}
-
-export type EmployeeUpdateWithoutDepartmentInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  company?: Prisma.CompanyUpdateOneRequiredWithoutEmployeesNestedInput
-  user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
-  leaveApprover?: Prisma.EmployeeUpdateOneWithoutManagesNestedInput
-  manages?: Prisma.EmployeeUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
-  leaveRequests?: Prisma.LeaveRequestUpdateManyWithoutEmployeeNestedInput
-  expenseReports?: Prisma.ExpenseReportUpdateManyWithoutEmployeeNestedInput
-}
-
-export type EmployeeUncheckedUpdateWithoutDepartmentInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  companyId?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  manages?: Prisma.EmployeeUncheckedUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUncheckedUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
-  leaveRequests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutEmployeeNestedInput
-  expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutEmployeeNestedInput
-}
-
-export type EmployeeUncheckedUpdateManyWithoutDepartmentInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  companyId?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  leaveApproverId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-}
-
-export type EmployeeCreateManyLeaveApproverInput = {
-  id?: string
-  companyId: string
-  userId?: string | null
-  departmentId?: string | null
-  name: string
-  email: string
-  position?: string | null
-  hireDate?: Date | string | null
-  status?: $Enums.EmployeeStatus
-  createdAt?: Date | string
-}
-
-export type EmployeeUpdateWithoutLeaveApproverInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  company?: Prisma.CompanyUpdateOneRequiredWithoutEmployeesNestedInput
-  user?: Prisma.UserUpdateOneWithoutEmployeeNestedInput
-  department?: Prisma.DepartmentUpdateOneWithoutEmployeesNestedInput
-  manages?: Prisma.EmployeeUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUpdateManyWithoutEmployeeNestedInput
-  leaveRequests?: Prisma.LeaveRequestUpdateManyWithoutEmployeeNestedInput
-  expenseReports?: Prisma.ExpenseReportUpdateManyWithoutEmployeeNestedInput
-}
-
-export type EmployeeUncheckedUpdateWithoutLeaveApproverInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  companyId?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  email?: Prisma.StringFieldUpdateOperationsInput | string
-  position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  hireDate?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  status?: Prisma.EnumEmployeeStatusFieldUpdateOperationsInput | $Enums.EmployeeStatus
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  manages?: Prisma.EmployeeUncheckedUpdateManyWithoutLeaveApproverNestedInput
-  managesDept?: Prisma.DepartmentUncheckedUpdateManyWithoutManagerNestedInput
-  leaveBalances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutEmployeeNestedInput
-  leaveRequests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutEmployeeNestedInput
-  expenseReports?: Prisma.ExpenseReportUncheckedUpdateManyWithoutEmployeeNestedInput
-}
-
-export type EmployeeUncheckedUpdateManyWithoutLeaveApproverInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  companyId?: Prisma.StringFieldUpdateOperationsInput | string
-  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
-  departmentId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   name?: Prisma.StringFieldUpdateOperationsInput | string
   email?: Prisma.StringFieldUpdateOperationsInput | string
   position?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -1669,17 +876,11 @@ export type EmployeeUncheckedUpdateManyWithoutLeaveApproverInput = {
  */
 
 export type EmployeeCountOutputType = {
-  manages: number
-  managesDept: number
-  leaveBalances: number
   leaveRequests: number
   expenseReports: number
 }
 
 export type EmployeeCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  manages?: boolean | EmployeeCountOutputTypeCountManagesArgs
-  managesDept?: boolean | EmployeeCountOutputTypeCountManagesDeptArgs
-  leaveBalances?: boolean | EmployeeCountOutputTypeCountLeaveBalancesArgs
   leaveRequests?: boolean | EmployeeCountOutputTypeCountLeaveRequestsArgs
   expenseReports?: boolean | EmployeeCountOutputTypeCountExpenseReportsArgs
 }
@@ -1692,27 +893,6 @@ export type EmployeeCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.Ext
    * Select specific fields to fetch from the EmployeeCountOutputType
    */
   select?: Prisma.EmployeeCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * EmployeeCountOutputType without action
- */
-export type EmployeeCountOutputTypeCountManagesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.EmployeeWhereInput
-}
-
-/**
- * EmployeeCountOutputType without action
- */
-export type EmployeeCountOutputTypeCountManagesDeptArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.DepartmentWhereInput
-}
-
-/**
- * EmployeeCountOutputType without action
- */
-export type EmployeeCountOutputTypeCountLeaveBalancesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.LeaveBalanceWhereInput
 }
 
 /**
@@ -1734,21 +914,14 @@ export type EmployeeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   id?: boolean
   companyId?: boolean
   userId?: boolean
-  departmentId?: boolean
   name?: boolean
   email?: boolean
   position?: boolean
   hireDate?: boolean
   status?: boolean
-  leaveApproverId?: boolean
   createdAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   user?: boolean | Prisma.Employee$userArgs<ExtArgs>
-  department?: boolean | Prisma.Employee$departmentArgs<ExtArgs>
-  leaveApprover?: boolean | Prisma.Employee$leaveApproverArgs<ExtArgs>
-  manages?: boolean | Prisma.Employee$managesArgs<ExtArgs>
-  managesDept?: boolean | Prisma.Employee$managesDeptArgs<ExtArgs>
-  leaveBalances?: boolean | Prisma.Employee$leaveBalancesArgs<ExtArgs>
   leaveRequests?: boolean | Prisma.Employee$leaveRequestsArgs<ExtArgs>
   expenseReports?: boolean | Prisma.Employee$expenseReportsArgs<ExtArgs>
   _count?: boolean | Prisma.EmployeeCountOutputTypeDefaultArgs<ExtArgs>
@@ -1758,61 +931,46 @@ export type EmployeeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   id?: boolean
   companyId?: boolean
   userId?: boolean
-  departmentId?: boolean
   name?: boolean
   email?: boolean
   position?: boolean
   hireDate?: boolean
   status?: boolean
-  leaveApproverId?: boolean
   createdAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   user?: boolean | Prisma.Employee$userArgs<ExtArgs>
-  department?: boolean | Prisma.Employee$departmentArgs<ExtArgs>
-  leaveApprover?: boolean | Prisma.Employee$leaveApproverArgs<ExtArgs>
 }, ExtArgs["result"]["employee"]>
 
 export type EmployeeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   companyId?: boolean
   userId?: boolean
-  departmentId?: boolean
   name?: boolean
   email?: boolean
   position?: boolean
   hireDate?: boolean
   status?: boolean
-  leaveApproverId?: boolean
   createdAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   user?: boolean | Prisma.Employee$userArgs<ExtArgs>
-  department?: boolean | Prisma.Employee$departmentArgs<ExtArgs>
-  leaveApprover?: boolean | Prisma.Employee$leaveApproverArgs<ExtArgs>
 }, ExtArgs["result"]["employee"]>
 
 export type EmployeeSelectScalar = {
   id?: boolean
   companyId?: boolean
   userId?: boolean
-  departmentId?: boolean
   name?: boolean
   email?: boolean
   position?: boolean
   hireDate?: boolean
   status?: boolean
-  leaveApproverId?: boolean
   createdAt?: boolean
 }
 
-export type EmployeeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "userId" | "departmentId" | "name" | "email" | "position" | "hireDate" | "status" | "leaveApproverId" | "createdAt", ExtArgs["result"]["employee"]>
+export type EmployeeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "userId" | "name" | "email" | "position" | "hireDate" | "status" | "createdAt", ExtArgs["result"]["employee"]>
 export type EmployeeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   user?: boolean | Prisma.Employee$userArgs<ExtArgs>
-  department?: boolean | Prisma.Employee$departmentArgs<ExtArgs>
-  leaveApprover?: boolean | Prisma.Employee$leaveApproverArgs<ExtArgs>
-  manages?: boolean | Prisma.Employee$managesArgs<ExtArgs>
-  managesDept?: boolean | Prisma.Employee$managesDeptArgs<ExtArgs>
-  leaveBalances?: boolean | Prisma.Employee$leaveBalancesArgs<ExtArgs>
   leaveRequests?: boolean | Prisma.Employee$leaveRequestsArgs<ExtArgs>
   expenseReports?: boolean | Prisma.Employee$expenseReportsArgs<ExtArgs>
   _count?: boolean | Prisma.EmployeeCountOutputTypeDefaultArgs<ExtArgs>
@@ -1820,14 +978,10 @@ export type EmployeeInclude<ExtArgs extends runtime.Types.Extensions.InternalArg
 export type EmployeeIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   user?: boolean | Prisma.Employee$userArgs<ExtArgs>
-  department?: boolean | Prisma.Employee$departmentArgs<ExtArgs>
-  leaveApprover?: boolean | Prisma.Employee$leaveApproverArgs<ExtArgs>
 }
 export type EmployeeIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
   user?: boolean | Prisma.Employee$userArgs<ExtArgs>
-  department?: boolean | Prisma.Employee$departmentArgs<ExtArgs>
-  leaveApprover?: boolean | Prisma.Employee$leaveApproverArgs<ExtArgs>
 }
 
 export type $EmployeePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
@@ -1835,11 +989,6 @@ export type $EmployeePayload<ExtArgs extends runtime.Types.Extensions.InternalAr
   objects: {
     company: Prisma.$CompanyPayload<ExtArgs>
     user: Prisma.$UserPayload<ExtArgs> | null
-    department: Prisma.$DepartmentPayload<ExtArgs> | null
-    leaveApprover: Prisma.$EmployeePayload<ExtArgs> | null
-    manages: Prisma.$EmployeePayload<ExtArgs>[]
-    managesDept: Prisma.$DepartmentPayload<ExtArgs>[]
-    leaveBalances: Prisma.$LeaveBalancePayload<ExtArgs>[]
     leaveRequests: Prisma.$LeaveRequestPayload<ExtArgs>[]
     expenseReports: Prisma.$ExpenseReportPayload<ExtArgs>[]
   }
@@ -1847,13 +996,11 @@ export type $EmployeePayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     id: string
     companyId: string
     userId: string | null
-    departmentId: string | null
     name: string
     email: string
     position: string | null
     hireDate: Date | null
     status: $Enums.EmployeeStatus
-    leaveApproverId: string | null
     createdAt: Date
   }, ExtArgs["result"]["employee"]>
   composites: {}
@@ -2251,11 +1398,6 @@ export interface Prisma__EmployeeClient<T, Null = never, ExtArgs extends runtime
   readonly [Symbol.toStringTag]: "PrismaPromise"
   company<T extends Prisma.CompanyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyDefaultArgs<ExtArgs>>): Prisma.Prisma__CompanyClient<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.Employee$userArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$userArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  department<T extends Prisma.Employee$departmentArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$departmentArgs<ExtArgs>>): Prisma.Prisma__DepartmentClient<runtime.Types.Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  leaveApprover<T extends Prisma.Employee$leaveApproverArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$leaveApproverArgs<ExtArgs>>): Prisma.Prisma__EmployeeClient<runtime.Types.Result.GetResult<Prisma.$EmployeePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-  manages<T extends Prisma.Employee$managesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$managesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$EmployeePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  managesDept<T extends Prisma.Employee$managesDeptArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$managesDeptArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-  leaveBalances<T extends Prisma.Employee$leaveBalancesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$leaveBalancesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeaveBalancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   leaveRequests<T extends Prisma.Employee$leaveRequestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$leaveRequestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeaveRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   expenseReports<T extends Prisma.Employee$expenseReportsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Employee$expenseReportsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ExpenseReportPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
@@ -2290,13 +1432,11 @@ export interface EmployeeFieldRefs {
   readonly id: Prisma.FieldRef<"Employee", 'String'>
   readonly companyId: Prisma.FieldRef<"Employee", 'String'>
   readonly userId: Prisma.FieldRef<"Employee", 'String'>
-  readonly departmentId: Prisma.FieldRef<"Employee", 'String'>
   readonly name: Prisma.FieldRef<"Employee", 'String'>
   readonly email: Prisma.FieldRef<"Employee", 'String'>
   readonly position: Prisma.FieldRef<"Employee", 'String'>
   readonly hireDate: Prisma.FieldRef<"Employee", 'DateTime'>
   readonly status: Prisma.FieldRef<"Employee", 'EmployeeStatus'>
-  readonly leaveApproverId: Prisma.FieldRef<"Employee", 'String'>
   readonly createdAt: Prisma.FieldRef<"Employee", 'DateTime'>
 }
     
@@ -2715,116 +1855,6 @@ export type Employee$userArgs<ExtArgs extends runtime.Types.Extensions.InternalA
    */
   include?: Prisma.UserInclude<ExtArgs> | null
   where?: Prisma.UserWhereInput
-}
-
-/**
- * Employee.department
- */
-export type Employee$departmentArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Department
-   */
-  select?: Prisma.DepartmentSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Department
-   */
-  omit?: Prisma.DepartmentOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.DepartmentInclude<ExtArgs> | null
-  where?: Prisma.DepartmentWhereInput
-}
-
-/**
- * Employee.leaveApprover
- */
-export type Employee$leaveApproverArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Employee
-   */
-  select?: Prisma.EmployeeSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Employee
-   */
-  omit?: Prisma.EmployeeOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.EmployeeInclude<ExtArgs> | null
-  where?: Prisma.EmployeeWhereInput
-}
-
-/**
- * Employee.manages
- */
-export type Employee$managesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Employee
-   */
-  select?: Prisma.EmployeeSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Employee
-   */
-  omit?: Prisma.EmployeeOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.EmployeeInclude<ExtArgs> | null
-  where?: Prisma.EmployeeWhereInput
-  orderBy?: Prisma.EmployeeOrderByWithRelationInput | Prisma.EmployeeOrderByWithRelationInput[]
-  cursor?: Prisma.EmployeeWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.EmployeeScalarFieldEnum | Prisma.EmployeeScalarFieldEnum[]
-}
-
-/**
- * Employee.managesDept
- */
-export type Employee$managesDeptArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the Department
-   */
-  select?: Prisma.DepartmentSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the Department
-   */
-  omit?: Prisma.DepartmentOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.DepartmentInclude<ExtArgs> | null
-  where?: Prisma.DepartmentWhereInput
-  orderBy?: Prisma.DepartmentOrderByWithRelationInput | Prisma.DepartmentOrderByWithRelationInput[]
-  cursor?: Prisma.DepartmentWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.DepartmentScalarFieldEnum | Prisma.DepartmentScalarFieldEnum[]
-}
-
-/**
- * Employee.leaveBalances
- */
-export type Employee$leaveBalancesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the LeaveBalance
-   */
-  select?: Prisma.LeaveBalanceSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the LeaveBalance
-   */
-  omit?: Prisma.LeaveBalanceOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.LeaveBalanceInclude<ExtArgs> | null
-  where?: Prisma.LeaveBalanceWhereInput
-  orderBy?: Prisma.LeaveBalanceOrderByWithRelationInput | Prisma.LeaveBalanceOrderByWithRelationInput[]
-  cursor?: Prisma.LeaveBalanceWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.LeaveBalanceScalarFieldEnum | Prisma.LeaveBalanceScalarFieldEnum[]
 }
 
 /**

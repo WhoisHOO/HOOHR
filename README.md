@@ -17,20 +17,19 @@ Built for a team of ~20 people, not for an enterprise HR suite. Open source unde
 
 | Module | Features |
 |---|---|
-| **Leave** (휴가) | PTO / sick / unpaid requests, full or half-day, live balance with over-request blocking, manager approval (reject requires a reason), self-cancel before approval, monthly company schedule, admin CSV balance import, **holiday-aware day counting** |
+| **Leave** (휴가) | PTO / sick / unpaid requests, full or half-day, remaining days derived from policy annual days minus approved days, admin approval (reject requires a reason), self-cancel before approval, monthly company schedule |
 | **Expenses** (경비) | Draft reports with multiple line items, per-item receipt upload, submit → approve → pay workflow, protected receipt downloads, **CSV export** for accounting |
-| **Employee & org admin** | Departments with managers, employee profiles, activate/deactivate, re-invite pending employees, **team-scoped approval inboxes** |
-| **Settings** | Company name + country, leave policy management (annual days, carry-over, paid/approval flags), holiday calendar, expense categories |
+| **Employee admin** | Employee profiles, activate/deactivate, re-invite pending employees |
+| **Settings** | Company name + country, leave policy management (annual days, carry-over, paid/approval flags), expense categories |
 
 ### Roles
 
 | Role | Sees | Can approve |
 |---|---|---|
 | **EMPLOYEE** | Own leave, expenses | — |
-| **MANAGER** | Own + direct team | Own team's requests only |
-| **ADMIN** | Whole company | Everything, plus invites, settings, CSV import/export |
+| **ADMIN** | Whole company | Everything, plus invites, settings, CSV export |
 
-Approval is scoped to the team: a manager resolves to the employee's explicit approver (`leaveApproverId`) or, failing that, their department manager. Self-approval and cross-company approval are refused at both the page and the action layer.
+Approvals are assigned to the ADMIN role. Self-approval and cross-company approval are refused at both the page and the action layer. The creator of a request can cancel it while it is still pending, but cannot approve it themselves.
 
 ### Status flows
 
@@ -79,7 +78,7 @@ That is the whole procedure. The window walks through it:
    session secret. Every question is two options, so there is nothing to read
    up on.
 3. Builds the image, applies the database migrations, and seeds the company
-   defaults (departments, leave policies, expense categories).
+   defaults (leave policies, expense categories).
 4. Waits until the app answers a real readiness check - not merely until the
    port is listening, so it never opens a browser onto a page that will 500.
 5. If you answered **server**, opens a public HTTPS address and checks the app
@@ -295,19 +294,10 @@ send is retried on the next run.
 Self-cleaning scripts exercise the domain logic directly against PostgreSQL and remove their own fixtures:
 
 ```bash
-npx tsx _test-team.ts       # 27 checks - approval scoping and authorization
-npx tsx _test-settings.ts   # 23 checks - holiday-aware counting, policies, categories
-npx tsx _test-leave.ts      # leave request -> approve -> deduct -> cancel
 npx tsx _test-expense.ts    # expense draft -> submit -> approve -> pay
 npx tsx _test-storage.ts    # 11 checks - receipt MIME, size, errors, path traversal
 npx tsx _test-mail.ts       # 58 checks - SMTP config, escaping, every template in ko/en
-npx tsx _test-digest.ts     # 34 checks - the digest against a real DB and SMTP conversation
-npx tsx _test-weekend-currency.ts  # 50 checks - company weekend, workday maths, currency codes
 ```
-
-`_test-digest.ts` starts a small in-process ESMTP server, so it verifies real delivery
-and the real ledger without needing a credential or an external relay.
-
 ### Browser E2E
 
 Some flows cannot be reached over `curl` because a Next.js **server action** is not
@@ -358,10 +348,9 @@ English copy set the country to the US and restore it before they exit. See
 
 The MVP feature set is implemented. Not done yet:
 
-- **Email notifications** — SMTP is configured but no send path exists yet
 - **OCR receipt extraction** — deferred to v0.2
-- **Grant-on-hire / leave carry-over automation** — balances are currently granted explicitly
 - **EKS deployment** — see [`deploy/`](./deploy)
+- **Fine-grained per-request approval routing** — every request currently routes to the same ADMIN pool
 
 ## Contributing
 

@@ -46,24 +46,6 @@ export function InviteForm() {
         )}
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="role" className="text-sm font-medium text-zinc-700">
-          {d.common.fields.role}
-        </label>
-        <select
-          id="role"
-          name="role"
-          defaultValue="EMPLOYEE"
-          className="rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          <option value="EMPLOYEE">{d.auth.invite.roleEmployee}</option>
-          <option value="MANAGER">{d.auth.invite.roleManager}</option>
-        </select>
-        {state?.fieldErrors?.role && (
-          <p className="text-sm text-red-600">{state.fieldErrors.role[0]}</p>
-        )}
-      </div>
-
       {state?.message && !state.inviteUrl && (
         <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
           {state.message}

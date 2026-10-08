@@ -15,14 +15,6 @@ function idSchema(v: AdminValidationMessages) {
     .max(100, { error: v.validation.invalidInfo });
 }
 
-function departmentNameSchema(v: AdminValidationMessages) {
-  return z
-    .string()
-    .trim()
-    .min(1, { error: v.validation.departmentNameRequired })
-    .max(100, { error: v.validation.departmentNameTooLong });
-}
-
 function hireDateSchema(v: AdminValidationMessages) {
   return z
     .string()
@@ -36,37 +28,15 @@ function hireDateSchema(v: AdminValidationMessages) {
     );
 }
 
-export function departmentCreateSchema(v: AdminValidationMessages) {
-  return z.object({
-    name: departmentNameSchema(v),
-  });
-}
-
-export function departmentUpdateSchema(v: AdminValidationMessages) {
-  return z.object({
-    id: idSchema(v),
-    name: departmentNameSchema(v),
-    managerId: idSchema(v).optional(),
-  });
-}
-
-export function departmentDeleteSchema(v: AdminValidationMessages) {
-  return z.object({
-    id: idSchema(v),
-  });
-}
-
 export function employeeProfileSchema(v: AdminValidationMessages) {
   return z.object({
     id: idSchema(v),
-    departmentId: idSchema(v).optional(),
     position: z
       .string()
       .trim()
       .max(100, { error: v.validation.positionTooLong })
       .optional(),
     hireDate: hireDateSchema(v).optional(),
-    leaveApproverId: idSchema(v).optional(),
   });
 }
 
@@ -91,10 +61,6 @@ export type EmployeeAdminState = {
   ok?: boolean;
 } | undefined;
 
-export type DepartmentCreateState = EmployeeAdminState;
-export type DepartmentUpdateState = EmployeeAdminState;
-export type DepartmentDeleteState = EmployeeAdminState;
 export type EmployeeProfileState = EmployeeAdminState;
 export type EmployeeStatusState = EmployeeAdminState;
-export type DepartmentActionState = EmployeeAdminState;
 export type EmployeeActionState = EmployeeAdminState;

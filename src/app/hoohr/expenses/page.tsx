@@ -6,11 +6,6 @@ import { getCompanyTimezone } from "@/lib/company";
 import { zonedToday, monthLabel } from "@/lib/date";
 import { formatMoney } from "@/lib/expense";
 import { formatLeaveRange } from "@/lib/leave";
-import {
-  approvalInboxEmployeeWhere,
-  canActAsAdmin,
-  isApprovalReviewer,
-} from "@/lib/team";
 import type { CommonMessages } from "@/i18n/dictionaries/common";
 import { getDict, getLocale, interpolate, INTL_LOCALES } from "@/i18n/server";
 import { NewExpenseForm, type ExpenseCategoryOption } from "./expense-form";
@@ -103,8 +98,7 @@ export default async function ExpensesPage() {
   const { common, expenses } = await getDict();
   const locale = await getLocale();
   const intl = INTL_LOCALES[locale];
-  const isReviewer = isApprovalReviewer(user);
-  const canPay = canActAsAdmin(user);
+  const isAdmin = user.role === "ADMIN";
   const tz = await getCompanyTimezone(user.companyId);
   const currentMonth = monthLabel(zonedToday(tz));
 
@@ -123,12 +117,12 @@ export default async function ExpensesPage() {
           take: 50,
         })
       : Promise.resolve([]),
-    isReviewer
+    isAdmin
       ? prisma.expenseReport.findMany({
           where: {
             companyId: user.companyId,
             status: "SUBMITTED",
-            employee: approvalInboxEmployeeWhere(user),
+            ...(user.employeeId ? { employeeId: { not: user.employeeId } } : {}),
           },
           include: {
             employee: true,
@@ -137,7 +131,7 @@ export default async function ExpensesPage() {
           orderBy: { submittedAt: "asc" },
         })
       : Promise.resolve([]),
-    canPay
+    isAdmin
       ? prisma.expenseReport.findMany({
           where: {
             companyId: user.companyId,
@@ -254,7 +248,7 @@ export default async function ExpensesPage() {
         )}
       </section>
 
-      {isReviewer && inbox.length > 0 && (
+      {isAdmin && inbox.length > 0 && (
         <section className="rounded-xl border border-zinc-200 bg-white p-6">
           <h2 className="text-sm font-semibold text-zinc-900">
             {interpolate(expenses.sections.inbox, { count: inbox.length })}
@@ -287,7 +281,7 @@ export default async function ExpensesPage() {
         </section>
       )}
 
-      {canPay && payQueue.length > 0 && (
+      {isAdmin && payQueue.length > 0 && (
         <section className="rounded-xl border border-zinc-200 bg-white p-6">
           <h2 className="text-sm font-semibold text-zinc-900">
             {interpolate(expenses.sections.payQueue, { count: payQueue.length })}

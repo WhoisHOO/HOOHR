@@ -727,6 +727,14 @@ export type EnumExpenseStatusFieldUpdateOperationsInput = {
   set?: $Enums.ExpenseStatus
 }
 
+export type IntFieldUpdateOperationsInput = {
+  set?: number
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
 export type ExpenseReportCreateNestedOneWithoutItemsInput = {
   create?: Prisma.XOR<Prisma.ExpenseReportCreateWithoutItemsInput, Prisma.ExpenseReportUncheckedCreateWithoutItemsInput>
   connectOrCreate?: Prisma.ExpenseReportCreateOrConnectWithoutItemsInput
