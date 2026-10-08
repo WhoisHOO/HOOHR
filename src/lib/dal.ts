@@ -5,10 +5,6 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { decrypt } from "@/lib/session";
 import { hasAnyUser } from "@/lib/bootstrap";
-import {
-  approvalReviewerFromUser,
-  approvalReviewerSelect,
-} from "@/lib/team";
 
 export type SessionUser = {
   id: string;
@@ -47,26 +43,37 @@ export const getCurrentUser = cache(async (): Promise<SessionUser | null> => {
   const user = await prisma.user.findUnique({
     where: { id: session.userId },
     select: {
-      ...approvalReviewerSelect,
+      id: true,
+      companyId: true,
+      role: true,
+      isActive: true,
       name: true,
       email: true,
-      isActive: true,
+      employee: {
+        select: { id: true, companyId: true, status: true },
+      },
     },
   });
 
   if (!user || !user.isActive) return null;
 
-  const reviewer = approvalReviewerFromUser(user);
+  const activeEmployee =
+    user.employee &&
+    user.employee.companyId === user.companyId &&
+    user.employee.status === "ACTIVE"
+      ? user.employee
+      : null;
+
   return {
     id: user.id,
-    companyId: reviewer.companyId,
-    role: reviewer.role,
-    isActive: reviewer.isActive,
+    companyId: user.companyId,
+    role: user.role,
+    isActive: user.isActive,
     name: user.name,
     email: user.email,
-    employeeId: reviewer.employeeId,
-    employeeCompanyId: reviewer.employeeCompanyId,
-    employeeStatus: reviewer.employeeStatus,
+    employeeId: activeEmployee?.id ?? null,
+    employeeCompanyId: activeEmployee?.companyId ?? null,
+    employeeStatus: activeEmployee?.status ?? null,
   };
 });
 

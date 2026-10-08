@@ -5,7 +5,6 @@ import {
   PrismaClient,
   Role,
   EmployeeStatus,
-  LeaveTypeKind,
 } from "../src/generated/prisma/client";
 import {
   DEFAULT_COUNTRY,
@@ -36,7 +35,7 @@ async function main() {
     (country === "US" ? "My Company" : "내 회사");
 
   await prisma.$transaction(async (tx) => {
-    const { company, departments, text } = await createCompanyWithDefaults(tx, {
+    const { company, text } = await createCompanyWithDefaults(tx, {
       name: companyName,
       country,
     });
@@ -60,11 +59,10 @@ async function main() {
         role: Role.ADMIN,
       },
     });
-    const adminEmployee = await tx.employee.create({
+    await tx.employee.create({
       data: {
         companyId: company.id,
         userId: adminUser.id,
-        departmentId: departments[0].id,
         name: text.adminName,
         email: adminEmail,
         position: text.adminPosition,
@@ -72,21 +70,6 @@ async function main() {
         status: EmployeeStatus.ACTIVE,
       },
     });
-
-    const yearPolicies = await tx.leavePolicy.findMany({
-      where: { companyId: company.id, kind: { in: [LeaveTypeKind.PTO, LeaveTypeKind.SICK] } },
-      select: { id: true, annualDays: true },
-    });
-    for (const policy of yearPolicies) {
-      await tx.leaveBalance.create({
-        data: {
-          employeeId: adminEmployee.id,
-          policyId: policy.id,
-          year,
-          grantedDays: policy.annualDays,
-        },
-      });
-    }
 
     console.log(`Bootstrap complete: company "${companyName}", admin ${adminEmail}`);
   });

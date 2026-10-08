@@ -261,7 +261,6 @@ export type LeavePolicyWhereInput = {
   active?: Prisma.BoolFilter<"LeavePolicy"> | boolean
   createdAt?: Prisma.DateTimeFilter<"LeavePolicy"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
-  balances?: Prisma.LeaveBalanceListRelationFilter
   requests?: Prisma.LeaveRequestListRelationFilter
 }
 
@@ -277,7 +276,6 @@ export type LeavePolicyOrderByWithRelationInput = {
   active?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   company?: Prisma.CompanyOrderByWithRelationInput
-  balances?: Prisma.LeaveBalanceOrderByRelationAggregateInput
   requests?: Prisma.LeaveRequestOrderByRelationAggregateInput
 }
 
@@ -297,7 +295,6 @@ export type LeavePolicyWhereUniqueInput = Prisma.AtLeast<{
   active?: Prisma.BoolFilter<"LeavePolicy"> | boolean
   createdAt?: Prisma.DateTimeFilter<"LeavePolicy"> | Date | string
   company?: Prisma.XOR<Prisma.CompanyScalarRelationFilter, Prisma.CompanyWhereInput>
-  balances?: Prisma.LeaveBalanceListRelationFilter
   requests?: Prisma.LeaveRequestListRelationFilter
 }, "id" | "companyId_kind">
 
@@ -346,7 +343,6 @@ export type LeavePolicyCreateInput = {
   active?: boolean
   createdAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutLeavePoliciesInput
-  balances?: Prisma.LeaveBalanceCreateNestedManyWithoutPolicyInput
   requests?: Prisma.LeaveRequestCreateNestedManyWithoutPolicyInput
 }
 
@@ -361,7 +357,6 @@ export type LeavePolicyUncheckedCreateInput = {
   requiresApproval?: boolean
   active?: boolean
   createdAt?: Date | string
-  balances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutPolicyInput
   requests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutPolicyInput
 }
 
@@ -376,7 +371,6 @@ export type LeavePolicyUpdateInput = {
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutLeavePoliciesNestedInput
-  balances?: Prisma.LeaveBalanceUpdateManyWithoutPolicyNestedInput
   requests?: Prisma.LeaveRequestUpdateManyWithoutPolicyNestedInput
 }
 
@@ -391,7 +385,6 @@ export type LeavePolicyUncheckedUpdateInput = {
   requiresApproval?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  balances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutPolicyNestedInput
   requests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutPolicyNestedInput
 }
 
@@ -556,20 +549,6 @@ export type FloatFieldUpdateOperationsInput = {
   divide?: number
 }
 
-export type LeavePolicyCreateNestedOneWithoutBalancesInput = {
-  create?: Prisma.XOR<Prisma.LeavePolicyCreateWithoutBalancesInput, Prisma.LeavePolicyUncheckedCreateWithoutBalancesInput>
-  connectOrCreate?: Prisma.LeavePolicyCreateOrConnectWithoutBalancesInput
-  connect?: Prisma.LeavePolicyWhereUniqueInput
-}
-
-export type LeavePolicyUpdateOneRequiredWithoutBalancesNestedInput = {
-  create?: Prisma.XOR<Prisma.LeavePolicyCreateWithoutBalancesInput, Prisma.LeavePolicyUncheckedCreateWithoutBalancesInput>
-  connectOrCreate?: Prisma.LeavePolicyCreateOrConnectWithoutBalancesInput
-  upsert?: Prisma.LeavePolicyUpsertWithoutBalancesInput
-  connect?: Prisma.LeavePolicyWhereUniqueInput
-  update?: Prisma.XOR<Prisma.XOR<Prisma.LeavePolicyUpdateToOneWithWhereWithoutBalancesInput, Prisma.LeavePolicyUpdateWithoutBalancesInput>, Prisma.LeavePolicyUncheckedUpdateWithoutBalancesInput>
-}
-
 export type LeavePolicyCreateNestedOneWithoutRequestsInput = {
   create?: Prisma.XOR<Prisma.LeavePolicyCreateWithoutRequestsInput, Prisma.LeavePolicyUncheckedCreateWithoutRequestsInput>
   connectOrCreate?: Prisma.LeavePolicyCreateOrConnectWithoutRequestsInput
@@ -594,7 +573,6 @@ export type LeavePolicyCreateWithoutCompanyInput = {
   requiresApproval?: boolean
   active?: boolean
   createdAt?: Date | string
-  balances?: Prisma.LeaveBalanceCreateNestedManyWithoutPolicyInput
   requests?: Prisma.LeaveRequestCreateNestedManyWithoutPolicyInput
 }
 
@@ -608,7 +586,6 @@ export type LeavePolicyUncheckedCreateWithoutCompanyInput = {
   requiresApproval?: boolean
   active?: boolean
   createdAt?: Date | string
-  balances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutPolicyInput
   requests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutPolicyInput
 }
 
@@ -654,78 +631,6 @@ export type LeavePolicyScalarWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"LeavePolicy"> | Date | string
 }
 
-export type LeavePolicyCreateWithoutBalancesInput = {
-  id?: string
-  name: string
-  kind: $Enums.LeaveTypeKind
-  annualDays?: number
-  isPaid?: boolean
-  maxCarryOverDays?: number
-  requiresApproval?: boolean
-  active?: boolean
-  createdAt?: Date | string
-  company: Prisma.CompanyCreateNestedOneWithoutLeavePoliciesInput
-  requests?: Prisma.LeaveRequestCreateNestedManyWithoutPolicyInput
-}
-
-export type LeavePolicyUncheckedCreateWithoutBalancesInput = {
-  id?: string
-  companyId: string
-  name: string
-  kind: $Enums.LeaveTypeKind
-  annualDays?: number
-  isPaid?: boolean
-  maxCarryOverDays?: number
-  requiresApproval?: boolean
-  active?: boolean
-  createdAt?: Date | string
-  requests?: Prisma.LeaveRequestUncheckedCreateNestedManyWithoutPolicyInput
-}
-
-export type LeavePolicyCreateOrConnectWithoutBalancesInput = {
-  where: Prisma.LeavePolicyWhereUniqueInput
-  create: Prisma.XOR<Prisma.LeavePolicyCreateWithoutBalancesInput, Prisma.LeavePolicyUncheckedCreateWithoutBalancesInput>
-}
-
-export type LeavePolicyUpsertWithoutBalancesInput = {
-  update: Prisma.XOR<Prisma.LeavePolicyUpdateWithoutBalancesInput, Prisma.LeavePolicyUncheckedUpdateWithoutBalancesInput>
-  create: Prisma.XOR<Prisma.LeavePolicyCreateWithoutBalancesInput, Prisma.LeavePolicyUncheckedCreateWithoutBalancesInput>
-  where?: Prisma.LeavePolicyWhereInput
-}
-
-export type LeavePolicyUpdateToOneWithWhereWithoutBalancesInput = {
-  where?: Prisma.LeavePolicyWhereInput
-  data: Prisma.XOR<Prisma.LeavePolicyUpdateWithoutBalancesInput, Prisma.LeavePolicyUncheckedUpdateWithoutBalancesInput>
-}
-
-export type LeavePolicyUpdateWithoutBalancesInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  kind?: Prisma.EnumLeaveTypeKindFieldUpdateOperationsInput | $Enums.LeaveTypeKind
-  annualDays?: Prisma.FloatFieldUpdateOperationsInput | number
-  isPaid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  maxCarryOverDays?: Prisma.FloatFieldUpdateOperationsInput | number
-  requiresApproval?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  company?: Prisma.CompanyUpdateOneRequiredWithoutLeavePoliciesNestedInput
-  requests?: Prisma.LeaveRequestUpdateManyWithoutPolicyNestedInput
-}
-
-export type LeavePolicyUncheckedUpdateWithoutBalancesInput = {
-  id?: Prisma.StringFieldUpdateOperationsInput | string
-  companyId?: Prisma.StringFieldUpdateOperationsInput | string
-  name?: Prisma.StringFieldUpdateOperationsInput | string
-  kind?: Prisma.EnumLeaveTypeKindFieldUpdateOperationsInput | $Enums.LeaveTypeKind
-  annualDays?: Prisma.FloatFieldUpdateOperationsInput | number
-  isPaid?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  maxCarryOverDays?: Prisma.FloatFieldUpdateOperationsInput | number
-  requiresApproval?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  active?: Prisma.BoolFieldUpdateOperationsInput | boolean
-  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  requests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutPolicyNestedInput
-}
-
 export type LeavePolicyCreateWithoutRequestsInput = {
   id?: string
   name: string
@@ -737,7 +642,6 @@ export type LeavePolicyCreateWithoutRequestsInput = {
   active?: boolean
   createdAt?: Date | string
   company: Prisma.CompanyCreateNestedOneWithoutLeavePoliciesInput
-  balances?: Prisma.LeaveBalanceCreateNestedManyWithoutPolicyInput
 }
 
 export type LeavePolicyUncheckedCreateWithoutRequestsInput = {
@@ -751,7 +655,6 @@ export type LeavePolicyUncheckedCreateWithoutRequestsInput = {
   requiresApproval?: boolean
   active?: boolean
   createdAt?: Date | string
-  balances?: Prisma.LeaveBalanceUncheckedCreateNestedManyWithoutPolicyInput
 }
 
 export type LeavePolicyCreateOrConnectWithoutRequestsInput = {
@@ -781,7 +684,6 @@ export type LeavePolicyUpdateWithoutRequestsInput = {
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   company?: Prisma.CompanyUpdateOneRequiredWithoutLeavePoliciesNestedInput
-  balances?: Prisma.LeaveBalanceUpdateManyWithoutPolicyNestedInput
 }
 
 export type LeavePolicyUncheckedUpdateWithoutRequestsInput = {
@@ -795,7 +697,6 @@ export type LeavePolicyUncheckedUpdateWithoutRequestsInput = {
   requiresApproval?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  balances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutPolicyNestedInput
 }
 
 export type LeavePolicyCreateManyCompanyInput = {
@@ -820,7 +721,6 @@ export type LeavePolicyUpdateWithoutCompanyInput = {
   requiresApproval?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  balances?: Prisma.LeaveBalanceUpdateManyWithoutPolicyNestedInput
   requests?: Prisma.LeaveRequestUpdateManyWithoutPolicyNestedInput
 }
 
@@ -834,7 +734,6 @@ export type LeavePolicyUncheckedUpdateWithoutCompanyInput = {
   requiresApproval?: Prisma.BoolFieldUpdateOperationsInput | boolean
   active?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  balances?: Prisma.LeaveBalanceUncheckedUpdateManyWithoutPolicyNestedInput
   requests?: Prisma.LeaveRequestUncheckedUpdateManyWithoutPolicyNestedInput
 }
 
@@ -856,12 +755,10 @@ export type LeavePolicyUncheckedUpdateManyWithoutCompanyInput = {
  */
 
 export type LeavePolicyCountOutputType = {
-  balances: number
   requests: number
 }
 
 export type LeavePolicyCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  balances?: boolean | LeavePolicyCountOutputTypeCountBalancesArgs
   requests?: boolean | LeavePolicyCountOutputTypeCountRequestsArgs
 }
 
@@ -873,13 +770,6 @@ export type LeavePolicyCountOutputTypeDefaultArgs<ExtArgs extends runtime.Types.
    * Select specific fields to fetch from the LeavePolicyCountOutputType
    */
   select?: Prisma.LeavePolicyCountOutputTypeSelect<ExtArgs> | null
-}
-
-/**
- * LeavePolicyCountOutputType without action
- */
-export type LeavePolicyCountOutputTypeCountBalancesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  where?: Prisma.LeaveBalanceWhereInput
 }
 
 /**
@@ -902,7 +792,6 @@ export type LeavePolicySelect<ExtArgs extends runtime.Types.Extensions.InternalA
   active?: boolean
   createdAt?: boolean
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
-  balances?: boolean | Prisma.LeavePolicy$balancesArgs<ExtArgs>
   requests?: boolean | Prisma.LeavePolicy$requestsArgs<ExtArgs>
   _count?: boolean | Prisma.LeavePolicyCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["leavePolicy"]>
@@ -951,7 +840,6 @@ export type LeavePolicySelectScalar = {
 export type LeavePolicyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "companyId" | "name" | "kind" | "annualDays" | "isPaid" | "maxCarryOverDays" | "requiresApproval" | "active" | "createdAt", ExtArgs["result"]["leavePolicy"]>
 export type LeavePolicyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   company?: boolean | Prisma.CompanyDefaultArgs<ExtArgs>
-  balances?: boolean | Prisma.LeavePolicy$balancesArgs<ExtArgs>
   requests?: boolean | Prisma.LeavePolicy$requestsArgs<ExtArgs>
   _count?: boolean | Prisma.LeavePolicyCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -966,7 +854,6 @@ export type $LeavePolicyPayload<ExtArgs extends runtime.Types.Extensions.Interna
   name: "LeavePolicy"
   objects: {
     company: Prisma.$CompanyPayload<ExtArgs>
-    balances: Prisma.$LeaveBalancePayload<ExtArgs>[]
     requests: Prisma.$LeaveRequestPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1375,7 +1262,6 @@ readonly fields: LeavePolicyFieldRefs;
 export interface Prisma__LeavePolicyClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   company<T extends Prisma.CompanyDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.CompanyDefaultArgs<ExtArgs>>): Prisma.Prisma__CompanyClient<runtime.Types.Result.GetResult<Prisma.$CompanyPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  balances<T extends Prisma.LeavePolicy$balancesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LeavePolicy$balancesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeaveBalancePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   requests<T extends Prisma.LeavePolicy$requestsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.LeavePolicy$requestsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LeaveRequestPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1814,30 +1700,6 @@ export type LeavePolicyDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.I
    * Limit how many LeavePolicies to delete.
    */
   limit?: number
-}
-
-/**
- * LeavePolicy.balances
- */
-export type LeavePolicy$balancesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  /**
-   * Select specific fields to fetch from the LeaveBalance
-   */
-  select?: Prisma.LeaveBalanceSelect<ExtArgs> | null
-  /**
-   * Omit specific fields from the LeaveBalance
-   */
-  omit?: Prisma.LeaveBalanceOmit<ExtArgs> | null
-  /**
-   * Choose, which related nodes to fetch as well
-   */
-  include?: Prisma.LeaveBalanceInclude<ExtArgs> | null
-  where?: Prisma.LeaveBalanceWhereInput
-  orderBy?: Prisma.LeaveBalanceOrderByWithRelationInput | Prisma.LeaveBalanceOrderByWithRelationInput[]
-  cursor?: Prisma.LeaveBalanceWhereUniqueInput
-  take?: number
-  skip?: number
-  distinct?: Prisma.LeaveBalanceScalarFieldEnum | Prisma.LeaveBalanceScalarFieldEnum[]
 }
 
 /**

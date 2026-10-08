@@ -23,11 +23,6 @@ export * from './enums';
  */
 export type Company = Prisma.CompanyModel
 /**
- * Model Department
- * 
- */
-export type Department = Prisma.DepartmentModel
-/**
  * Model Employee
  * 
  */
@@ -42,11 +37,6 @@ export type User = Prisma.UserModel
  * 
  */
 export type LeavePolicy = Prisma.LeavePolicyModel
-/**
- * Model LeaveBalance
- * 
- */
-export type LeaveBalance = Prisma.LeaveBalanceModel
 /**
  * Model LeaveRequest
  * 
@@ -82,11 +72,6 @@ export type Approval = Prisma.ApprovalModel
  * 
  */
 export type Notification = Prisma.NotificationModel
-/**
- * Model Holiday
- * 
- */
-export type Holiday = Prisma.HolidayModel
 /**
  * Model Invitation
  * 

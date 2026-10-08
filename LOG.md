@@ -13,7 +13,7 @@
 
 ---
 
-## 📍 Current Status (as of 2026-10-01, end of Session 20)
+## 📍 Current Status (as of 2026-10-06, after Session 22)
 
 **Progress: The MVP feature set is complete and deliberately small ✅ The product is receipt processing + PTO/sick day requests for a ~20-person startup, plus the auth, employee admin and team-scoped approvals those two need. Session 20 settled the remaining product questions instead of adding features: the **country** is the only first-run question and it decides the language (the runtime switcher is gone), **attendance is removed** because "딱 두 가지" means two things, and answering **"server"** to the second question now genuinely opens the app to the internet. The install is still one click, and still verified rather than asserted: 74 browser E2E checks pass both on `localhost` **and through a live public Cloudflare Tunnel address**. The repo is branded HOOHR, public on GitHub, and clone-and-run.**
 
@@ -61,8 +61,9 @@
 | Holiday-aware leave day counting | ✅ Done (Session 10) |
 | Email notifications (NOT-1/2) | ✅ **Done (Session 16)** — SMTP transport, ko/en templates, decision + invite + digest mail. **Real delivery verified 2026-10-01** against a local SMTP server: invite + digest both arrived, correct Korean, links, HTML part |
 | **Click-level workflow doc** | ✅ **Done (Session 20)** — `docs/WORKFLOW.md`: every user/admin action, what it guarantees, what it refuses, plus a "Known gaps" table (G1–G7) that the UI hides. Writing it is what surfaced G7 |
-| **New hire can get leave (G1)** | ✅ **Fixed (Session 21)** — `decideLeave` now upserts the balance row; the request form warns instead of blocking on a missing/zero balance; a new-hire leaves with "잔여 없음" and can file/approve PTO + sick. Covered by `_e2e/resilience.ts` (29) and `_e2e/newhire.mjs` (20) |
+| **New hire can get leave (G1)** | ✅ **Fixed (Session 21), simplified (Session 22)** — `LeaveBalance` + balance CSV import removed; remaining paid days are computed at runtime from the policy's annual days minus that employee's approved days this year, so there is nothing to repair. Self-approval refused; a new hire requests, an admin approves |
 | **Draft expense report can be edited (G7)** | ✅ **Fixed (Session 21)** — copy corrected: the form hint no longer promises editing. Delete-and-recreate remains the only path for fixes |
+| **Deep scope cut (Session 22)** | ✅ Departments, team-approver routing, the MANAGER role, holidays table, and `LeaveBalance`/CSV-import are removed. The core is exactly: **leave request + receipt filing**, one-approval-pool (ADMIN) |
 | Checkpoint commit (Session 5–9) | ✅ `98f7ab8` + `e1cc5b3` |
 | **GitHub public repo** | ✅ **Done — https://github.com/WhoisHOO/HOOHR** (`main`, renamed in Session 11) |
 | Brand rename `hr-app` → `HOOHR` (routes/DB/containers/docs) | ✅ Done (Session 11) |

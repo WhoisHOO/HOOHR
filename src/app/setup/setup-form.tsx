@@ -17,6 +17,12 @@ export function SetupForm({ defaultCompanyName }: { defaultCompanyName: string }
       <Field label={d.setup.fields.companyName} error={state?.fieldErrors?.companyName?.[0]}>
         <input id="companyName" name="companyName" required defaultValue={defaultCompanyName} className={inputCls} />
       </Field>
+      <Field label={d.setup.fields.country} error={state?.fieldErrors?.country?.[0]}>
+        <select id="country" name="country" className={inputCls} required>
+          <option value="KR">{d.setup.countries.KR}</option>
+          <option value="US">{d.setup.countries.US}</option>
+        </select>
+      </Field>
       <Field label={d.setup.fields.name} error={state?.fieldErrors?.name?.[0]}>
         <input id="name" name="name" required className={inputCls} />
       </Field>

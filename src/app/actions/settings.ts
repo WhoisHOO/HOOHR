@@ -4,8 +4,6 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
-import { parseIsoDate, zonedToday } from "@/lib/date";
-import { getCompanyTimezone } from "@/lib/company";
 import { formatWeekendDays } from "@/lib/company-defaults";
 import { countryDefaults } from "@/lib/country";
 import {
@@ -13,18 +11,12 @@ import {
   expenseCategoryCreateSchema,
   expenseCategoryDeleteSchema,
   expenseCategoryUpdateSchema,
-  holidayCreateSchema,
-  holidayDeleteSchema,
-  leavePolicyIdSchema,
   leavePolicyUpdateSchema,
   type CompanySettingsState,
   type ExpenseCategoryState,
-  type HolidayState,
   type LeavePolicyState,
 } from "@/lib/settings-validation";
 import { getDict, interpolate } from "@/i18n/server";
-
-type AdminContext = { companyId: string };
 
 function formText(formData: FormData, key: string): string | undefined {
   const value = formData.get(key);
@@ -154,120 +146,6 @@ export async function updateLeavePolicy(
     message: interpolate(settings.messages.policySaved, { name: policy.name }),
     ok: true,
   };
-}
-
-/**
- * 정책의 연간 부여 일수를 올해 잔액에 반영 (ADMIN 전용 명시적 실행).
- * 기존 잔액 행만 갱신하며, 사용일(usedDays)·조정일(adjustDays)은 건드리지 않는다.
- */
-export async function applyPolicyToCurrentYear(
-  _state: LeavePolicyState,
-  formData: FormData,
-): Promise<LeavePolicyState> {
-  const admin = await requireAdmin();
-  const { common, settings } = await getDict();
-  const schema = leavePolicyIdSchema({
-    ...settings,
-    required: common.validation.required,
-  });
-  const parsed = schema.safeParse({ id: formText(formData, "id") });
-  if (!parsed.success) {
-    return { fieldErrors: fieldErrors(parsed.error.issues) };
-  }
-
-  const policy = await prisma.leavePolicy.findFirst({
-    where: { id: parsed.data.id, companyId: admin.companyId },
-    select: { id: true, name: true, annualDays: true },
-  });
-  if (!policy) {
-    return { message: settings.messages.policyNotFound, ok: false };
-  }
-
-  const year = await getCompanyYear(admin);
-  const result = await prisma.leaveBalance.updateMany({
-    where: { policyId: policy.id, year },
-    data: { grantedDays: policy.annualDays },
-  });
-
-  revalidateSettingsPages();
-  return {
-    message:
-      result.count === 0
-        ? interpolate(settings.messages.policyApplySkipped, { year })
-        : interpolate(settings.messages.policyApplied, {
-            year,
-            rows: interpolate(common.units.count, { n: result.count }),
-            days: interpolate(common.units.days, { n: policy.annualDays }),
-          }),
-    ok: true,
-  };
-}
-
-async function getCompanyYear(admin: AdminContext): Promise<number> {
-  const timezone = await getCompanyTimezone(admin.companyId);
-  return zonedToday(timezone).getUTCFullYear();
-}
-
-// ============ SET-3: 공휴일 ============
-
-export async function createHoliday(
-  _state: HolidayState,
-  formData: FormData,
-): Promise<HolidayState> {
-  const admin = await requireAdmin();
-  const { common, settings } = await getDict();
-  const schema = holidayCreateSchema({
-    ...settings,
-    required: common.validation.required,
-  });
-  const parsed = schema.safeParse({
-    date: formText(formData, "date"),
-    name: formText(formData, "name"),
-  });
-  if (!parsed.success) {
-    return { fieldErrors: fieldErrors(parsed.error.issues) };
-  }
-
-  const date = parseIsoDate(parsed.data.date);
-  try {
-    await prisma.holiday.create({
-      data: { companyId: admin.companyId, date, name: parsed.data.name },
-    });
-  } catch (error) {
-    if (isUniqueConstraintError(error)) {
-      return { message: settings.messages.holidayExists, ok: false };
-    }
-    throw error;
-  }
-
-  revalidateSettingsPages();
-  return { message: settings.messages.holidayCreated, ok: true };
-}
-
-export async function deleteHoliday(
-  _state: HolidayState,
-  formData: FormData,
-): Promise<HolidayState> {
-  const admin = await requireAdmin();
-  const { common, settings } = await getDict();
-  const schema = holidayDeleteSchema({
-    ...settings,
-    required: common.validation.required,
-  });
-  const parsed = schema.safeParse({ id: formText(formData, "id") });
-  if (!parsed.success) {
-    return { fieldErrors: fieldErrors(parsed.error.issues) };
-  }
-
-  const result = await prisma.holiday.deleteMany({
-    where: { id: parsed.data.id, companyId: admin.companyId },
-  });
-  if (result.count === 0) {
-    return { message: settings.messages.holidayNotFound, ok: false };
-  }
-
-  revalidateSettingsPages();
-  return { message: settings.messages.holidayDeleted, ok: true };
 }
 
 // ============ SET-4: 경비 분류 ============

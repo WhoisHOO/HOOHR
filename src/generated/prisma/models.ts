@@ -9,11 +9,9 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/Company'
-export type * from './models/Department'
 export type * from './models/Employee'
 export type * from './models/User'
 export type * from './models/LeavePolicy'
-export type * from './models/LeaveBalance'
 export type * from './models/LeaveRequest'
 export type * from './models/ExpenseCategory'
 export type * from './models/ExpenseReport'
@@ -21,6 +19,5 @@ export type * from './models/ExpenseItem'
 export type * from './models/ReceiptFile'
 export type * from './models/Approval'
 export type * from './models/Notification'
-export type * from './models/Holiday'
 export type * from './models/Invitation'
 export type * from './commonInputTypes'

@@ -1,19 +1,18 @@
 // 휴가 도메인의 순수 유틸 — 표시/계산 전용 (DB 접근 없음).
 
-import { isWorkday, type HolidaySet, type WeekendSet } from "@/lib/holidays";
+import { isWorkday, type WeekendSet } from "@/lib/weekend";
 import { DEFAULT_INTL_LOCALE, type InltLocale } from "@/i18n/config";
 
-/** [start, end] 구간의 근무일 수 (주휴일 + 등록된 공휴일 제외, UTC 날짜 기준). */
+/** [start, end] 구간의 근무일 수 (주휴일 제외, UTC 날짜 기준). */
 export function countWorkdays(
   start: Date,
   end: Date,
-  holidays?: HolidaySet,
   weekend?: WeekendSet,
 ): number {
   let count = 0;
   const cur = new Date(start.getTime());
   while (cur.getTime() <= end.getTime()) {
-    if (isWorkday(cur, holidays, weekend)) count += 1;
+    if (isWorkday(cur, weekend)) count += 1;
     cur.setUTCDate(cur.getUTCDate() + 1);
   }
   return count;
@@ -24,19 +23,17 @@ export function computeLeaveDays(
   start: Date,
   end: Date,
   isHalfDay: boolean,
-  holidays?: HolidaySet,
   weekend?: WeekendSet,
 ): number {
-  return isHalfDay ? 0.5 : countWorkdays(start, end, holidays, weekend);
+  return isHalfDay ? 0.5 : countWorkdays(start, end, weekend);
 }
 
-/** 잔여 연차 = 부여 - 사용 + 조정. */
-export function remainingDays(bal: {
-  grantedDays: number;
-  usedDays: number;
-  adjustDays: number;
-}): number {
-  return bal.grantedDays - bal.usedDays + bal.adjustDays;
+/** 유급 휴가의 남은 일수 = 정책 연간 부여 - 올해 승인된 사용. 미사용/무급은 없음. */
+export function availablePaidDays(
+  annualDays: number,
+  usedDaysThisYear: number,
+): number {
+  return Math.max(0, annualDays - usedDaysThisYear);
 }
 
 // 날짜형(@db.Date = UTC 자정) 값들을 지역 표기로. ko-KR이면 "M월 D일",

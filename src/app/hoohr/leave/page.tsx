@@ -3,16 +3,9 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/dal";
 import { getCompanyTimezone, getCompanyWeekendRaw } from "@/lib/company";
-import { addMonths, monthBounds, monthLabel, parseIsoDate, zonedToday } from "@/lib/date";
-import { formatLeaveDay, formatLeaveRange, remainingDays } from "@/lib/leave";
-import { isoDateKey } from "@/lib/holidays";
+import { addMonths, monthBounds, monthLabel, zonedToday } from "@/lib/date";
+import { formatLeaveRange, availablePaidDays } from "@/lib/leave";
 import { getDict, getLocale, interpolate, INTL_LOCALES } from "@/i18n/server";
-import { getCompanyHolidayNames } from "@/lib/holiday-store";
-import {
-  approvalInboxEmployeeWhere,
-  isApprovalReviewer,
-  teamEmployeeWhere,
-} from "@/lib/team";
 import { LeaveRequestForm, type LeavePolicyOption } from "./leave-form";
 import { DecideLeaveForm } from "./decide-form";
 import { CancelLeaveButton } from "./cancel-button";
@@ -71,20 +64,33 @@ export default async function LeavePage({
   const prevHref = `/hoohr/leave?month=${monthLabel(addMonths(monthDate, -1))}`;
   const nextHref = `/hoohr/leave?month=${monthLabel(addMonths(monthDate, 1))}`;
 
-  const isReviewer = isApprovalReviewer(user);
-  const teamScope = isReviewer
-    ? teamEmployeeWhere(user, true)
-    : { id: { in: [] } };
+  const isReviewer = user.role === "ADMIN";
 
-  const [policies, balances, myRequests, myMonthLeaves, inbox, companyMonthLeaves, holidayNames] =
+  // Used paid-leave days this year, per policy, for the current employee.
+  const usedByPolicy = new Map<string, number>();
+  if (user.employeeId) {
+    const approvedThisYear = await prisma.leaveRequest.findMany({
+      where: {
+        companyId: user.companyId,
+        employeeId: user.employeeId,
+        status: "APPROVED",
+        startDate: { gte: new Date(Date.UTC(year, 0, 1)) },
+        endDate: { lte: new Date(Date.UTC(year, 11, 31)) },
+        policy: { kind: { in: ["PTO", "SICK"] } },
+      },
+      select: { policyId: true, days: true },
+    });
+    for (const r of approvedThisYear) {
+      usedByPolicy.set(r.policyId, (usedByPolicy.get(r.policyId) ?? 0) + r.days);
+    }
+  }
+
+  const [policies, myRequests, myMonthLeaves, inbox, companyMonthLeaves] =
     await Promise.all([
       prisma.leavePolicy.findMany({
         where: { companyId: user.companyId, active: true },
         orderBy: [{ kind: "asc" }, { name: "asc" }],
       }),
-      user.employeeId
-        ? prisma.leaveBalance.findMany({ where: { employeeId: user.employeeId, year } })
-        : Promise.resolve([]),
       user.employeeId
         ? prisma.leaveRequest.findMany({
             where: {
@@ -114,11 +120,11 @@ export default async function LeavePage({
             where: {
               companyId: user.companyId,
               status: "PENDING",
-              employee: approvalInboxEmployeeWhere(user),
+              employeeId: { not: user.employeeId ?? "" },
             },
             include: {
               policy: true,
-              employee: { include: { department: { select: { name: true } } } },
+              employee: { select: { name: true } },
             },
             orderBy: { createdAt: "asc" },
           })
@@ -130,36 +136,22 @@ export default async function LeavePage({
               status: "APPROVED",
               startDate: { lte: monthEnd },
               endDate: { gte: monthStart },
-              employee: teamScope,
             },
             include: { policy: true, employee: true },
             orderBy: { startDate: "asc" },
           })
         : Promise.resolve([]),
-      getCompanyHolidayNames(user.companyId),
     ]);
 
-  const holidayDates = [...holidayNames.keys()];
-  const startKey = isoDateKey(monthStart);
-  const endKey = isoDateKey(monthEnd);
-  const monthHolidayNames = [...holidayNames.entries()]
-    .filter(([key]) => key >= startKey && key <= endKey)
-    .map(([key, name]) => `${formatLeaveDay(parseIsoDate(key), intl)} ${name}`);
-
-  const balanceByPolicy = new Map(balances.map((b) => [b.policyId, b]));
-
   const policyOptions: LeavePolicyOption[] = policies.map((p) => {
-    const bal = balanceByPolicy.get(p.id);
+    const used = usedByPolicy.get(p.id) ?? 0;
     return {
       id: p.id,
       name: p.name,
       kind: p.kind,
-      // `null` means "this company does not track a balance for this person",
-      // which is the normal case: nothing creates a LeaveBalance row except the
-      // seed and the CSV import. It must NOT collapse to 0, because 0 is a real
-      // number here - a granted-and-spent balance - and showing it as "0 days
-      // left" blocked a new hire from filing at all (see WORKFLOW.md G1).
-      remaining: p.kind === "UNPAID" || !bal ? null : remainingDays(bal),
+      // `null` means "this company does not track a balance for this person".
+      // For paid policies we always show the computed remaining days.
+      remaining: p.kind === "UNPAID" ? null : availablePaidDays(p.annualDays, used),
     };
   });
 
@@ -176,7 +168,8 @@ export default async function LeavePage({
         <>
           <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {policies.map((p) => {
-              const bal = balanceByPolicy.get(p.id);
+              const used = usedByPolicy.get(p.id) ?? 0;
+              const remaining = availablePaidDays(p.annualDays, used);
               return (
                 <div
                   key={p.id}
@@ -186,24 +179,15 @@ export default async function LeavePage({
                   <p className="mt-1 text-2xl font-semibold text-zinc-900">
                     {p.kind === "UNPAID"
                       ? "-"
-                      : bal
-                        ? interpolate(common.units.days, {
-                            n: Math.max(0, remainingDays(bal)),
-                          })
-                        : "-"}
+                      : interpolate(common.units.days, { n: remaining })}
                   </p>
-                  {bal && (
+                  {p.kind !== "UNPAID" && (
                     <p className="mt-1 text-xs text-zinc-400">
                       {interpolate(leave.balance.grantedUsedAdjusted, {
-                        granted: bal.grantedDays,
-                        used: bal.usedDays,
-                        adjusted: bal.adjustDays,
+                        granted: p.annualDays,
+                        used,
+                        adjusted: 0,
                       })}
-                    </p>
-                  )}
-                  {!bal && p.kind !== "UNPAID" && (
-                    <p className="mt-1 text-xs text-zinc-400">
-                      {leave.balance.noRemaining}
                     </p>
                   )}
                 </div>
@@ -231,7 +215,6 @@ export default async function LeavePage({
                 <LeaveRequestForm
                   policies={policyOptions}
                   today={`${today.getUTCFullYear()}-${String(today.getUTCMonth() + 1).padStart(2, "0")}-${String(today.getUTCDate()).padStart(2, "0")}`}
-                  holidays={holidayDates}
                   weekendDays={weekendDays}
                 />
               )}
@@ -339,14 +322,6 @@ export default async function LeavePage({
             ))}
           </ul>
         )}
-
-        {monthHolidayNames.length > 0 && (
-          <p className="mt-4 text-xs text-zinc-500">
-            {interpolate(leave.sections.holidays, {
-              names: monthHolidayNames.join(", "),
-            })}
-          </p>
-        )}
       </section>
 
       {isReviewer && inbox.length > 0 && (
@@ -359,9 +334,6 @@ export default async function LeavePage({
               <li key={r.id} className="rounded-lg border border-zinc-200 px-4 py-3">
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span className="font-medium text-zinc-800">{r.employee.name}</span>
-                  <span className="text-xs text-zinc-500">
-                    {r.employee.department?.name ?? "-"}
-                  </span>
                   <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-600">
                     {r.policy.name}
                   </span>

@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/dal";
 import { monthBounds } from "@/lib/date";
-import { teamEmployeeWhere } from "@/lib/team";
 import { getDict } from "@/i18n/server";
 
 function formatDateNoPad(d: Date): string {
@@ -42,18 +41,14 @@ export async function GET(request: Request) {
   const { start, end } = monthBounds(monthDate);
   const yyyymm = `${monthDate.getUTCFullYear()}-${String(monthDate.getUTCMonth() + 1).padStart(2, "0")}`;
   const isAdmin = user.role === "ADMIN";
-  const isManager = user.role === "MANAGER";
-  const isReviewer = isAdmin || isManager;
   const employeeScope = isAdmin
     ? { companyId: user.companyId }
-    : isManager
-      ? teamEmployeeWhere(user, true)
-      : {
-          companyId: user.companyId,
-          ...(user.employeeId
-            ? { id: user.employeeId }
-            : { id: { in: [] } }),
-        };
+    : {
+        companyId: user.companyId,
+        ...(user.employeeId
+          ? { id: user.employeeId }
+          : { id: { in: [] } }),
+      };
 
   const items = await prisma.expenseItem.findMany({
     where: {
@@ -83,7 +78,7 @@ export async function GET(request: Request) {
   const columns = expenses.export.columns;
   const statusLabel = (s: string) =>
     common.expenseStatus[s as keyof typeof common.expenseStatus] ?? s;
-  if (isReviewer) {
+  if (isAdmin) {
     rows.push([
       columns.date, columns.category, columns.employee, columns.title, columns.status, columns.amount, columns.currency, columns.description, columns.receipts,
     ]);
@@ -94,7 +89,7 @@ export async function GET(request: Request) {
     const base = [
       formatDateNoPad(it.date),
       it.category.name,
-      ...(isReviewer ? [it.report.employee.name] : []),
+      ...(isAdmin ? [it.report.employee.name] : []),
       it.report.title,
       statusLabel(it.report.status),
       (it.amountCents / 100).toFixed(2),

@@ -9,6 +9,11 @@ export const setupKo = {
     name: "관리자 이름",
     email: "이메일",
     password: "비밀번호 (영문+숫자, 8자 이상)",
+    country: "국가 (통화·시간대·언어가 정해집니다)",
+  },
+  countries: {
+    KR: "대한민국 (한국어, 원, 아시아/서울)",
+    US: "United States (English, USD, America/New_York)",
   },
   submit: "시작하기",
   submitting: "만드는 중...",
@@ -25,6 +30,11 @@ export const setupEn: SetupMessages = {
     name: "Admin name",
     email: "Email",
     password: "Password (letters + digits, 8+ chars)",
+    country: "Country (sets currency, timezone, and language)",
+  },
+  countries: {
+    KR: "South Korea (Korean, KRW, Asia/Seoul)",
+    US: "United States (English, USD, America/New_York)",
   },
   submit: "Get started",
   submitting: "Creating...",

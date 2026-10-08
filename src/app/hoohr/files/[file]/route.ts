@@ -3,10 +3,6 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser } from "@/lib/dal";
 import { receiptPath } from "@/lib/storage";
-import {
-  approvalTargetEmployeeInclude,
-  canReviewEmployee,
-} from "@/lib/team";
 
 export async function GET(
   _request: Request,
@@ -27,7 +23,7 @@ export async function GET(
       item: {
         include: {
           report: {
-            include: { employee: approvalTargetEmployeeInclude },
+            include: { employee: { select: { id: true, companyId: true } } },
           },
         },
       },
@@ -39,7 +35,8 @@ export async function GET(
 
   const report = receipt.item.report;
   const isOwner = report.employeeId === user.employeeId;
-  if (!isOwner && !canReviewEmployee(user, report)) {
+  const isAdmin = user.role === "ADMIN";
+  if (!isOwner && !isAdmin) {
     return new NextResponse("Forbidden", { status: 403 });
   }
 

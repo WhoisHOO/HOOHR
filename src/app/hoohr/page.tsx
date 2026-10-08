@@ -26,21 +26,28 @@ export default async function DashboardPage() {
   const now = new Date();
   const year = now.getUTCFullYear();
 
-  const [employee, ptoBalance, pendingLeave, submittedExpense] =
+  const [employee, ptoPolicy, ptoUsed, pendingLeave, submittedExpense] =
     await Promise.all([
       user.employeeId
         ? prisma.employee.findUnique({
             where: { id: user.employeeId },
-            include: { department: true },
           })
         : null,
       user.employeeId
-        ? prisma.leaveBalance.findFirst({
+        ? prisma.leavePolicy.findFirst({
+            where: { companyId: user.companyId, active: true, kind: "PTO" },
+          })
+        : null,
+      user.employeeId
+        ? prisma.leaveRequest.aggregate({
             where: {
               employeeId: user.employeeId,
-              year,
+              status: "APPROVED",
+              startDate: { gte: new Date(Date.UTC(year, 0, 1)) },
+              endDate: { lte: new Date(Date.UTC(year, 11, 31)) },
               policy: { kind: "PTO" },
             },
+            _sum: { days: true },
           })
         : null,
       user.employeeId
@@ -55,8 +62,8 @@ export default async function DashboardPage() {
         : 0,
     ]);
 
-  const ptoRemaining = ptoBalance
-    ? ptoBalance.grantedDays - ptoBalance.usedDays + ptoBalance.adjustDays
+  const ptoRemaining = ptoPolicy
+    ? Math.max(0, ptoPolicy.annualDays - (ptoUsed?._sum.days ?? 0))
     : null;
 
   const isFreshInstall =
@@ -93,7 +100,6 @@ export default async function DashboardPage() {
       </h1>
       <p className="mt-1 text-sm text-zinc-500">
         {interpolate(dashboard.profile, {
-          department: employee?.department?.name ?? "-",
           position: employee?.position ?? "-",
           date: formatDate(employee?.hireDate ?? null, locale),
         })}

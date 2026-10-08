@@ -1,41 +1,19 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/dal";
-import { getCompanyTimezone } from "@/lib/company";
-import { zonedToday } from "@/lib/date";
-import { formatLeaveDay } from "@/lib/leave";
-import { getDict, getLocale, interpolate, INTL_LOCALES } from "@/i18n/server";
-import { SettingsClient, type PolicyView, type CategoryView, type HolidayView } from "./settings-client";
+import { getDict } from "@/i18n/server";
+import { SettingsClient, type PolicyView, type CategoryView } from "./settings-client";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { settings } = await getDict();
   return { title: settings.page.title };
 }
 
-function toDateInput(date: Date): string {
-  return date.toISOString().slice(0, 10);
-}
-
-export default async function SettingsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ year?: string }>;
-}) {
+export default async function SettingsPage() {
   const admin = await requireAdmin();
   const { common, settings } = await getDict();
-  const locale = await getLocale();
-  const intl = INTL_LOCALES[locale];
-  const tz = await getCompanyTimezone(admin.companyId);
-  const currentYear = zonedToday(tz).getUTCFullYear();
 
-  const params = await searchParams;
-  const requestedYear = Number(params.year);
-  const year =
-    Number.isInteger(requestedYear) && requestedYear >= 2000 && requestedYear <= 2100
-      ? requestedYear
-      : currentYear;
-
-  const [company, policies, holidays, categories] = await Promise.all([
+  const [company, policies, categories] = await Promise.all([
     prisma.company.findUniqueOrThrow({
       where: { id: admin.companyId },
       select: {
@@ -47,12 +25,6 @@ export default async function SettingsPage({
     prisma.leavePolicy.findMany({
       where: { companyId: admin.companyId },
       orderBy: [{ kind: "asc" }, { name: "asc" }],
-      include: { _count: { select: { balances: true } } },
-    }),
-    prisma.holiday.findMany({
-      where: { companyId: admin.companyId },
-      orderBy: { date: "asc" },
-      select: { id: true, date: true, name: true },
     }),
     prisma.expenseCategory.findMany({
       where: { companyId: admin.companyId },
@@ -71,18 +43,6 @@ export default async function SettingsPage({
     isPaid: policy.isPaid,
     requiresApproval: policy.requiresApproval,
     active: policy.active,
-    balanceCount: policy._count.balances,
-  }));
-
-  const holidayViews: HolidayView[] = holidays.map((holiday) => ({
-    id: holiday.id,
-    date: toDateInput(holiday.date),
-    label: interpolate(settings.item.holidayLabel, {
-      date: formatLeaveDay(holiday.date, intl),
-      name: holiday.name,
-    }),
-    year: holiday.date.getUTCFullYear(),
-    name: holiday.name,
   }));
 
   const categoryViews: CategoryView[] = categories.map((category) => ({
@@ -91,9 +51,6 @@ export default async function SettingsPage({
     active: category.active,
     itemCount: category._count.items,
   }));
-
-  const prevYear = year - 1;
-  const nextYear = year + 1;
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
@@ -106,12 +63,7 @@ export default async function SettingsPage({
         companyName={company.name}
         country={company.country}
         weekendDays={company.weekendDays}
-        currentYear={currentYear}
-        year={year}
-        prevYear={prevYear}
-        nextYear={nextYear}
         policies={policyViews}
-        holidays={holidayViews}
         categories={categoryViews}
       />
     </div>

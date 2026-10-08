@@ -70,13 +70,13 @@ export async function inviteEmployee(
   const parsed = inviteFormSchema(common.validation).safeParse({
     email: formData.get("email"),
     name: formData.get("name"),
-    role: formData.get("role"),
+    role: "EMPLOYEE",
   });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
   }
 
-  const { email, name, role } = parsed.data;
+  const { email, name } = parsed.data;
 
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -105,7 +105,7 @@ export async function inviteEmployee(
       data: {
         companyId: admin.companyId,
         email,
-        role,
+        role: "EMPLOYEE",
         token,
         expiresAt,
       },
@@ -152,13 +152,13 @@ export async function reinviteEmployee(
   const { common, auth } = await getDict();
   const parsed = reinviteEmployeeFormSchema(common.validation).safeParse({
     employeeId: formData.get("employeeId"),
-    role: formData.get("role"),
+    role: "EMPLOYEE",
   });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
   }
 
-  const { employeeId, role } = parsed.data;
+  const { employeeId } = parsed.data;
   const employee = await prisma.employee.findFirst({
     where: { id: employeeId, companyId: admin.companyId, status: "INVITED" },
     select: { id: true, name: true, email: true, userId: true },
@@ -197,7 +197,7 @@ export async function reinviteEmployee(
       data: {
         companyId: admin.companyId,
         email: fresh.email,
-        role,
+        role: "EMPLOYEE",
         token,
         expiresAt,
       },
