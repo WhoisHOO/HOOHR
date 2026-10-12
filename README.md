@@ -17,10 +17,10 @@ Built for a team of ~20 people, not for an enterprise HR suite. Open source unde
 
 | Module | Features |
 |---|---|
-| **Leave** (휴가) | PTO / sick / unpaid requests, full or half-day, remaining days derived from policy annual days minus approved days, admin approval (reject requires a reason), self-cancel before approval, monthly company schedule |
+| **Leave** (휴가) | PTO / sick / unpaid requests, full or half-day, request → admin approval (reject requires a reason), self-cancel before approval, monthly company schedule |
 | **Expenses** (경비) | Draft reports with multiple line items, per-item receipt upload, submit → approve → pay workflow, protected receipt downloads, **CSV export** for accounting |
 | **Employee admin** | Employee profiles, activate/deactivate, re-invite pending employees |
-| **Settings** | Company name + country, leave policy management (annual days, carry-over, paid/approval flags), expense categories |
+| **Settings** | Company name + country, leave policy management (name, paid/approval flags), expense categories |
 
 ### Roles
 

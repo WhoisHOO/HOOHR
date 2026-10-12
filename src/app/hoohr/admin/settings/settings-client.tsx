@@ -24,8 +24,6 @@ export type PolicyView = {
   name: string;
   kind: string;
   kindLabel: string;
-  annualDays: number;
-  maxCarryOverDays: number;
   isPaid: boolean;
   requiresApproval: boolean;
   active: boolean;
@@ -373,36 +371,6 @@ function PolicyRow({ policy }: { policy: PolicyView }) {
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500">
-              {d.settings.labels.annualDays}
-            </label>
-            <input
-              name="annualDays"
-              type="number"
-              step="0.5"
-              min="0"
-              required
-              defaultValue={policy.annualDays}
-              className={inputClass}
-            />
-            <FieldError state={state} name="annualDays" />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-zinc-500">
-              {d.settings.labels.maxCarryOver}
-            </label>
-            <input
-              name="maxCarryOverDays"
-              type="number"
-              step="0.5"
-              min="0"
-              required
-              defaultValue={policy.maxCarryOverDays}
-              className={inputClass}
-            />
-            <FieldError state={state} name="maxCarryOverDays" />
-          </div>
           <label className="flex items-center gap-2 text-sm text-zinc-700">
             <input
               type="checkbox"

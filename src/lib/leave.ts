@@ -28,14 +28,6 @@ export function computeLeaveDays(
   return isHalfDay ? 0.5 : countWorkdays(start, end, weekend);
 }
 
-/** 유급 휴가의 남은 일수 = 정책 연간 부여 - 올해 승인된 사용. 미사용/무급은 없음. */
-export function availablePaidDays(
-  annualDays: number,
-  usedDaysThisYear: number,
-): number {
-  return Math.max(0, annualDays - usedDaysThisYear);
-}
-
 // 날짜형(@db.Date = UTC 자정) 값들을 지역 표기로. ko-KR이면 "M월 D일",
 // en-US이면 "M/D"가 된다.
 export function formatLeaveDay(

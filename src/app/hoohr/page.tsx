@@ -23,49 +23,25 @@ export default async function DashboardPage() {
   const user = await requireUser();
   const { dashboard } = await getDict();
   const locale = INTL_LOCALES[await getLocale()];
-  const now = new Date();
-  const year = now.getUTCFullYear();
   const isAdmin = user.role === "ADMIN";
 
-  const [employee, ptoPolicy, ptoUsed, pendingLeave, submittedExpense] =
-    await Promise.all([
-      user.employeeId
-        ? prisma.employee.findUnique({
-            where: { id: user.employeeId },
-          })
-        : null,
-      user.employeeId
-        ? prisma.leavePolicy.findFirst({
-            where: { companyId: user.companyId, active: true, kind: "PTO" },
-          })
-        : null,
-      user.employeeId
-        ? prisma.leaveRequest.aggregate({
-            where: {
-              employeeId: user.employeeId,
-              status: "APPROVED",
-              startDate: { gte: new Date(Date.UTC(year, 0, 1)) },
-              endDate: { lte: new Date(Date.UTC(year, 11, 31)) },
-              policy: { kind: "PTO" },
-            },
-            _sum: { days: true },
-          })
-        : null,
-      user.employeeId
-        ? prisma.leaveRequest.count({
-            where: { employeeId: user.employeeId, status: "PENDING" },
-          })
-        : 0,
-      user.employeeId
-        ? prisma.expenseReport.count({
-            where: { employeeId: user.employeeId, status: "SUBMITTED" },
-          })
-        : 0,
-    ]);
-
-  const ptoRemaining = ptoPolicy
-    ? Math.max(0, ptoPolicy.annualDays - (ptoUsed?._sum.days ?? 0))
-    : null;
+  const [employee, pendingLeave, submittedExpense] = await Promise.all([
+    user.employeeId
+      ? prisma.employee.findUnique({
+          where: { id: user.employeeId },
+        })
+      : null,
+    user.employeeId
+      ? prisma.leaveRequest.count({
+          where: { employeeId: user.employeeId, status: "PENDING" },
+        })
+      : 0,
+    user.employeeId
+      ? prisma.expenseReport.count({
+          where: { employeeId: user.employeeId, status: "SUBMITTED" },
+        })
+      : 0,
+  ]);
 
   // Admin sees everyone else's waiting requests. Employees never see this.
   const [inboxLeave, inboxExpense, employeeCount] = isAdmin
@@ -134,12 +110,6 @@ export default async function DashboardPage() {
             </p>
           </Link>
         </div>
-
-        {ptoRemaining !== null && (
-          <p className="mt-6 text-sm text-zinc-500">
-            {interpolate(dashboard.stats.leave.days, { n: ptoRemaining })}
-          </p>
-        )}
       </div>
     );
   }
@@ -209,12 +179,7 @@ export default async function DashboardPage() {
         <StatCard
           href="/hoohr/leave"
           title={dashboard.stats.leave.title}
-          value={
-            ptoRemaining !== null
-              ? interpolate(dashboard.stats.leave.days, { n: ptoRemaining })
-              : "-"
-          }
-          sub={interpolate(dashboard.stats.leave.pending, { n: pendingLeave })}
+          value={interpolate(dashboard.stats.leave.pending, { n: pendingLeave })}
         />
         <StatCard
           href="/hoohr/expenses"

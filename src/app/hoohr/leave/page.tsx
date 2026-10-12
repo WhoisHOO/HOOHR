@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/dal";
 import { getCompanyTimezone, getCompanyWeekendRaw } from "@/lib/company";
 import { addMonths, monthBounds, monthLabel, zonedToday } from "@/lib/date";
-import { formatLeaveRange, availablePaidDays } from "@/lib/leave";
+import { formatLeaveRange } from "@/lib/leave";
 import { getDict, getLocale, interpolate, INTL_LOCALES } from "@/i18n/server";
 import { LeaveRequestForm, type LeavePolicyOption } from "./leave-form";
 import { DecideLeaveForm } from "./decide-form";
@@ -50,7 +50,6 @@ export default async function LeavePage({
   const weekendDays = await getCompanyWeekendRaw(user.companyId);
 
   const today = zonedToday(tz);
-  const year = today.getUTCFullYear();
 
   const params = await searchParams;
   const monthMatch = /^(\d{4})-(\d{2})$/.exec(params.month ?? "");
@@ -65,25 +64,6 @@ export default async function LeavePage({
   const nextHref = `/hoohr/leave?month=${monthLabel(addMonths(monthDate, 1))}`;
 
   const isReviewer = user.role === "ADMIN";
-
-  // Used paid-leave days this year, per policy, for the current employee.
-  const usedByPolicy = new Map<string, number>();
-  if (user.employeeId) {
-    const approvedThisYear = await prisma.leaveRequest.findMany({
-      where: {
-        companyId: user.companyId,
-        employeeId: user.employeeId,
-        status: "APPROVED",
-        startDate: { gte: new Date(Date.UTC(year, 0, 1)) },
-        endDate: { lte: new Date(Date.UTC(year, 11, 31)) },
-        policy: { kind: { in: ["PTO", "SICK"] } },
-      },
-      select: { policyId: true, days: true },
-    });
-    for (const r of approvedThisYear) {
-      usedByPolicy.set(r.policyId, (usedByPolicy.get(r.policyId) ?? 0) + r.days);
-    }
-  }
 
   const [policies, myRequests, myMonthLeaves, inbox, companyMonthLeaves] =
     await Promise.all([
@@ -144,14 +124,10 @@ export default async function LeavePage({
     ]);
 
   const policyOptions: LeavePolicyOption[] = policies.map((p) => {
-    const used = usedByPolicy.get(p.id) ?? 0;
     return {
       id: p.id,
       name: p.name,
       kind: p.kind,
-      // `null` means "this company does not track a balance for this person".
-      // For paid policies we always show the computed remaining days.
-      remaining: p.kind === "UNPAID" ? null : availablePaidDays(p.annualDays, used),
     };
   });
 
@@ -166,35 +142,6 @@ export default async function LeavePage({
 
       {user.employeeId && (
         <>
-          <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {policies.map((p) => {
-              const used = usedByPolicy.get(p.id) ?? 0;
-              const remaining = availablePaidDays(p.annualDays, used);
-              return (
-                <div
-                  key={p.id}
-                  className="rounded-xl border border-zinc-200 bg-white p-5"
-                >
-                  <p className="text-xs font-medium text-zinc-500">{p.name}</p>
-                  <p className="mt-1 text-2xl font-semibold text-zinc-900">
-                    {p.kind === "UNPAID"
-                      ? "-"
-                      : interpolate(common.units.days, { n: remaining })}
-                  </p>
-                  {p.kind !== "UNPAID" && (
-                    <p className="mt-1 text-xs text-zinc-400">
-                      {interpolate(leave.balance.grantedUsedAdjusted, {
-                        granted: p.annualDays,
-                        used,
-                        adjusted: 0,
-                      })}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </section>
-
           <section className="rounded-xl border border-zinc-200 bg-white p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
@@ -263,9 +210,6 @@ export default async function LeavePage({
                       {formatLeaveRange(r.startDate, r.endDate, intl)}
                       {r.isHalfDay ? ` ${leave.badge.halfDay}` : ""}
                     </span>
-                    <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-600">
-                      {interpolate(common.units.days, { n: r.days })}
-                    </span>
                     {statusBadge(r.status, statusLabels[r.status])}
                     <span className="flex-1 truncate text-zinc-500">{r.reason ?? ""}</span>
                     {r.status === "PENDING" && <CancelLeaveButton leaveId={r.id} />}
@@ -315,9 +259,6 @@ export default async function LeavePage({
                   {formatLeaveRange(r.startDate, r.endDate, intl)}
                   {r.isHalfDay ? ` ${leave.badge.halfDay}` : ""}
                 </span>
-                <span className="ml-auto text-xs text-zinc-400">
-                  {interpolate(common.units.days, { n: r.days })}
-                </span>
               </li>
             ))}
           </ul>
@@ -340,9 +281,6 @@ export default async function LeavePage({
                   <span className="text-zinc-600">
                     {formatLeaveRange(r.startDate, r.endDate, intl)}
                     {r.isHalfDay ? ` ${leave.badge.halfDay}` : ""}
-                  </span>
-                  <span className="text-xs text-zinc-500">
-                    {interpolate(common.units.days, { n: r.days })}
                   </span>
                 </div>
                 {r.reason && <p className="mt-1 text-sm text-zinc-600">{r.reason}</p>}

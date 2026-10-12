@@ -44,8 +44,6 @@ export default async function SettingsPage() {
     name: policy.name,
     kind: policy.kind,
     kindLabel: common.leaveKind[policy.kind] ?? policy.kind,
-    annualDays: policy.annualDays,
-    maxCarryOverDays: policy.maxCarryOverDays,
     isPaid: policy.isPaid,
     requiresApproval: policy.requiresApproval,
     active: policy.active,

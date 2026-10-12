@@ -11,7 +11,6 @@ export type LeavePolicyOption = {
   id: string;
   name: string;
   kind: string;
-  remaining: number | null;
 };
 
 function parseIso(value: string): Date | null {
@@ -40,7 +39,6 @@ export function LeaveRequestForm({
   const [endDate, setEndDate] = useState(today);
   const [isHalfDay, setIsHalfDay] = useState(false);
 
-  const selected = policies.find((p) => p.id === policyId);
   const start: Date | null = parseIso(startDate);
   const end: Date | null = isHalfDay ? start : parseIso(endDate);
   // Same fallback the server applies, so the disabled state matches the rejection.
@@ -51,13 +49,6 @@ export function LeaveRequestForm({
       : isHalfDay && start
         ? 0.5
         : 0;
-  const remaining = selected?.remaining ?? null;
-  const remainingAfter = remaining !== null ? Math.max(0, remaining - days) : null;
-  // A warning, not a block. The employee filing the request is not the person who
-  // decides it, and the company may not track a balance at all (`remaining` is
-  // null then). Blocking here is what made a brand-new hire unable to request
-  // leave: the button was disabled on "0 days" that nobody had ever set.
-  const over = remaining !== null && days > remaining;
   // Server refuses a half-day on a weekend; mirror it so the button state matches.
   const halfDayBlocked = isHalfDay && start !== null && !isWorkday(start, weekend);
   const blocked = halfDayBlocked || days <= 0;
@@ -79,9 +70,6 @@ export function LeaveRequestForm({
             {policies.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
-                {p.remaining !== null
-                  ? ` ${interpolate(d.leave.form.optionRemaining, { n: p.remaining })}`
-                  : ""}
               </option>
             ))}
           </select>
@@ -173,14 +161,6 @@ export function LeaveRequestForm({
           <span className="font-semibold text-zinc-900">
             {interpolate(d.common.units.days, { n: days })}
           </span>
-          {remaining !== null && (
-            <>
-              {" · "}
-              <span className={`font-semibold ${over ? "text-red-600" : "text-zinc-900"}`}>
-                {interpolate(d.leave.form.remaining, { n: remainingAfter ?? 0 })}
-              </span>
-            </>
-          )}
         </p>
         <button
           type="submit"
@@ -194,12 +174,6 @@ export function LeaveRequestForm({
       {halfDayBlocked && (
         <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700">
           {d.leave.form.halfDayBlocked}
-        </p>
-      )}
-
-      {over && (
-        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700">
-          {interpolate(d.leave.form.overBalance, { days, remaining: remaining ?? 0 })}
         </p>
       )}
 

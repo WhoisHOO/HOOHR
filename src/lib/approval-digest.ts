@@ -188,7 +188,6 @@ export function renderDigest(plan: DigestPlan, locale: Locale): ComposedMessage 
     interpolate(n.digest.leaveItem, {
       period: formatLeaveRange(i.startDate, i.endDate, intl),
       kind: common.leaveKind[i.leaveKind],
-      days: interpolate(common.units.days, { n: i.days }),
       requester: i.requesterName,
     }),
   );
@@ -334,7 +333,6 @@ export async function runApprovalDigest(opts?: {
           ? interpolate(dictionaries[locale].notifications.digest.leaveItem, {
               period: formatLeaveRange(item.startDate, item.endDate, INTL_LOCALES[locale]),
               kind: dictionaries[locale].common.leaveKind[item.leaveKind],
-              days: interpolate(dictionaries[locale].common.units.days, { n: item.days }),
               requester: item.requesterName,
             })
           : interpolate(dictionaries[locale].notifications.digest.expenseItem, {
