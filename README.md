@@ -98,9 +98,11 @@ always safe: your data and settings are left alone.
 ==========================================================
 ```
 
-Then the browser opens **your setup screen**: pick a company name and create
-the first admin account. That screen appears only once - after the first
-account exists it is gone, and from then on you land on the login page.
+Then the browser opens **your setup screen**: one wizard, three steps —
+company + country, the first admin account, then email alerts (optional;
+leave it empty to start without mail). That screen appears only once - after
+the first account exists it is gone, and from then on you land on the login
+page.
 
 ### 4. Watch the logs
 
