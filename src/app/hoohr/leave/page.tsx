@@ -132,12 +132,48 @@ export default async function LeavePage({
   });
 
   const monthLeaves = isReviewer ? companyMonthLeaves : myMonthLeaves;
+  const isoDay = (d: Date) =>
+    `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
 
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <div>
         <h1 className="text-2xl font-semibold text-zinc-900">{leave.page.title}</h1>
         <p className="mt-1 text-sm text-zinc-500">{leave.page.subtitle}</p>
+        {isReviewer && (
+          <form
+            method="get"
+            action="/hoohr/leave/export"
+            className="mt-3 flex flex-wrap items-end gap-2"
+          >
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500">
+              {leave.export.from}
+              <input
+                name="from"
+                type="date"
+                required
+                defaultValue={isoDay(monthStart)}
+                className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700"
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-500">
+              {leave.export.to}
+              <input
+                name="to"
+                type="date"
+                required
+                defaultValue={isoDay(monthEnd)}
+                className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700"
+              />
+            </label>
+            <button
+              type="submit"
+              className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+            >
+              {leave.export.download}
+            </button>
+          </form>
+        )}
       </div>
 
       {user.employeeId && (

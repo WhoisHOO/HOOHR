@@ -18,7 +18,6 @@ export type EmployeeView = {
   id: string;
   name: string;
   email: string;
-  position: string | null;
   hireDate: string;
   status: string;
 };
@@ -89,20 +88,6 @@ function EmployeeProfileForm({ employee }: { employee: EmployeeView }) {
     <form action={action} className="mt-4 border-t border-zinc-100 pt-4">
       <input type="hidden" name="id" value={employee.id} />
       <div className="grid gap-3 md:grid-cols-2">
-        <div className="flex flex-col gap-1">
-          <label htmlFor={`employee-position-${employee.id}`} className="text-xs font-medium text-zinc-500">
-            {d.common.fields.position}
-          </label>
-          <input
-            id={`employee-position-${employee.id}`}
-            name="position"
-            type="text"
-            defaultValue={employee.position ?? ""}
-            placeholder={d.admin.employees.positionPlaceholder}
-            className={inputClass}
-          />
-          <FieldError state={state} name="position" />
-        </div>
         <div className="flex flex-col gap-1">
           <label htmlFor={`employee-hire-date-${employee.id}`} className="text-xs font-medium text-zinc-500">
             {d.admin.employees.hireDate}
@@ -228,10 +213,6 @@ function EmployeeCard({ employee }: { employee: EmployeeView }) {
       </div>
 
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-        <div>
-          <dt className="text-xs text-zinc-400">{d.common.fields.position}</dt>
-          <dd className="mt-1 text-zinc-700">{employee.position ?? "-"}</dd>
-        </div>
         <div>
           <dt className="text-xs text-zinc-400">{d.admin.employees.hireDate}</dt>
           <dd className="mt-1 text-zinc-700">{employee.hireDate || "-"}</dd>

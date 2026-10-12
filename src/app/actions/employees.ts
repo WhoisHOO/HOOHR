@@ -42,7 +42,6 @@ export async function updateEmployeeProfile(
   const { admin: adminDict } = await getDict();
   const parsed = employeeProfileSchema(adminDict).safeParse({
     id: formText(formData, "id"),
-    position: formText(formData, "position"),
     hireDate: formText(formData, "hireDate"),
   });
   if (!parsed.success) {
@@ -62,7 +61,6 @@ export async function updateEmployeeProfile(
   await prisma.employee.update({
     where: { id: employee.id },
     data: {
-      position: parsed.data.position ?? null,
       hireDate,
     },
   });

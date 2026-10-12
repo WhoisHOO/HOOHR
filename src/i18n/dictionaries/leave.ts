@@ -3,7 +3,8 @@
 export const leaveKo = {
   page: {
     title: "휴가",
-    subtitle: "연차 · 병가 · 무급휴직 신청 및 승인",
+    subtitle: "연차 · 병가 신청 및 승인",
+    exportCsv: "CSV 내보내기",
   },
   form: {
     type: "휴가 유형",
@@ -22,7 +23,7 @@ export const leaveKo = {
   },
   sections: {
     request: "휴가 신청",
-    requestHint: "주말은 제외하고 일수가 계산됩니다. 반차는 0.5일.",
+    requestHint: "주말은 제외하고 일수가 계산됩니다.",
     noPolicy: "등록된 휴가 정책이 없습니다. 관리자에게 문의하세요.",
     myRequests: "내 휴가 신청",
     prevMonth: "이전달",
@@ -39,6 +40,19 @@ export const leaveKo = {
   },
   badge: {
     halfDay: "(반차)",
+  },
+  export: {
+    from: "시작일",
+    to: "종료일",
+    download: "내려받기",
+    columns: {
+      employee: "직원",
+      type: "종류",
+      start: "시작일",
+      end: "종료일",
+      status: "상태",
+      memo: "메모",
+    },
   },
   item: {
     comment: "의견: {comment}",
@@ -89,7 +103,8 @@ export type LeaveMessages = typeof leaveKo;
 export const leaveEn: LeaveMessages = {
   page: {
     title: "Leave",
-    subtitle: "Request and approve annual, sick and unpaid leave",
+    subtitle: "Request and approve annual and sick leave",
+    exportCsv: "Export CSV",
   },
   form: {
     type: "Leave type",
@@ -109,7 +124,7 @@ export const leaveEn: LeaveMessages = {
   },
   sections: {
     request: "Request leave",
-    requestHint: "Weekends are excluded when counting days. A half day counts as 0.5 days.",
+    requestHint: "Weekends are excluded when counting days.",
     noPolicy: "No leave policies are set up. Please contact an administrator.",
     myRequests: "My leave requests",
     prevMonth: "Previous month",
@@ -126,6 +141,19 @@ export const leaveEn: LeaveMessages = {
   },
   badge: {
     halfDay: "(half day)",
+  },
+  export: {
+    from: "From",
+    to: "To",
+    download: "Download",
+    columns: {
+      employee: "Employee",
+      type: "Type",
+      start: "Start",
+      end: "End",
+      status: "Status",
+      memo: "Note",
+    },
   },
   item: {
     comment: "Comment: {comment}",
