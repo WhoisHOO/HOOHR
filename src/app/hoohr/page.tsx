@@ -73,12 +73,13 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-semibold text-zinc-900">
           {interpolate(dashboard.greeting, { name: user.name })}
         </h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          {interpolate(dashboard.profile, {
-            position: employee?.position ?? "-",
-            date: formatDate(employee?.hireDate ?? null, locale),
-          })}
-        </p>
+        {employee?.hireDate && (
+          <p className="mt-1 text-sm text-zinc-500">
+            {interpolate(dashboard.profile, {
+              date: formatDate(employee.hireDate, locale),
+            })}
+          </p>
+        )}
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2">
           <Link
@@ -138,12 +139,13 @@ export default async function DashboardPage() {
       <h1 className="text-2xl font-semibold text-zinc-900">
         {interpolate(dashboard.greeting, { name: user.name })}
       </h1>
-      <p className="mt-1 text-sm text-zinc-500">
-        {interpolate(dashboard.profile, {
-          position: employee?.position ?? "-",
-          date: formatDate(employee?.hireDate ?? null, locale),
-        })}
-      </p>
+      {employee?.hireDate && (
+        <p className="mt-1 text-sm text-zinc-500">
+          {interpolate(dashboard.profile, {
+            date: formatDate(employee.hireDate, locale),
+          })}
+        </p>
+      )}
 
       <section className="mt-8 rounded-xl border border-zinc-200 bg-white p-6">
         <h2 className="text-sm font-semibold text-zinc-900">

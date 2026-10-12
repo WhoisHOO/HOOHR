@@ -31,11 +31,6 @@ function hireDateSchema(v: AdminValidationMessages) {
 export function employeeProfileSchema(v: AdminValidationMessages) {
   return z.object({
     id: idSchema(v),
-    position: z
-      .string()
-      .trim()
-      .max(100, { error: v.validation.positionTooLong })
-      .optional(),
     hireDate: hireDateSchema(v).optional(),
   });
 }

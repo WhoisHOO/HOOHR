@@ -1020,5 +1020,13 @@ Four commits on `feature/first-run-setup`, plus a merge of `feature/public-tunne
 - **Also**: dashboard "내 승인대기/내 제출" → "승인 대기/제출".
 - **Verification**: tsc 0, lint 0, mail 58/58, container rebuilt + healthy, health/login/setup 200, export+logo correctly bounce (307) when logged out. First-run e2e + docs updated in `5734716`; `_test-expense.ts` fixture still missing in this DB (pre-existing).
 
+### Session 26 (2026-10-12): position gone, leave CSV by date range
+
+- **Product direction (user)**: position field is unnecessary (name suffices); leave needs CSV export by date range (from–to).
+- **Position removed**: admin edit form input, card detail row, `EmployeeView`, page mapping, action parse/write, validation schema all dropped. DB column stays inert. Dashboard profile line is now hire-date only (hidden when unset).
+- **Leave CSV export** (`/hoohr/leave/export?from=YYYY-MM-DD&to=YYYY-MM-DD`, default current month): admin only (403 for staff, same rule as expense export); overlap query, CANCELED excluded; columns 직원/종류/시작일/종료일/상태/메모 (ko/en); BOM+CRLF, `leave-YYYYMMDD-YYYYMMDD.csv`. Page header has an admin-only from/to form defaulting to the viewed month.
+- **Also fixed visible leftovers**: leave subtitle/hint no longer mention unpaid/half-day.
+- **Verification**: tsc 0, lint 0, mail 58/58, container rebuilt + healthy, health/login 200, export routes bounce (307) when logged out — no 500s. Authed CSV content follows the reviewed code paths (e2e needs a browser + fresh DB, not run here).
+
 <!-- ====== Template for next sessions (copy & use) ======
 

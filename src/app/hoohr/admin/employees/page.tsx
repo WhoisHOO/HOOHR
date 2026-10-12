@@ -31,7 +31,6 @@ export default async function EmployeesAdminPage() {
     id: employee.id,
     name: employee.name,
     email: employee.email,
-    position: employee.position,
     hireDate: toDateInput(employee.hireDate),
     status: employee.status,
   }));
