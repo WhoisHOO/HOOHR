@@ -29,7 +29,6 @@ type LeaveDecisionMail = {
   kind: "PTO" | "SICK" | "UNPAID";
   startDate: Date;
   endDate: Date;
-  days: number;
 };
 
 // ============ 휴가 신청 (EMPLOYEE) ============
@@ -129,7 +128,6 @@ export async function requestLeave(
       kind: policy.kind,
       startDate: start,
       endDate: end,
-      days,
       reason: parsed.data.reason?.trim() || null,
     });
   }
@@ -224,7 +222,6 @@ export async function decideLeave(
         kind: fresh.policy.kind,
         startDate: fresh.startDate,
         endDate: fresh.endDate,
-        days: fresh.days,
       };
     });
   } catch {

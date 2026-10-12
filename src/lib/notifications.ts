@@ -138,7 +138,6 @@ export function buildLeaveDecisionMessage(args: {
   kind: "PTO" | "SICK" | "UNPAID";
   startDate: Date;
   endDate: Date;
-  days: number;
   decision: LeaveDecisionOutcome;
   comment?: string | null;
   locale?: Locale;
@@ -154,10 +153,9 @@ export function buildLeaveDecisionMessage(args: {
   );
   const period = formatLeaveRange(args.startDate, args.endDate, intl);
   const kind = common.leaveKind[args.kind];
-  const days = interpolate(common.units.days, { n: args.days });
   const body = interpolate(
     approved ? n.leaveDecision.approvedBody : n.leaveDecision.rejectedBody,
-    { period, kind, days },
+    { period, kind },
   );
   const comment = args.comment?.trim();
 
@@ -343,7 +341,6 @@ export function buildLeaveSubmittedMessage(args: {
   kind: "PTO" | "SICK" | "UNPAID";
   startDate: Date;
   endDate: Date;
-  days: number;
   reason?: string | null;
   locale?: Locale;
 }): ComposedMessage {
@@ -353,7 +350,6 @@ export function buildLeaveSubmittedMessage(args: {
 
   const period = formatLeaveRange(args.startDate, args.endDate, intl);
   const kind = common.leaveKind[args.kind];
-  const days = interpolate(common.units.days, { n: args.days });
   const subject = interpolate(n.leaveSubmitted.subject, {
     app: n.appName,
     requester: args.requesterName,
@@ -361,7 +357,7 @@ export function buildLeaveSubmittedMessage(args: {
   });
   const reason = args.reason?.trim();
   const lines = [
-    interpolate(n.leaveSubmitted.body, { requester: args.requesterName, kind, period, days }),
+    interpolate(n.leaveSubmitted.body, { requester: args.requesterName, kind, period }),
     ...(reason ? [interpolate(n.leaveSubmitted.reasonLine, { reason })] : []),
   ];
 

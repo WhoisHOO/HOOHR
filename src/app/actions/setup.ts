@@ -93,8 +93,8 @@ export async function createFirstAdmin(
       },
     });
 
-    // Note: Leave balances are no longer pre-created. They are derived from
-    // policy annualDays and approved request days at runtime.
+    // Note: no quotas are tracked anywhere. A leave request is just a
+    // request — each company applies its own standards at approval time.
 
     return createdUser;
   });

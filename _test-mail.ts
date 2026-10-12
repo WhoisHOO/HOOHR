@@ -146,7 +146,6 @@ async function main() {
     kind: "PTO" as const,
     startDate: new Date(Date.UTC(2026, 8, 1)),
     endDate: new Date(Date.UTC(2026, 8, 3)),
-    days: 3,
     decision: "APPROVED" as const,
     comment: "",
   };
@@ -160,7 +159,7 @@ async function main() {
   check("leave ko body has no leftover placeholders", leftoverPlaceholders(leaveKo.text).length === 0, leftoverPlaceholders(leaveKo.text).join(","));
   check("leave ko html has no leftover placeholders", leftoverPlaceholders(leaveKo.html).length === 0, leftoverPlaceholders(leaveKo.html).join(","));
   check("an absent comment falls back, not to 'null'", leaveKo.text.includes("작성된 의견 없음") && !leaveKo.text.includes("null"));
-  check("leave body carries the day count", /\d/.test(leaveKo.text));
+  check("leave body names the period, not a day count", /9\. 1\./.test(leaveKo.text) && !/\/ \d+일/.test(leaveKo.text), leaveKo.text.split("\n")[2] ?? "");
 
   const leaveRejKo = buildLeaveDecisionMessage({ ...leaveArgs, decision: "REJECTED", comment: "인원 부족", locale: "ko" });
   check("rejection subject differs from approval", leaveRejKo.subject !== leaveKo.subject);

@@ -998,5 +998,15 @@ Four commits on `feature/first-run-setup`, plus a merge of `feature/public-tunne
 - **Verification**: `npx tsc --noEmit` 0, `npm run lint` 0, `_test-mail.ts` 58/58, 16-check wizard/message/config script 16/16 (temp, removed), container rebuilt + healthy, `/api/health` ok, `/setup` renders all 3 steps + SMTP fields, `/login` 200. `_test-expense.ts` fails on a pre-existing missing fixture (`admin@example.com` absent from this DB) — unrelated to this change, files untouched.
 - **Housekeeping**: removed stray `start-app.ps1` (failed experiment from a prior session, had been committed by accident).
 
+### Session 24 (2026-10-12): day counts removed — leave is request → approval only
+
+- **Product direction (user)**: the "10 days / 5 days" quota displays are unnecessary; every company applies its own standards, so only request + approval remain.
+- **Removed from UI**: leave balance cards, per-policy remaining in the request dropdown, remaining-after preview and over-balance warning in the form, `{n}일` badges on my-requests/schedule/inbox, dashboard remaining-days stats (admin StatCard now shows the pending count), policy `annualDays`/`maxCarryOverDays` inputs in Company settings.
+- **Removed from logic**: `availablePaidDays` (`lib/leave.ts`) and `daysSchema` (`lib/settings-validation.ts`) deleted; `leavePolicyUpdateSchema`/`updateLeavePolicy` no longer read or write quotas; `LeavePolicyOption.remaining` dropped. DB columns stay (inert, no migration); `LeaveRequest.days` is still computed from the chosen dates as record info.
+- **Mail**: decision/submission/digest templates no longer render day counts (period + kind only). `_test-mail.ts` updated (58/58).
+- **Kept**: date-range request form with the live period preview (`forms.mjs` preview check unaffected), memo fields, approval/reject/cancel flow, submission + decision emails.
+- **Docs**: README feature row + setup comment updated (no more "remaining days derived…").
+- **Verification**: tsc 0, lint 0, mail 58/58, container rebuilt + healthy, `/api/health` ok, `/login` + `/setup` 200.
+
 <!-- ====== Template for next sessions (copy & use) ======
 

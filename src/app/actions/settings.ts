@@ -170,8 +170,6 @@ export async function updateLeavePolicy(
   const parsed = schema.safeParse({
     id: formText(formData, "id"),
     name: formText(formData, "name"),
-    annualDays: formData.get("annualDays"),
-    maxCarryOverDays: formData.get("maxCarryOverDays"),
     isPaid: formCheckbox(formData, "isPaid"),
     requiresApproval: formCheckbox(formData, "requiresApproval"),
     active: formCheckbox(formData, "active"),
@@ -193,8 +191,6 @@ export async function updateLeavePolicy(
       where: { id: policy.id },
       data: {
         name: parsed.data.name,
-        annualDays: parsed.data.annualDays,
-        maxCarryOverDays: parsed.data.maxCarryOverDays,
         isPaid: parsed.data.isPaid === "true",
         requiresApproval: parsed.data.requiresApproval === "true",
         active: parsed.data.active === "true",

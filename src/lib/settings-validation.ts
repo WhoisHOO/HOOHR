@@ -38,12 +38,6 @@ const nameSchema = (v: SettingsValidationMessages, label: string) =>
     .min(1, { error: v.required })
     .max(100, { error: interpolate(v.validation.nameTooLong, { label }) });
 
-const daysSchema = (v: SettingsValidationMessages, label: string) =>
-  z.coerce
-    .number({ error: v.required })
-    .min(0, { error: interpolate(v.validation.daysNegative, { label }) })
-    .max(365, { error: interpolate(v.validation.daysTooMany, { label }) });
-
 const booleanSchema = (v: SettingsValidationMessages) =>
   z.enum(["true", "false"], {
     error: v.validation.valueInvalid,
@@ -78,11 +72,11 @@ export function companySettingsSchema(v: SettingsValidationMessages) {
 // ---- SET-2: 휴가 정책 ----
 
 export function leavePolicyUpdateSchema(v: SettingsValidationMessages) {
+  // Day counts are deliberately not here: each company tracks leave its own
+  // way, so the app stores requests + approvals, never quotas.
   return z.object({
     id: idSchema(v),
     name: nameSchema(v, v.labels.policyName),
-    annualDays: daysSchema(v, v.labels.annualDays),
-    maxCarryOverDays: daysSchema(v, v.labels.maxCarryOver),
     isPaid: booleanSchema(v),
     requiresApproval: booleanSchema(v),
     active: booleanSchema(v),
