@@ -3,7 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 import { requestLeave } from "@/app/actions/leave";
 import { countWorkdays } from "@/lib/leave";
-import { isWorkday, toWeekendSet } from "@/lib/weekend";
+import { toWeekendSet } from "@/lib/weekend";
 import type { LeaveRequestState } from "@/lib/leave-validation";
 import { useI18n, interpolate } from "@/i18n/client";
 
@@ -37,21 +37,16 @@ export function LeaveRequestForm({
   const [policyId, setPolicyId] = useState(policies[0]?.id ?? "");
   const [startDate, setStartDate] = useState(today);
   const [endDate, setEndDate] = useState(today);
-  const [isHalfDay, setIsHalfDay] = useState(false);
 
   const start: Date | null = parseIso(startDate);
-  const end: Date | null = isHalfDay ? start : parseIso(endDate);
+  const end: Date | null = parseIso(endDate);
   // Same fallback the server applies, so the disabled state matches the rejection.
   const weekend = useMemo(() => toWeekendSet(weekendDays), [weekendDays]);
   const days =
-    start && end && start.getTime() <= end.getTime() && !isHalfDay
+    start && end && start.getTime() <= end.getTime()
       ? countWorkdays(start, end, weekend)
-      : isHalfDay && start
-        ? 0.5
-        : 0;
-  // Server refuses a half-day on a weekend; mirror it so the button state matches.
-  const halfDayBlocked = isHalfDay && start !== null && !isWorkday(start, weekend);
-  const blocked = halfDayBlocked || days <= 0;
+      : 0;
+  const blocked = days <= 0;
 
   return (
     <form action={action} className="flex flex-col gap-4">
@@ -91,7 +86,6 @@ export function LeaveRequestForm({
             value={startDate}
             onChange={(e) => {
               setStartDate(e.target.value);
-              if (isHalfDay) setEndDate(e.target.value);
             }}
             className="rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
@@ -110,8 +104,7 @@ export function LeaveRequestForm({
             type="date"
             required
             min={today}
-            disabled={isHalfDay}
-            value={isHalfDay ? startDate : endDate}
+            value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
             className="rounded-md border border-zinc-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-zinc-100 disabled:text-zinc-400"
           />
@@ -120,24 +113,6 @@ export function LeaveRequestForm({
           )}
         </div>
       </div>
-
-      <label className="flex items-center gap-2 text-sm text-zinc-700">
-        <input
-          type="checkbox"
-          name="isHalfDay"
-          value="on"
-          checked={isHalfDay}
-          onChange={(e) => {
-            setIsHalfDay(e.target.checked);
-            if (e.target.checked) setEndDate(startDate);
-          }}
-          className="h-4 w-4 rounded border-zinc-300 text-blue-600"
-        />
-        {d.leave.form.halfDay}
-      </label>
-      {state?.fieldErrors?.isHalfDay && (
-        <p className="-mt-2 text-sm text-red-600">{state.fieldErrors.isHalfDay[0]}</p>
-      )}
 
       <div className="flex flex-col gap-1">
         <label htmlFor="lv-reason" className="text-sm font-medium text-zinc-700">
@@ -170,12 +145,6 @@ export function LeaveRequestForm({
           {pending ? d.leave.form.submitting : d.leave.form.submit}
         </button>
       </div>
-
-      {halfDayBlocked && (
-        <p className="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-700">
-          {d.leave.form.halfDayBlocked}
-        </p>
-      )}
 
       {state?.message && (
         <p

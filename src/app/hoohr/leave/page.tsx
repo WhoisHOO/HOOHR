@@ -68,7 +68,7 @@ export default async function LeavePage({
   const [policies, myRequests, myMonthLeaves, inbox, companyMonthLeaves] =
     await Promise.all([
       prisma.leavePolicy.findMany({
-        where: { companyId: user.companyId, active: true },
+        where: { companyId: user.companyId, active: true, kind: { in: ["PTO", "SICK"] } },
         orderBy: [{ kind: "asc" }, { name: "asc" }],
       }),
       user.employeeId
@@ -208,7 +208,6 @@ export default async function LeavePage({
                     <span className="font-medium text-zinc-800">{r.policy.name}</span>
                     <span className="text-zinc-600">
                       {formatLeaveRange(r.startDate, r.endDate, intl)}
-                      {r.isHalfDay ? ` ${leave.badge.halfDay}` : ""}
                     </span>
                     {statusBadge(r.status, statusLabels[r.status])}
                     <span className="flex-1 truncate text-zinc-500">{r.reason ?? ""}</span>
@@ -257,7 +256,6 @@ export default async function LeavePage({
                 </span>
                 <span className="text-zinc-600">
                   {formatLeaveRange(r.startDate, r.endDate, intl)}
-                  {r.isHalfDay ? ` ${leave.badge.halfDay}` : ""}
                 </span>
               </li>
             ))}
@@ -280,7 +278,6 @@ export default async function LeavePage({
                   </span>
                   <span className="text-zinc-600">
                     {formatLeaveRange(r.startDate, r.endDate, intl)}
-                    {r.isHalfDay ? ` ${leave.badge.halfDay}` : ""}
                   </span>
                 </div>
                 {r.reason && <p className="mt-1 text-sm text-zinc-600">{r.reason}</p>}

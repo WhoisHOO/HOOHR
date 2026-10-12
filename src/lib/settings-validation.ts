@@ -100,26 +100,6 @@ export function holidayDeleteSchema(v: SettingsValidationMessages) {
   return z.object({ id: idSchema(v) });
 }
 
-// ---- SET-4: 경비 분류 ----
-
-export function expenseCategoryCreateSchema(v: SettingsValidationMessages) {
-  return z.object({
-    name: nameSchema(v, v.labels.categoryName),
-  });
-}
-
-export function expenseCategoryUpdateSchema(v: SettingsValidationMessages) {
-  return z.object({
-    id: idSchema(v),
-    name: nameSchema(v, v.labels.categoryName),
-    active: booleanSchema(v),
-  });
-}
-
-export function expenseCategoryDeleteSchema(v: SettingsValidationMessages) {
-  return z.object({ id: idSchema(v) });
-}
-
 export type SettingsState = {
   fieldErrors?: FieldErrors;
   message?: string;
@@ -129,4 +109,3 @@ export type SettingsState = {
 export type CompanySettingsState = SettingsState;
 export type LeavePolicyState = SettingsState;
 export type HolidayState = SettingsState;
-export type ExpenseCategoryState = SettingsState;

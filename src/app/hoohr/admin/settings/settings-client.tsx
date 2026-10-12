@@ -4,17 +4,15 @@ import { useActionState, useState } from "react";
 import { parseWeekendDays, WEEKDAY_KEYS } from "@/lib/company-defaults";
 import { COUNTRIES, COUNTRY_DEFAULTS, COUNTRY_LABELS } from "@/lib/country";
 import {
-  createExpenseCategory,
-  deleteExpenseCategory,
+  removeCompanyLogo,
+  updateCompanyLogo,
   updateCompanySettings,
-  updateExpenseCategory,
   updateLeavePolicy,
   updateMailSettings,
 } from "@/app/actions/settings";
 import type { FieldErrors } from "@/lib/auth-validation";
 import type {
   CompanySettingsState,
-  ExpenseCategoryState,
   LeavePolicyState,
 } from "@/lib/settings-validation";
 import { interpolate, useI18n } from "@/i18n/client";
@@ -29,13 +27,6 @@ export type PolicyView = {
   active: boolean;
 };
 
-export type CategoryView = {
-  id: string;
-  name: string;
-  active: boolean;
-  itemCount: number;
-};
-
 type ActionState = { fieldErrors?: FieldErrors; message?: string; ok?: boolean };
 
 const inputClass =
@@ -44,8 +35,6 @@ const primaryButtonClass =
   "rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50";
 const secondaryButtonClass =
   "rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50";
-const dangerButtonClass =
-  "rounded-md border border-red-200 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50";
 
 function Message({ state }: { state?: ActionState }) {
   if (!state?.message) return null;
@@ -338,6 +327,68 @@ function MailSection({ initial }: { initial: MailView }) {
   );
 }
 
+// ---- SET-1c: 회사 로고 ----
+
+function LogoSection({ logoSet }: { logoSet: boolean }) {
+  const { d } = useI18n();
+  const [state, action, pending] = useActionState<CompanySettingsState, FormData>(
+    updateCompanyLogo,
+    undefined,
+  );
+  const [rmState, rmAction, rmPending] = useActionState<CompanySettingsState, FormData>(
+    async () => removeCompanyLogo(),
+    undefined,
+  );
+
+  return (
+    <Section
+      title={d.settings.sections.logo.title}
+      description={d.settings.sections.logo.description}
+    >
+      {logoSet && (
+        <div className="mb-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/hoohr/logo"
+            alt=""
+            width={56}
+            height={56}
+            className="h-14 w-14 rounded-lg border border-zinc-200 object-contain"
+          />
+        </div>
+      )}
+      <form action={action} encType="multipart/form-data" className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-col gap-1">
+          <input
+            name="logo"
+            type="file"
+            required
+            accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+            className="text-sm text-zinc-700"
+          />
+          <FieldError state={state} name="logo" />
+        </div>
+        <button type="submit" disabled={pending} className={primaryButtonClass}>
+          {pending ? d.common.buttons.saving : d.common.actions.save}
+        </button>
+      </form>
+      <div className="mt-2">
+        <Message state={state} />
+      </div>
+      {logoSet && (
+        <form action={rmAction} className="mt-3">
+          <button type="submit" disabled={rmPending} className={secondaryButtonClass}>
+            {d.common.actions.delete}
+          </button>
+          <div className="mt-2">
+            <Message state={rmState} />
+          </div>
+        </form>
+      )}
+    </Section>
+  );
+}
+
 // ---- SET-2 ----
 
 function PolicyRow({ policy }: { policy: PolicyView }) {
@@ -429,134 +480,20 @@ function PolicySection({ policies }: { policies: PolicyView[] }) {
   );
 }
 
-// ---- SET-4 ----
-
-function CategoryRow({ category }: { category: CategoryView }) {
-  const { d } = useI18n();
-  const [state, action, pending] = useActionState<ExpenseCategoryState, FormData>(
-    updateExpenseCategory,
-    undefined,
-  );
-  const [deleteState, deleteAction, deletePending] = useActionState<
-    ExpenseCategoryState,
-    FormData
-  >(deleteExpenseCategory, undefined);
-
-  return (
-    <li className="flex flex-wrap items-center gap-3 border-b border-zinc-100 py-2 text-sm">
-      <form action={action} className="flex flex-1 flex-wrap items-center gap-2">
-        <input type="hidden" name="id" value={category.id} />
-        <input
-          name="name"
-          type="text"
-          required
-          defaultValue={category.name}
-          aria-label={d.settings.labels.categoryName}
-          className={`${inputClass} max-w-48`}
-        />
-        <label className="flex items-center gap-1 text-xs text-zinc-600">
-          <input
-            type="checkbox"
-            name="active"
-            defaultChecked={category.active}
-            className="h-4 w-4 rounded border-zinc-300 text-blue-600"
-          />
-          {d.settings.labels.inUse}
-        </label>
-        <button type="submit" disabled={pending} className={secondaryButtonClass}>
-          {pending ? d.common.buttons.saving : d.common.actions.save}
-        </button>
-      </form>
-      <span className="text-xs text-zinc-400">
-        {interpolate(d.settings.counts.categoryItems, { n: category.itemCount })}
-      </span>
-      {!category.active && (
-        <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-medium text-zinc-600">
-          {d.settings.labels.inactive}
-        </span>
-      )}
-      <form action={deleteAction}>
-        <input type="hidden" name="id" value={category.id} />
-        <button
-          type="submit"
-          disabled={deletePending || category.itemCount > 0}
-          title={
-            category.itemCount > 0 ? d.settings.hints.deleteBlocked : undefined
-          }
-          className={dangerButtonClass}
-        >
-          {deletePending ? d.settings.pending.deleting : d.common.actions.delete}
-        </button>
-      </form>
-      <div className="w-full space-y-1">
-        <Message state={state} />
-        <Message state={deleteState} />
-      </div>
-    </li>
-  );
-}
-
-function CategorySection({ categories }: { categories: CategoryView[] }) {
-  const { d } = useI18n();
-  const [state, action, pending] = useActionState<ExpenseCategoryState, FormData>(
-    createExpenseCategory,
-    undefined,
-  );
-
-  return (
-    <Section
-      title={d.settings.sections.category.title}
-      description={d.settings.sections.category.description}
-      count={interpolate(d.settings.counts.items, { n: categories.length })}
-    >
-      <form action={action} className="flex flex-col gap-3 sm:flex-row sm:items-end">
-        <div className="flex flex-1 flex-col gap-1">
-          <label htmlFor="category-name" className="text-xs font-medium text-zinc-500">
-            {d.settings.labels.newCategoryName}
-          </label>
-          <input
-            id="category-name"
-            name="name"
-            type="text"
-            required
-            placeholder={d.settings.placeholders.categoryName}
-            className={inputClass}
-          />
-          <FieldError state={state} name="name" />
-        </div>
-        <button type="submit" disabled={pending} className={primaryButtonClass}>
-          {pending ? d.settings.pending.addingCategory : d.settings.actions.addCategory}
-        </button>
-        <Message state={state} />
-      </form>
-
-      {categories.length === 0 ? (
-        <p className="text-sm text-zinc-500">{d.settings.empty.categories}</p>
-      ) : (
-        <ul>
-          {categories.map((category) => (
-            <CategoryRow key={category.id} category={category} />
-          ))}
-        </ul>
-      )}
-    </Section>
-  );
-}
-
 export function SettingsClient({
   companyName,
   country,
   weekendDays,
   mail,
+  logoSet,
   policies,
-  categories,
 }: {
   companyName: string;
   country: string;
   weekendDays: string;
   mail: MailView;
+  logoSet: boolean;
   policies: PolicyView[];
-  categories: CategoryView[];
 }) {
   return (
     <div className="space-y-8">
@@ -566,8 +503,8 @@ export function SettingsClient({
         weekendDays={weekendDays}
       />
       <MailSection initial={mail} />
+      <LogoSection logoSet={logoSet} />
       <PolicySection policies={policies} />
-      <CategorySection categories={categories} />
     </div>
   );
 }

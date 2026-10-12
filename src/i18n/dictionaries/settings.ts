@@ -34,6 +34,11 @@ export const settingsKo = {
         "휴가·영수증 신청이 들어오면 관리자에게 이메일이 갑니다. 비워 두면 알림 없이 사용합니다.",
       passKept: "저장된 비밀번호가 있습니다. 비워 두면 유지됩니다.",
     },
+    logo: {
+      title: "회사 로고",
+      description:
+        "사이드바 상단에 회사명과 함께 표시됩니다. JPG·PNG·WEBP, 1MB 이하.",
+    },
   },
   labels: {
     companyName: "회사명",
@@ -120,6 +125,9 @@ export const settingsKo = {
     companySaved: "회사 설정이 저장되었습니다.",
     mailSaved: "이메일 알림 설정이 저장되었습니다.",
     mailSaveFailed: "저장하지 못했습니다. 잠시 후 다시 시도해주세요.",
+    logoSaved: "회사 로고가 저장되었습니다.",
+    logoRemoved: "회사 로고를 지웠습니다.",
+    logoRequired: "로고 이미지 파일을 선택해주세요.",
     policyNotFound: "휴가 정책을 찾을 수 없습니다.",
     policyNameTaken: "같은 이름의 휴가 정책이 이미 있습니다.",
     policySaved: "휴가 정책이 저장되었습니다. ({name})",
@@ -174,6 +182,11 @@ export const settingsEn: SettingsMessages = {
       description:
         "When a leave or receipt request arrives, the admins get an email. Leave it empty to run without alerts.",
       passKept: "A password is stored. Leave it empty to keep it.",
+    },
+    logo: {
+      title: "Company logo",
+      description:
+        "Shown with the company name at the top of the sidebar. JPG, PNG or WEBP, up to 1MB.",
     },
   },
   labels: {
@@ -259,6 +272,9 @@ export const settingsEn: SettingsMessages = {
     companySaved: "Company settings saved.",
     mailSaved: "Email alert settings saved.",
     mailSaveFailed: "Could not save. Please try again in a moment.",
+    logoSaved: "Company logo saved.",
+    logoRemoved: "Company logo removed.",
+    logoRequired: "Choose a logo image file.",
     policyNotFound: "That leave policy could not be found.",
     policyNameTaken: "A leave policy with the same name already exists.",
     policySaved: "Leave policy saved ({name}).",

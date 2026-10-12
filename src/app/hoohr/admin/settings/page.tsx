@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/dal";
 import { getDict } from "@/i18n/server";
-import { SettingsClient, type PolicyView, type CategoryView } from "./settings-client";
+import { SettingsClient, type PolicyView } from "./settings-client";
 
 export async function generateMetadata(): Promise<Metadata> {
   const { settings } = await getDict();
@@ -13,7 +13,7 @@ export default async function SettingsPage() {
   const admin = await requireAdmin();
   const { common, settings } = await getDict();
 
-  const [company, policies, categories] = await Promise.all([
+  const [company, policies] = await Promise.all([
     prisma.company.findUniqueOrThrow({
       where: { id: admin.companyId },
       select: {
@@ -26,16 +26,12 @@ export default async function SettingsPage() {
         smtpPass: true,
         smtpFrom: true,
         smtpSecure: true,
+        logoPath: true,
       },
     }),
     prisma.leavePolicy.findMany({
-      where: { companyId: admin.companyId },
+      where: { companyId: admin.companyId, kind: { in: ["PTO", "SICK"] } },
       orderBy: [{ kind: "asc" }, { name: "asc" }],
-    }),
-    prisma.expenseCategory.findMany({
-      where: { companyId: admin.companyId },
-      orderBy: { name: "asc" },
-      include: { _count: { select: { items: true } } },
     }),
   ]);
 
@@ -47,13 +43,6 @@ export default async function SettingsPage() {
     isPaid: policy.isPaid,
     requiresApproval: policy.requiresApproval,
     active: policy.active,
-  }));
-
-  const categoryViews: CategoryView[] = categories.map((category) => ({
-    id: category.id,
-    name: category.name,
-    active: category.active,
-    itemCount: category._count.items,
   }));
 
   return (
@@ -77,8 +66,8 @@ export default async function SettingsPage() {
           // whether one is stored.
           hasSmtpPass: (company.smtpPass ?? "").length > 0,
         }}
+        logoSet={(company.logoPath ?? "").length > 0}
         policies={policyViews}
-        categories={categoryViews}
       />
     </div>
   );

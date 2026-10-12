@@ -189,7 +189,7 @@ async function main() {
   check("the plain-text part keeps the raw title readable", expKo.text.includes("<script>"));
   check("expense text has no leftover placeholders", leftoverPlaceholders(expKo.text).length === 0, leftoverPlaceholders(expKo.text).join(","));
   check("a null comment uses the fallback", expKo.text.includes("작성된 의견 없음") && !expKo.text.includes("null"));
-  check("the amount is formatted as currency", /\$|₩|KRW|USD/.test(expKo.text), expKo.text);
+  check("the amount is a plain number, no sign or code", /1,234\.56/.test(expKo.text) && !/[$₩]/.test(expKo.text) && !/USD|KRW/.test(expKo.text), expKo.text);
 
   const expPaid = buildExpenseDecisionMessage({ ...expArgs, decision: "PAID", locale: "ko" });
   check("the paid notice has its own subject", expPaid.subject !== expKo.subject, expPaid.subject);

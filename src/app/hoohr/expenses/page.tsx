@@ -8,7 +8,7 @@ import { formatMoney } from "@/lib/expense";
 import { formatLeaveRange } from "@/lib/leave";
 import type { CommonMessages } from "@/i18n/dictionaries/common";
 import { getDict, getLocale, interpolate, INTL_LOCALES } from "@/i18n/server";
-import { NewExpenseForm, type ExpenseCategoryOption } from "./expense-form";
+import { NewExpenseForm } from "./expense-form";
 import { SubmitExpenseButton } from "./submit-button";
 import { DeleteExpenseButton } from "./delete-button";
 import { DecideExpenseForm } from "./decide-form";
@@ -47,7 +47,6 @@ function ItemRows({
   intl: string;
   items: {
     date: Date;
-    category: { name: string };
     amountCents: number;
     description: string | null;
     currency: string;
@@ -62,14 +61,11 @@ function ItemRows({
       <ul className="mt-2 space-y-2">
         {items.map((it) => (
           <li
-            key={`${it.date.getTime()}-${it.category.name}`}
+            key={`${it.date.getTime()}-${it.amountCents}-${it.description ?? ""}`}
             className="flex flex-wrap items-center gap-2 text-sm"
           >
             <span className="text-xs text-zinc-500">
               {formatLeaveRange(it.date, it.date, intl)}
-            </span>
-            <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-600">
-              {it.category.name}
             </span>
             <span className="font-medium text-zinc-800">
               {formatMoney(it.amountCents, it.currency, intl)}
@@ -102,16 +98,12 @@ export default async function ExpensesPage() {
   const tz = await getCompanyTimezone(user.companyId);
   const currentMonth = monthLabel(zonedToday(tz));
 
-  const [categories, myReports, inbox, payQueue] = await Promise.all([
-    prisma.expenseCategory.findMany({
-      where: { companyId: user.companyId, active: true },
-      orderBy: { name: "asc" },
-    }),
+  const [myReports, inbox, payQueue] = await Promise.all([
     user.employeeId
       ? prisma.expenseReport.findMany({
           where: { companyId: user.companyId, employeeId: user.employeeId },
           include: {
-            items: { include: { category: true, receipts: true } },
+            items: { include: { receipts: true } },
           },
           orderBy: { createdAt: "desc" },
           take: 50,
@@ -126,7 +118,7 @@ export default async function ExpensesPage() {
           },
           include: {
             employee: true,
-            items: { include: { category: true, receipts: true } },
+            items: { include: { receipts: true } },
           },
           orderBy: { submittedAt: "asc" },
         })
@@ -140,17 +132,12 @@ export default async function ExpensesPage() {
           },
           include: {
             employee: true,
-            items: { include: { category: true, receipts: true } },
+            items: { include: { receipts: true } },
           },
           orderBy: { decidedAt: "asc" },
         })
       : Promise.resolve([]),
   ]);
-
-  const categoryOptions: ExpenseCategoryOption[] = categories.map((c) => ({
-    id: c.id,
-    name: c.name,
-  }));
 
   const receiptLink = (filename: string) =>
     interpolate(expenses.receipt.link, { filename });
@@ -162,12 +149,14 @@ export default async function ExpensesPage() {
           {expenses.page.title}
         </h1>
         <p className="mt-1 text-sm text-zinc-500">{expenses.page.subtitle}</p>
-        <Link
-          href={`/hoohr/expenses/export?month=${currentMonth}`}
-          className="mt-3 inline-block rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
-        >
-          {expenses.page.exportCsv}
-        </Link>
+        {isAdmin && (
+          <Link
+            href={`/hoohr/expenses/export?month=${currentMonth}`}
+            className="mt-3 inline-block rounded-md border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100"
+          >
+            {expenses.page.exportCsv}
+          </Link>
+        )}
       </div>
 
       <section className="rounded-xl border border-zinc-200 bg-white p-6">
@@ -178,7 +167,7 @@ export default async function ExpensesPage() {
           {expenses.sections.newReportHint}
         </p>
         <div className="mt-4">
-          <NewExpenseForm categories={categoryOptions} />
+          <NewExpenseForm />
         </div>
       </section>
 

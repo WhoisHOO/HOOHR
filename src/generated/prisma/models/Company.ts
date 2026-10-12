@@ -47,6 +47,8 @@ export type CompanyMinAggregateOutputType = {
   smtpPass: string | null
   smtpFrom: string | null
   smtpSecure: boolean | null
+  logoPath: string | null
+  logoMime: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -64,6 +66,8 @@ export type CompanyMaxAggregateOutputType = {
   smtpPass: string | null
   smtpFrom: string | null
   smtpSecure: boolean | null
+  logoPath: string | null
+  logoMime: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -81,6 +85,8 @@ export type CompanyCountAggregateOutputType = {
   smtpPass: number
   smtpFrom: number
   smtpSecure: number
+  logoPath: number
+  logoMime: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -108,6 +114,8 @@ export type CompanyMinAggregateInputType = {
   smtpPass?: true
   smtpFrom?: true
   smtpSecure?: true
+  logoPath?: true
+  logoMime?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -125,6 +133,8 @@ export type CompanyMaxAggregateInputType = {
   smtpPass?: true
   smtpFrom?: true
   smtpSecure?: true
+  logoPath?: true
+  logoMime?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -142,6 +152,8 @@ export type CompanyCountAggregateInputType = {
   smtpPass?: true
   smtpFrom?: true
   smtpSecure?: true
+  logoPath?: true
+  logoMime?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -246,6 +258,8 @@ export type CompanyGroupByOutputType = {
   smtpPass: string | null
   smtpFrom: string | null
   smtpSecure: boolean | null
+  logoPath: string | null
+  logoMime: string | null
   createdAt: Date
   updatedAt: Date
   _count: CompanyCountAggregateOutputType | null
@@ -286,6 +300,8 @@ export type CompanyWhereInput = {
   smtpPass?: Prisma.StringNullableFilter<"Company"> | string | null
   smtpFrom?: Prisma.StringNullableFilter<"Company"> | string | null
   smtpSecure?: Prisma.BoolNullableFilter<"Company"> | boolean | null
+  logoPath?: Prisma.StringNullableFilter<"Company"> | string | null
+  logoMime?: Prisma.StringNullableFilter<"Company"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Company"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Company"> | Date | string
   users?: Prisma.UserListRelationFilter
@@ -311,6 +327,8 @@ export type CompanyOrderByWithRelationInput = {
   smtpPass?: Prisma.SortOrderInput | Prisma.SortOrder
   smtpFrom?: Prisma.SortOrderInput | Prisma.SortOrder
   smtpSecure?: Prisma.SortOrderInput | Prisma.SortOrder
+  logoPath?: Prisma.SortOrderInput | Prisma.SortOrder
+  logoMime?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   users?: Prisma.UserOrderByRelationAggregateInput
@@ -339,6 +357,8 @@ export type CompanyWhereUniqueInput = Prisma.AtLeast<{
   smtpPass?: Prisma.StringNullableFilter<"Company"> | string | null
   smtpFrom?: Prisma.StringNullableFilter<"Company"> | string | null
   smtpSecure?: Prisma.BoolNullableFilter<"Company"> | boolean | null
+  logoPath?: Prisma.StringNullableFilter<"Company"> | string | null
+  logoMime?: Prisma.StringNullableFilter<"Company"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Company"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Company"> | Date | string
   users?: Prisma.UserListRelationFilter
@@ -364,6 +384,8 @@ export type CompanyOrderByWithAggregationInput = {
   smtpPass?: Prisma.SortOrderInput | Prisma.SortOrder
   smtpFrom?: Prisma.SortOrderInput | Prisma.SortOrder
   smtpSecure?: Prisma.SortOrderInput | Prisma.SortOrder
+  logoPath?: Prisma.SortOrderInput | Prisma.SortOrder
+  logoMime?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.CompanyCountOrderByAggregateInput
@@ -389,6 +411,8 @@ export type CompanyScalarWhereWithAggregatesInput = {
   smtpPass?: Prisma.StringNullableWithAggregatesFilter<"Company"> | string | null
   smtpFrom?: Prisma.StringNullableWithAggregatesFilter<"Company"> | string | null
   smtpSecure?: Prisma.BoolNullableWithAggregatesFilter<"Company"> | boolean | null
+  logoPath?: Prisma.StringNullableWithAggregatesFilter<"Company"> | string | null
+  logoMime?: Prisma.StringNullableWithAggregatesFilter<"Company"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Company"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Company"> | Date | string
 }
@@ -406,6 +430,8 @@ export type CompanyCreateInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -431,6 +457,8 @@ export type CompanyUncheckedCreateInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -456,6 +484,8 @@ export type CompanyUpdateInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -481,6 +511,8 @@ export type CompanyUncheckedUpdateInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -506,6 +538,8 @@ export type CompanyCreateManyInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -523,6 +557,8 @@ export type CompanyUpdateManyMutationInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -540,6 +576,8 @@ export type CompanyUncheckedUpdateManyInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -557,6 +595,8 @@ export type CompanyCountOrderByAggregateInput = {
   smtpPass?: Prisma.SortOrder
   smtpFrom?: Prisma.SortOrder
   smtpSecure?: Prisma.SortOrder
+  logoPath?: Prisma.SortOrder
+  logoMime?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -578,6 +618,8 @@ export type CompanyMaxOrderByAggregateInput = {
   smtpPass?: Prisma.SortOrder
   smtpFrom?: Prisma.SortOrder
   smtpSecure?: Prisma.SortOrder
+  logoPath?: Prisma.SortOrder
+  logoMime?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -595,6 +637,8 @@ export type CompanyMinOrderByAggregateInput = {
   smtpPass?: Prisma.SortOrder
   smtpFrom?: Prisma.SortOrder
   smtpSecure?: Prisma.SortOrder
+  logoPath?: Prisma.SortOrder
+  logoMime?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -757,6 +801,8 @@ export type CompanyCreateWithoutEmployeesInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -781,6 +827,8 @@ export type CompanyUncheckedCreateWithoutEmployeesInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -821,6 +869,8 @@ export type CompanyUpdateWithoutEmployeesInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -845,6 +895,8 @@ export type CompanyUncheckedUpdateWithoutEmployeesInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -869,6 +921,8 @@ export type CompanyCreateWithoutUsersInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   employees?: Prisma.EmployeeCreateNestedManyWithoutCompanyInput
@@ -893,6 +947,8 @@ export type CompanyUncheckedCreateWithoutUsersInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   employees?: Prisma.EmployeeUncheckedCreateNestedManyWithoutCompanyInput
@@ -933,6 +989,8 @@ export type CompanyUpdateWithoutUsersInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   employees?: Prisma.EmployeeUpdateManyWithoutCompanyNestedInput
@@ -957,6 +1015,8 @@ export type CompanyUncheckedUpdateWithoutUsersInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   employees?: Prisma.EmployeeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -981,6 +1041,8 @@ export type CompanyCreateWithoutLeavePoliciesInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -1005,6 +1067,8 @@ export type CompanyUncheckedCreateWithoutLeavePoliciesInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -1045,6 +1109,8 @@ export type CompanyUpdateWithoutLeavePoliciesInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -1069,6 +1135,8 @@ export type CompanyUncheckedUpdateWithoutLeavePoliciesInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1093,6 +1161,8 @@ export type CompanyCreateWithoutLeaveRequestsInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -1117,6 +1187,8 @@ export type CompanyUncheckedCreateWithoutLeaveRequestsInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -1157,6 +1229,8 @@ export type CompanyUpdateWithoutLeaveRequestsInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -1181,6 +1255,8 @@ export type CompanyUncheckedUpdateWithoutLeaveRequestsInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1205,6 +1281,8 @@ export type CompanyCreateWithoutExpenseCategoriesInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -1229,6 +1307,8 @@ export type CompanyUncheckedCreateWithoutExpenseCategoriesInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -1269,6 +1349,8 @@ export type CompanyUpdateWithoutExpenseCategoriesInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -1293,6 +1375,8 @@ export type CompanyUncheckedUpdateWithoutExpenseCategoriesInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1317,6 +1401,8 @@ export type CompanyCreateWithoutExpenseReportsInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -1341,6 +1427,8 @@ export type CompanyUncheckedCreateWithoutExpenseReportsInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -1381,6 +1469,8 @@ export type CompanyUpdateWithoutExpenseReportsInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -1405,6 +1495,8 @@ export type CompanyUncheckedUpdateWithoutExpenseReportsInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1429,6 +1521,8 @@ export type CompanyCreateWithoutNotificationsInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -1453,6 +1547,8 @@ export type CompanyUncheckedCreateWithoutNotificationsInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -1493,6 +1589,8 @@ export type CompanyUpdateWithoutNotificationsInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -1517,6 +1615,8 @@ export type CompanyUncheckedUpdateWithoutNotificationsInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1541,6 +1641,8 @@ export type CompanyCreateWithoutInvitationsInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -1565,6 +1667,8 @@ export type CompanyUncheckedCreateWithoutInvitationsInput = {
   smtpPass?: string | null
   smtpFrom?: string | null
   smtpSecure?: boolean | null
+  logoPath?: string | null
+  logoMime?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -1605,6 +1709,8 @@ export type CompanyUpdateWithoutInvitationsInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -1629,6 +1735,8 @@ export type CompanyUncheckedUpdateWithoutInvitationsInput = {
   smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
+  logoPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  logoMime?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1747,6 +1855,8 @@ export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   smtpPass?: boolean
   smtpFrom?: boolean
   smtpSecure?: boolean
+  logoPath?: boolean
+  logoMime?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   users?: boolean | Prisma.Company$usersArgs<ExtArgs>
@@ -1773,6 +1883,8 @@ export type CompanySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   smtpPass?: boolean
   smtpFrom?: boolean
   smtpSecure?: boolean
+  logoPath?: boolean
+  logoMime?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["company"]>
@@ -1790,6 +1902,8 @@ export type CompanySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   smtpPass?: boolean
   smtpFrom?: boolean
   smtpSecure?: boolean
+  logoPath?: boolean
+  logoMime?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["company"]>
@@ -1807,11 +1921,13 @@ export type CompanySelectScalar = {
   smtpPass?: boolean
   smtpFrom?: boolean
   smtpSecure?: boolean
+  logoPath?: boolean
+  logoMime?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type CompanyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "country" | "timezone" | "currency" | "weekendDays" | "smtpHost" | "smtpPort" | "smtpUser" | "smtpPass" | "smtpFrom" | "smtpSecure" | "createdAt" | "updatedAt", ExtArgs["result"]["company"]>
+export type CompanyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "country" | "timezone" | "currency" | "weekendDays" | "smtpHost" | "smtpPort" | "smtpUser" | "smtpPass" | "smtpFrom" | "smtpSecure" | "logoPath" | "logoMime" | "createdAt" | "updatedAt", ExtArgs["result"]["company"]>
 export type CompanyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | Prisma.Company$usersArgs<ExtArgs>
   employees?: boolean | Prisma.Company$employeesArgs<ExtArgs>
@@ -1851,6 +1967,8 @@ export type $CompanyPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     smtpPass: string | null
     smtpFrom: string | null
     smtpSecure: boolean | null
+    logoPath: string | null
+    logoMime: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["company"]>
@@ -2296,6 +2414,8 @@ export interface CompanyFieldRefs {
   readonly smtpPass: Prisma.FieldRef<"Company", 'String'>
   readonly smtpFrom: Prisma.FieldRef<"Company", 'String'>
   readonly smtpSecure: Prisma.FieldRef<"Company", 'Boolean'>
+  readonly logoPath: Prisma.FieldRef<"Company", 'String'>
+  readonly logoMime: Prisma.FieldRef<"Company", 'String'>
   readonly createdAt: Prisma.FieldRef<"Company", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Company", 'DateTime'>
 }

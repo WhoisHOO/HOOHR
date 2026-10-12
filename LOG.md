@@ -1008,5 +1008,17 @@ Four commits on `feature/first-run-setup`, plus a merge of `feature/public-tunne
 - **Docs**: README feature row + setup comment updated (no more "remaining days derived…").
 - **Verification**: tsc 0, lint 0, mail 58/58, container rebuilt + healthy, `/api/health` ok, `/login` + `/setup` 200.
 
+### Session 25 (2026-10-12): request-only leave, admin-only export, plain amounts, language switch, no categories, company logo
+
+- **Product direction (user)**: quotas are gone entirely (no half-day, no unpaid, no day counts); CSV export is admin-only (staff export was a bug); amounts show as plain numbers, never USD/$/₩; language is switchable KR/EN; expense categories are gone; sidebar header shows the company brand, footer shows the program version.
+- **Leave request-only**: half-day checkbox/logic/validation removed (form, action, schema; full-day periods only); UNPAID excluded from dropdown/validation/settings/seed and deactivated in the live DB; `isHalfDay`/`halfDayDate` columns stay inert. Period preview kept.
+- **Export 403**: `/hoohr/expenses/export` returns 403 for staff (was: own-scoped CSV); button hidden for staff; route simplified to company scope.
+- **Amounts**: `formatMoney` renders grouped plain numbers (`1,234.56`); currency stays in the DB as record info only. Mail test asserts no sign/code.
+- **Language switch**: `locale` cookie (1yr) + `setLocale` action + sidebar 한국어/English toggle; `getLocale()` falls back to company country; dates/numbers follow. Setup country hint now says "default language".
+- **Categories removed**: form select, item schema field, settings CRUD section/actions/schemas, seed lists (one invisible `일반`/`General` bucket remains because items keep the column; auto-created on demand). Export CSV keeps its category column populated from the hidden bucket.
+- **Company logo + version**: `Company.logoPath/logoMime` (migration `20261012220705_company_logo`), 1MB jpg/png/webp upload in Company settings with preview + remove (old file deleted on replace), served by `/hoohr/logo` to company members; sidebar header shows logo + company name (name was already editable in settings); footer shows `HOOHR v0.1.0` from package.json.
+- **Also**: dashboard "내 승인대기/내 제출" → "승인 대기/제출".
+- **Verification**: tsc 0, lint 0, mail 58/58, container rebuilt + healthy, health/login/setup 200, export+logo correctly bounce (307) when logged out. First-run e2e + docs updated in `5734716`; `_test-expense.ts` fixture still missing in this DB (pre-existing).
+
 <!-- ====== Template for next sessions (copy & use) ======
 

@@ -6,10 +6,9 @@ import { LeaveTypeKind, type Prisma } from "@/generated/prisma/client";
 
 /**
  * Seed text per locale. Country is the single install-time answer, so the
- * seed data (policy names, category names) comes out in that country's
- * language - a US company should not boot into "교통/식비".
- * Leave day counts are starting values the admin edits in Settings, not a
- * legal entitlement for the country.
+ * seed data comes out in that country's language.
+ * Categories are gone from the UI; exactly one invisible default bucket is
+ * seeded because items still carry a categoryId column.
  */
 export const SEED_TEXT: Record<
   string,
@@ -34,9 +33,8 @@ export const SEED_TEXT: Record<
     policies: [
       { name: "연차", kind: LeaveTypeKind.PTO, annualDays: 10, maxCarryOverDays: 5, isPaid: true },
       { name: "병가", kind: LeaveTypeKind.SICK, annualDays: 5, maxCarryOverDays: 0, isPaid: true },
-      { name: "무급휴직", kind: LeaveTypeKind.UNPAID, annualDays: 0, maxCarryOverDays: 0, isPaid: false },
     ],
-    categories: ["교통", "식비", "숙박", "회의비", "교육비", "기타"],
+    categories: ["일반"],
   },
   en: {
     companyName: "My Company",
@@ -45,9 +43,8 @@ export const SEED_TEXT: Record<
     policies: [
       { name: "PTO", kind: LeaveTypeKind.PTO, annualDays: 10, maxCarryOverDays: 5, isPaid: true },
       { name: "Sick day", kind: LeaveTypeKind.SICK, annualDays: 5, maxCarryOverDays: 0, isPaid: true },
-      { name: "Unpaid leave", kind: LeaveTypeKind.UNPAID, annualDays: 0, maxCarryOverDays: 0, isPaid: false },
     ],
-    categories: ["Transport", "Meals", "Lodging", "Meetings", "Education", "Other"],
+    categories: ["General"],
   },
 };
 

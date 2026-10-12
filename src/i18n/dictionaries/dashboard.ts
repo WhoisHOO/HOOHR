@@ -17,8 +17,8 @@ export const dashboardKo = {
     leaveHint: "PTO · 병가 · 무급, 메모와 함께",
     expenseTitle: "영수증 제출하기",
     expenseHint: "사진을 올리고 메모와 함께",
-    pendingLeave: "내 승인 대기 {n}건",
-    pendingExpense: "내 제출 {n}건",
+    pendingLeave: "승인 대기 {n}건",
+    pendingExpense: "제출 {n}건",
   },
   // 관리자 대시보드: 남은 일은 승인뿐이다.
   queue: {

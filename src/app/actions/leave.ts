@@ -7,14 +7,13 @@ import { fieldErrors } from "@/lib/form-utils";
 import { getCompanyTimezone, getCompanyWeekend } from "@/lib/company";
 import { parseIsoDate, zonedToday } from "@/lib/date";
 import { computeLeaveDays } from "@/lib/leave";
-import { isWorkday } from "@/lib/weekend";
 import {
   leaveRequestFormSchema,
   type LeaveCancelState,
   type LeaveDecideState,
   type LeaveRequestState,
 } from "@/lib/leave-validation";
-import { getDict, interpolate } from "@/i18n/server";
+import { getDict } from "@/i18n/server";
 import {
   adminRecipients,
   notifyLeaveDecision,
@@ -47,14 +46,12 @@ export async function requestLeave(
     policyId: formData.get("policyId"),
     startDate: formData.get("startDate"),
     endDate: formData.get("endDate"),
-    isHalfDay: String(formData.get("isHalfDay") ?? ""),
     reason: formData.get("reason") ?? undefined,
   });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
   }
 
-  const isHalfDay = ["true", "1", "on"].includes(parsed.data.isHalfDay ?? "");
   const start = parseIsoDate(parsed.data.startDate);
   const end = parseIsoDate(parsed.data.endDate);
 
@@ -66,29 +63,25 @@ export async function requestLeave(
   if (start.getTime() > end.getTime()) {
     return { message: leave.messages.endBeforeStart };
   }
-  if (isHalfDay && start.getTime() !== end.getTime()) {
-    return { message: leave.messages.halfDaySingleDayOnly };
-  }
 
+  // Only day-based policies (PTO/sick) can be requested. Each company applies
+  // its own standards at approval time; unpaid leave is not offered.
   const policy = await prisma.leavePolicy.findFirst({
-    where: { companyId: user.companyId, id: parsed.data.policyId, active: true },
+    where: {
+      companyId: user.companyId,
+      id: parsed.data.policyId,
+      active: true,
+      kind: { in: ["PTO", "SICK"] },
+    },
   });
   if (!policy) {
     return { message: leave.messages.policyNotFound };
   }
 
   const weekend = await getCompanyWeekend(user.companyId);
-  const days = computeLeaveDays(start, end, isHalfDay, weekend);
+  const days = computeLeaveDays(start, end, false, weekend);
   if (days <= 0) {
     return { message: leave.messages.noWorkdays };
-  }
-  if (isHalfDay && !isWorkday(start, weekend)) {
-    return {
-      message: interpolate(leave.messages.halfDayOnWeekend, {
-        m: start.getUTCMonth() + 1,
-        d: start.getUTCDate(),
-      }),
-    };
   }
 
   // A DB failure here must surface as a plain message, never an exception
@@ -102,8 +95,8 @@ export async function requestLeave(
         policyId: policy.id,
         startDate: start,
         endDate: end,
-        isHalfDay,
-        halfDayDate: isHalfDay ? start : null,
+        isHalfDay: false,
+        halfDayDate: null,
         days,
         reason: parsed.data.reason?.trim() || null,
       },

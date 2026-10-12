@@ -94,6 +94,8 @@ export const CompanyScalarFieldEnum = {
   smtpPass: 'smtpPass',
   smtpFrom: 'smtpFrom',
   smtpSecure: 'smtpSecure',
+  logoPath: 'logoPath',
+  logoMime: 'logoMime',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

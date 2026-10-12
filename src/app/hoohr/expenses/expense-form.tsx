@@ -6,15 +6,9 @@ import { parseAmountToCents } from "@/lib/expense";
 import type { ExpenseCreateState } from "@/lib/expense-validation";
 import { useI18n, INTL_LOCALES } from "@/i18n/client";
 
-export type ExpenseCategoryOption = {
-  id: string;
-  name: string;
-};
-
 type ItemRow = {
   key: number;
   date: string;
-  categoryId: string;
   amount: string;
   description: string;
   fileName: string;
@@ -27,11 +21,7 @@ function todayStr(): string {
   return `${d.getFullYear()}-${m}-${day}`;
 }
 
-export function NewExpenseForm({
-  categories,
-}: {
-  categories: ExpenseCategoryOption[];
-}) {
+export function NewExpenseForm() {
   const { d, locale } = useI18n();
   const [state, action, pending] = useActionState<ExpenseCreateState, FormData>(
     createExpenseReport,
@@ -45,7 +35,6 @@ export function NewExpenseForm({
     {
       key: 0,
       date: todayStr(),
-      categoryId: categories[0]?.id ?? "",
       amount: "",
       description: "",
       fileName: "",
@@ -73,7 +62,6 @@ export function NewExpenseForm({
       {
         key: prev.length,
         date: todayStr(),
-        categoryId: categories[0]?.id ?? "",
         amount: "",
         description: "",
         fileName: "",
@@ -169,27 +157,6 @@ export function NewExpenseForm({
                   onChange={(e) => updateRow(row.key, { date: e.target.value })}
                   className={inputCls}
                 />
-              </div>
-              <div className="flex flex-col gap-1">
-                <label
-                  htmlFor={`ex-item-cat-${row.key}`}
-                  className="text-xs font-medium text-zinc-500"
-                >
-                  {d.expenses.form.category}
-                </label>
-                <select
-                  id={`ex-item-cat-${row.key}`}
-                  name="item_categoryId"
-                  value={row.categoryId}
-                  onChange={(e) => updateRow(row.key, { categoryId: e.target.value })}
-                  className={inputCls}
-                >
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
               </div>
               <div className="flex flex-col gap-1">
                 <label
