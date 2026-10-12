@@ -76,3 +76,39 @@ export async function removeReceipt(storedName: string): Promise<void> {
 export function receiptPath(storedName: string): string {
   return path.join(/*turbopackIgnore: true*/ uploadDir(), path.basename(storedName));
 }
+
+// ============ 회사 로고 (관리자 1장) ============
+
+export const MAX_LOGO_BYTES = 1 * 1024 * 1024;
+
+const LOGO_TYPES: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+};
+
+export type LogoError = "EMPTY" | "TOO_LARGE" | "UNSUPPORTED_TYPE";
+
+export async function saveLogo(
+  file: File,
+): Promise<{ ok: true; storedName: string; mimeType: string } | { ok: false; error: LogoError }> {
+  if (file.size === 0) return { ok: false, error: "EMPTY" };
+  if (file.size > MAX_LOGO_BYTES) return { ok: false, error: "TOO_LARGE" };
+  const ext = LOGO_TYPES[file.type];
+  if (!ext) return { ok: false, error: "UNSUPPORTED_TYPE" };
+
+  const storedName = `logo-${randomUUID()}${ext}`;
+  const buf = Buffer.from(await file.arrayBuffer());
+  const dir = uploadDir();
+  await mkdir(dir, { recursive: true });
+  await writeFile(path.join(/*turbopackIgnore: true*/ dir, storedName), buf);
+  return { ok: true, storedName, mimeType: file.type };
+}
+
+export async function removeLogo(storedName: string): Promise<void> {
+  try {
+    await unlink(path.join(/*turbopackIgnore: true*/ uploadDir(), path.basename(storedName)));
+  } catch {
+    // 이미 없거나 경로 문제 — 무시
+  }
+}

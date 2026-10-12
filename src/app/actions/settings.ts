@@ -9,16 +9,13 @@ import { formatWeekendDays } from "@/lib/company-defaults";
 import { countryDefaults } from "@/lib/country";
 import {
   companySettingsSchema,
-  expenseCategoryCreateSchema,
-  expenseCategoryDeleteSchema,
-  expenseCategoryUpdateSchema,
   leavePolicyUpdateSchema,
   type CompanySettingsState,
-  type ExpenseCategoryState,
   type LeavePolicyState,
 } from "@/lib/settings-validation";
 import { getDict, interpolate } from "@/i18n/server";
 import { smtpFieldsSchema } from "@/lib/setup-validation";
+import { removeLogo, saveLogo } from "@/lib/storage";
 
 function formText(formData: FormData, key: string): string | undefined {
   const value = formData.get(key);
@@ -155,6 +152,71 @@ export async function updateMailSettings(
   return { message: settings.messages.mailSaved, ok: true };
 }
 
+// ============ SET-1c: 회사 로고 ============
+
+export async function updateCompanyLogo(
+  _state: CompanySettingsState,
+  formData: FormData,
+): Promise<CompanySettingsState> {
+  const admin = await requireAdmin();
+  const { common, settings } = await getDict();
+
+  const file = formData.get("logo");
+  if (!(file instanceof File) || file.size === 0) {
+    return { message: settings.messages.logoRequired };
+  }
+
+  const saved = await saveLogo(file);
+  if (!saved.ok) {
+    return {
+      message:
+        saved.error === "TOO_LARGE"
+          ? interpolate(common.validation.fileTooLarge, { max: "1MB" })
+          : common.validation.fileTypeInvalid,
+    };
+  }
+
+  try {
+    const company = await prisma.company.findUniqueOrThrow({
+      where: { id: admin.companyId },
+      select: { logoPath: true },
+    });
+    await prisma.company.update({
+      where: { id: admin.companyId },
+      data: { logoPath: saved.storedName, logoMime: saved.mimeType },
+    });
+    if (company.logoPath) await removeLogo(company.logoPath);
+  } catch {
+    await removeLogo(saved.storedName);
+    return { message: settings.messages.mailSaveFailed };
+  }
+
+  revalidateSettingsPages();
+  return { message: settings.messages.logoSaved, ok: true };
+}
+
+export async function removeCompanyLogo(): Promise<CompanySettingsState> {
+  const admin = await requireAdmin();
+  const { settings } = await getDict();
+
+  try {
+    const company = await prisma.company.findUniqueOrThrow({
+      where: { id: admin.companyId },
+      select: { logoPath: true },
+    });
+    await prisma.company.update({
+      where: { id: admin.companyId },
+      data: { logoPath: null, logoMime: null },
+    });
+    if (company.logoPath) await removeLogo(company.logoPath);
+  } catch {
+    return { message: settings.messages.mailSaveFailed };
+  }
+
+  revalidateSettingsPages();
+  return { message: settings.messages.logoRemoved, ok: true };
+}
+
 // ============ SET-2: 휴가 정책 ============
 
 export async function updateLeavePolicy(
@@ -208,127 +270,4 @@ export async function updateLeavePolicy(
     message: interpolate(settings.messages.policySaved, { name: policy.name }),
     ok: true,
   };
-}
-
-// ============ SET-4: 경비 분류 ============
-
-export async function createExpenseCategory(
-  _state: ExpenseCategoryState,
-  formData: FormData,
-): Promise<ExpenseCategoryState> {
-  const admin = await requireAdmin();
-  const { common, settings } = await getDict();
-  const schema = expenseCategoryCreateSchema({
-    ...settings,
-    required: common.validation.required,
-  });
-  const parsed = schema.safeParse({
-    name: formText(formData, "name"),
-  });
-  if (!parsed.success) {
-    return { fieldErrors: fieldErrors(parsed.error.issues) };
-  }
-
-  try {
-    await prisma.expenseCategory.create({
-      data: { companyId: admin.companyId, name: parsed.data.name },
-    });
-  } catch (error) {
-    if (isUniqueConstraintError(error)) {
-      return { message: settings.messages.categoryNameTaken, ok: false };
-    }
-    throw error;
-  }
-
-  revalidateSettingsPages();
-  return { message: settings.messages.categoryCreated, ok: true };
-}
-
-export async function updateExpenseCategory(
-  _state: ExpenseCategoryState,
-  formData: FormData,
-): Promise<ExpenseCategoryState> {
-  const admin = await requireAdmin();
-  const { common, settings } = await getDict();
-  const schema = expenseCategoryUpdateSchema({
-    ...settings,
-    required: common.validation.required,
-  });
-  const parsed = schema.safeParse({
-    id: formText(formData, "id"),
-    name: formText(formData, "name"),
-    active: formCheckbox(formData, "active"),
-  });
-  if (!parsed.success) {
-    return { fieldErrors: fieldErrors(parsed.error.issues) };
-  }
-
-  const category = await prisma.expenseCategory.findFirst({
-    where: { id: parsed.data.id, companyId: admin.companyId },
-    select: { id: true },
-  });
-  if (!category) {
-    return { message: settings.messages.categoryNotFound, ok: false };
-  }
-
-  try {
-    await prisma.expenseCategory.update({
-      where: { id: category.id },
-      data: { name: parsed.data.name, active: parsed.data.active === "true" },
-    });
-  } catch (error) {
-    if (isUniqueConstraintError(error)) {
-      return { message: settings.messages.categoryNameTaken, ok: false };
-    }
-    throw error;
-  }
-
-  revalidateSettingsPages();
-  return { message: settings.messages.categorySaved, ok: true };
-}
-
-/** 사용 중인 분류(항목이 존재)는 삭제하지 않고 비활성화만 허용. */
-export async function deleteExpenseCategory(
-  _state: ExpenseCategoryState,
-  formData: FormData,
-): Promise<ExpenseCategoryState> {
-  const admin = await requireAdmin();
-  const { common, settings } = await getDict();
-  const schema = expenseCategoryDeleteSchema({
-    ...settings,
-    required: common.validation.required,
-  });
-  const parsed = schema.safeParse({ id: formText(formData, "id") });
-  if (!parsed.success) {
-    return { fieldErrors: fieldErrors(parsed.error.issues) };
-  }
-
-  const result = await prisma.$transaction(async (tx) => {
-    const category = await tx.expenseCategory.findFirst({
-      where: { id: parsed.data.id, companyId: admin.companyId },
-      select: { id: true, name: true, _count: { select: { items: true } } },
-    });
-    if (!category) return { kind: "not_found" as const, name: "" };
-    if (category._count.items > 0) {
-      return { kind: "in_use" as const, name: category.name };
-    }
-
-    await tx.expenseCategory.delete({ where: { id: category.id } });
-    return { kind: "deleted" as const, name: category.name };
-  });
-
-  if (result.kind === "not_found") {
-    return { message: settings.messages.categoryNotFound, ok: false };
-  }
-  if (result.kind === "in_use") {
-    return {
-      message: interpolate(settings.messages.categoryInUse, {
-        name: result.name,
-      }),
-      ok: false,
-    };
-  }
-
-  revalidateSettingsPages();
-  return { message: settings.messages.categoryDeleted, ok: true };
 }

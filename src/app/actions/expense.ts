@@ -17,7 +17,7 @@ import {
   type ExpenseDeleteState,
   type ExpenseSubmitState,
 } from "@/lib/expense-validation";
-import { getDict, interpolate } from "@/i18n/server";
+import { getDict, getLocale, interpolate } from "@/i18n/server";
 import {
   adminRecipients,
   notifyExpenseDecision,
@@ -37,7 +37,6 @@ import type { ExpenseMessages } from "@/i18n/dictionaries/expenses";
 
 type ItemInput = {
   date: Date;
-  categoryId: string;
   amountCents: number;
   description: string | null;
   file: File | null;
@@ -64,7 +63,6 @@ function parseItemRows(
   expenses: ExpenseMessages,
 ): ItemInput[] | string {
   const dates = formData.getAll("item_date") as string[];
-  const categoryIds = formData.getAll("item_categoryId") as string[];
   const amounts = formData.getAll("item_amount") as string[];
   const descriptions = formData.getAll("item_description") as string[];
   const files = formData.getAll("item_file") as unknown as File[];
@@ -79,7 +77,6 @@ function parseItemRows(
   for (let i = 0; i < count; i++) {
     const parsed = expenseItemFormSchema(expenses).safeParse({
       date: dates[i],
-      categoryId: categoryIds[i],
       amountLabel: amounts[i],
       description: descriptions[i] || undefined,
     });
@@ -96,7 +93,6 @@ function parseItemRows(
     }
     items.push({
       date: parseIsoDate(parsed.data.date),
-      categoryId: parsed.data.categoryId,
       amountCents,
       description: parsed.data.description || null,
       file: files[i]?.size > 0 ? files[i] : null,
@@ -137,23 +133,28 @@ export async function createExpenseReport(
     return { message: parsedItems };
   }
 
-  const categoryIds = [...new Set(parsedItems.map((i) => i.categoryId))];
-  const categories = await prisma.expenseCategory.findMany({
-    where: {
-      companyId: user.companyId,
-      id: { in: categoryIds },
-      active: true,
-    },
-    select: { id: true },
-  });
-  if (categories.length !== categoryIds.length) {
-    return { message: expenses.messages.invalidCategory };
-  }
-
+  // Categories are gone from the UI. Items still carry a categoryId column,
+  // so every item lands in the company's default bucket (first active one,
+  // created on demand for companies that have none).
   const totalCents = parsedItems.reduce((sum, it) => sum + it.amountCents, 0);
 
   const savedFiles: string[] = [];
   try {
+    let defaultCategory = await prisma.expenseCategory.findFirst({
+      where: { companyId: user.companyId, active: true },
+      orderBy: { name: "asc" },
+    });
+    if (!defaultCategory) {
+      const locale = await getLocale();
+      defaultCategory = await prisma.expenseCategory.create({
+        data: {
+          companyId: user.companyId,
+          name: locale === "ko" ? "일반" : "General",
+          active: true,
+        },
+      });
+    }
+
     const itemData = [];
     for (const it of parsedItems) {
       const receipts = [];
@@ -170,7 +171,7 @@ export async function createExpenseReport(
       }
       itemData.push({
         date: it.date,
-        categoryId: it.categoryId,
+        categoryId: defaultCategory.id,
         amountCents: it.amountCents,
         description: it.description,
         receipts: { create: receipts },

@@ -1,14 +1,21 @@
 import "server-only";
 
+import { cookies } from "next/headers";
 import { getCompanyLocale } from "@/lib/company";
 import { dictionaries, type Dict } from "./dictionaries";
-import type { Locale } from "./config";
+import { isLocale, type Locale } from "./config";
 
 /**
- * 화면 언어는 회사의 국가가 정한다 - 사용자가 고르는 별도의 언어 설정은 없다.
- * (설치할 때 국가를 한 번 고르면 통화·시간대와 함께 언어가 따라온다.)
+ * 화면 언어는 `locale` 쿠키가 정하고, 없으면 회사의 국가(기본값)가 정한다.
+ * 쿠키는 사이드바의 한국어/English 전환이 쓴다.
  */
 export async function getLocale(): Promise<Locale> {
+  try {
+    const cookieLocale = (await cookies()).get("locale")?.value;
+    if (isLocale(cookieLocale)) return cookieLocale;
+  } catch {
+    // 요청 밖(스크립트 등)에서는 쿠키가 없으므로 회사 기본값으로 떨어진다.
+  }
   return getCompanyLocale();
 }
 

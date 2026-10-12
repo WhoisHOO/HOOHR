@@ -28,7 +28,6 @@ export function expenseItemFormSchema(v: ExpenseValidationMessages) {
     date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
       error: v.validation.dateRequired,
     }),
-    categoryId: z.string().min(1, { error: v.validation.categoryRequired }),
     amountLabel: z
       .string()
       .regex(/^\d+(\.\d{1,2})?$/, { error: v.validation.amountInvalid }),

@@ -49,8 +49,8 @@ export async function getCompanyTimezone(companyId: string): Promise<string> {
 }
 
 /**
- * 통화 코드 조회. formatMoney 는 존재하지 않는 통화 코드에 RangeError 를 던져
- * 화면을 500 으로 만들기 때문에, 여기서 항상 유효한 값만 돌려준다.
+ * 통화 코드 조회. 금액은 통화 기호 없이 숫자로만 표시하므로 여기서의 값은
+ * 기록용으로만 쓰인다 (표시가 깨질 일은 없다).
  */
 export async function getCompanyCurrency(companyId: string): Promise<string> {
   const company = await prisma.company.findUnique({

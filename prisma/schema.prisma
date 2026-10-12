@@ -88,6 +88,12 @@ model Company {
   smtpPass   String?
   smtpFrom   String?
   smtpSecure Boolean?
+  // Company brand shown in the sidebar header (admin uploads it in Company
+  // settings). Null = text name only. Served by /hoohr/logo to any logged-in
+  // member of the company; the program brand (HOOHR + version) lives in the
+  // sidebar footer instead.
+  logoPath String?
+  logoMime String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

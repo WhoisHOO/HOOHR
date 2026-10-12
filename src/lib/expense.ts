@@ -2,15 +2,16 @@
 
 import { DEFAULT_INTL_LOCALE, type InltLocale } from "@/i18n/config";
 
-/** cents → 통화 표시 (기본 USD). */
+/** cents → 숫자 표시 (통화 기호·코드 없음, 소수 둘째 자리). */
 export function formatMoney(
   cents: number,
-  currency = "USD",
+  _currency = "USD",
   intl: InltLocale = DEFAULT_INTL_LOCALE,
 ): string {
-  return new Intl.NumberFormat(intl, { style: "currency", currency }).format(
-    cents / 100,
-  );
+  return new Intl.NumberFormat(intl, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(cents / 100);
 }
 
 /** 금액 입력 문자열("12.50") → cents. */

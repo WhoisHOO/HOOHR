@@ -18,6 +18,11 @@ export async function GET(request: Request) {
   if (!user) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
+  // Accounting export is an admin function. Staff have no export: their menu
+  // is request/submit only, and the button is hidden for them as well.
+  if (user.role !== "ADMIN") {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
 
   const { common, expenses } = await getDict();
 
@@ -40,15 +45,6 @@ export async function GET(request: Request) {
 
   const { start, end } = monthBounds(monthDate);
   const yyyymm = `${monthDate.getUTCFullYear()}-${String(monthDate.getUTCMonth() + 1).padStart(2, "0")}`;
-  const isAdmin = user.role === "ADMIN";
-  const employeeScope = isAdmin
-    ? { companyId: user.companyId }
-    : {
-        companyId: user.companyId,
-        ...(user.employeeId
-          ? { id: user.employeeId }
-          : { id: { in: [] } }),
-      };
 
   const items = await prisma.expenseItem.findMany({
     where: {
@@ -56,7 +52,6 @@ export async function GET(request: Request) {
       report: {
         companyId: user.companyId,
         status: { not: "DRAFT" },
-        employee: employeeScope,
       },
     },
     include: {
@@ -78,18 +73,14 @@ export async function GET(request: Request) {
   const columns = expenses.export.columns;
   const statusLabel = (s: string) =>
     common.expenseStatus[s as keyof typeof common.expenseStatus] ?? s;
-  if (isAdmin) {
-    rows.push([
-      columns.date, columns.category, columns.employee, columns.title, columns.status, columns.amount, columns.currency, columns.description, columns.receipts,
-    ]);
-  } else {
-    rows.push([columns.date, columns.category, columns.title, columns.status, columns.amount, columns.currency, columns.description, columns.receipts]);
-  }
+  rows.push([
+    columns.date, columns.category, columns.employee, columns.title, columns.status, columns.amount, columns.currency, columns.description, columns.receipts,
+  ]);
   for (const it of items) {
     const base = [
       formatDateNoPad(it.date),
       it.category.name,
-      ...(isAdmin ? [it.report.employee.name] : []),
+      it.report.employee.name,
       it.report.title,
       statusLabel(it.report.status),
       (it.amountCents / 100).toFixed(2),

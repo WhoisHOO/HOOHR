@@ -1,8 +1,10 @@
 import Link from "next/link";
-import Image from "next/image";
 import { requireUser } from "@/lib/dal";
+import { prisma } from "@/lib/prisma";
 import { logout } from "@/app/actions/auth";
-import { getDict } from "@/i18n/server";
+import { setLocale } from "@/app/actions/locale";
+import { getDict, getLocale } from "@/i18n/server";
+import { version as appVersion } from "../../../package.json";
 
 const ADMIN_NAV_ITEMS = [
   { href: "/hoohr", label: "dashboard" },
@@ -20,8 +22,15 @@ const EMPLOYEE_NAV_ITEMS = [
 export default async function AppLayout({ children }: LayoutProps<"/hoohr">) {
   const user = await requireUser();
   const { nav } = await getDict();
+  const locale = await getLocale();
   const isAdmin = user.role === "ADMIN";
   const navItems = isAdmin ? ADMIN_NAV_ITEMS : EMPLOYEE_NAV_ITEMS;
+  // Company brand for the header. Falls back to the name alone when the
+  // admin has not uploaded a logo yet.
+  const company = await prisma.company.findUnique({
+    where: { id: user.companyId },
+    select: { name: true, logoPath: true },
+  });
 
   return (
     <div className="flex min-h-screen">
@@ -29,8 +38,18 @@ export default async function AppLayout({ children }: LayoutProps<"/hoohr">) {
       <aside className="flex w-56 flex-col border-r border-zinc-200 bg-white">
         <div className="border-b border-zinc-200 px-5 py-4">
           <Link href="/hoohr" className="flex items-center gap-2 text-lg font-semibold text-zinc-900">
-            <Image src="/logo.png" alt="HOOHR" width={28} height={28} priority />
-            HOOHR
+            {company?.logoPath ? (
+              // Dynamic upload path: next/image cannot optimize it, so plain img.
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src="/hoohr/logo"
+                alt=""
+                width={28}
+                height={28}
+                className="h-7 w-7 rounded object-contain"
+              />
+            ) : null}
+            <span className="truncate">{company?.name ?? "HOOHR"}</span>
           </Link>
         </div>
 
@@ -79,6 +98,24 @@ export default async function AppLayout({ children }: LayoutProps<"/hoohr">) {
           </p>
           <p className="truncate text-xs text-zinc-500">{user.email}</p>
           <div className="mt-2">
+            <form action={setLocale} className="flex gap-1">
+              {(["ko", "en"] as const).map((l) => (
+                <button
+                  key={l}
+                  name="locale"
+                  value={l}
+                  className={`rounded px-1.5 py-0.5 text-xs font-medium ${
+                    locale === l
+                      ? "bg-zinc-900 text-white"
+                      : "text-zinc-500 hover:text-zinc-900"
+                  }`}
+                >
+                  {l === "ko" ? "한국어" : "English"}
+                </button>
+              ))}
+            </form>
+          </div>
+          <div className="mt-2">
             <form action={logout}>
               <button
                 type="submit"
@@ -88,6 +125,7 @@ export default async function AppLayout({ children }: LayoutProps<"/hoohr">) {
               </button>
             </form>
           </div>
+          <p className="mt-3 text-[10px] text-zinc-400">HOOHR v{appVersion}</p>
         </div>
       </aside>
 
