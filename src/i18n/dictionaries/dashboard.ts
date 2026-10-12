@@ -8,10 +8,24 @@ export const dashboardKo = {
   profile: "{position} · 입사 {date}",
   gettingStarted: {
     title: "시작하기",
-    subtitle: "처음이라면 아래 순서대로 진행하세요.",
-    invite: "직원 초대하기",
-    policies: "휴가 정책 · 공휴일 확인",
-    settings: "회사 정보 확인",
+    subtitle: "직원을 초대하면 바로 사용할 수 있습니다.",
+    action: "직원 초대하기",
+  },
+  // 직원 대시보드: 두 개의 큰 행동 버튼 + 내 대기 건수. 그 이상은 없다.
+  myActions: {
+    leaveTitle: "휴가 신청하기",
+    leaveHint: "PTO · 병가 · 무급, 메모와 함께",
+    expenseTitle: "영수증 제출하기",
+    expenseHint: "사진을 올리고 메모와 함께",
+    pendingLeave: "내 승인 대기 {n}건",
+    pendingExpense: "내 제출 {n}건",
+  },
+  // 관리자 대시보드: 남은 일은 승인뿐이다.
+  queue: {
+    title: "승인 대기",
+    leavePending: "휴가 {n}건",
+    expensePending: "영수증 {n}건",
+    empty: "대기 중인 요청이 없습니다.",
   },
   stats: {
     leave: {
@@ -37,10 +51,22 @@ export const dashboardEn: DashboardMessages = {
   profile: "{position} · Joined {date}",
   gettingStarted: {
     title: "Getting started",
-    subtitle: "New here? Work through these in order.",
-    invite: "Invite your team",
-    policies: "Review leave policies & holidays",
-    settings: "Check company settings",
+    subtitle: "Invite your team and you are ready to go.",
+    action: "Invite your team",
+  },
+  myActions: {
+    leaveTitle: "Request leave",
+    leaveHint: "PTO · sick · unpaid, with a note",
+    expenseTitle: "Submit receipts",
+    expenseHint: "Snap a photo, add a note",
+    pendingLeave: "{n} awaiting approval",
+    pendingExpense: "{n} submitted",
+  },
+  queue: {
+    title: "Waiting for approval",
+    leavePending: "{n} leave",
+    expensePending: "{n} receipts",
+    empty: "Nothing is waiting.",
   },
   stats: {
     leave: {

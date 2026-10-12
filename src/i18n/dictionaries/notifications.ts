@@ -52,6 +52,21 @@ export const notificationsKo = {
     cta: "지출 내역 보기",
   },
 
+  leaveSubmitted: {
+    subject: "{app}: 새 휴가 신청 — {requester} ({period})",
+    greeting: "{name}님, 안녕하세요.",
+    body: "{requester}님이 {kind} / {period} / {days} 휴가를 신청했습니다.",
+    reasonLine: "메모: {reason}",
+    cta: "승인 대기 목록 열기",
+  },
+
+  expenseSubmitted: {
+    subject: "{app}: 새 지출 보고서 — '{title}' ({requester})",
+    greeting: "{name}님, 안녕하세요.",
+    body: "{requester}님이 '{title}' ({amount}) 보고서를 제출했습니다.",
+    cta: "승인 대기 목록 열기",
+  },
+
   digest: {
     subject: "{app}: 대기 중인 승인 요청 {count}건",
     greeting: "{name}님, 안녕하세요.",
@@ -111,6 +126,21 @@ export const notificationsEn: NotificationMessages = {
     commentLabel: "Reviewer comment",
     noComment: "(no comment left)",
     cta: "View my expenses",
+  },
+
+  leaveSubmitted: {
+    subject: "{app}: new leave request — {requester} ({period})",
+    greeting: "Hello {name},",
+    body: "{requester} requested {kind}, {days} ({period}).",
+    reasonLine: "Note: {reason}",
+    cta: "Open pending requests",
+  },
+
+  expenseSubmitted: {
+    subject: "{app}: new expense report — '{title}' ({requester})",
+    greeting: "Hello {name},",
+    body: "{requester} submitted '{title}' ({amount}).",
+    cta: "Open pending reports",
   },
 
   digest: {

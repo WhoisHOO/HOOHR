@@ -19,7 +19,9 @@ import {
 } from "@/lib/expense-validation";
 import { getDict, interpolate } from "@/i18n/server";
 import {
+  adminRecipients,
   notifyExpenseDecision,
+  notifyExpenseSubmitted,
   type ExpenseDecisionOutcome,
 } from "@/lib/notifications";
 
@@ -223,10 +225,31 @@ export async function submitExpenseReport(
     return { message: expenses.messages.noItemsToSubmit };
   }
 
-  await prisma.expenseReport.update({
-    where: { id },
-    data: { status: "SUBMITTED", submittedAt: new Date() },
-  });
+  // A DB failure here must surface as a plain message, never an exception
+  // banner: the report was already validated, so anything left is infra.
+  try {
+    await prisma.expenseReport.update({
+      where: { id },
+      data: { status: "SUBMITTED", submittedAt: new Date() },
+    });
+  } catch {
+    return { message: expenses.messages.saveError };
+  }
+
+  // NOT-1 (submission): tell every active admin. Best effort — the report is
+  // already submitted, so a mail outage must not turn this into an error.
+  const admins = await adminRecipients(user.companyId);
+  if (admins.length > 0) {
+    await notifyExpenseSubmitted({
+      to: admins.map((a) => a.email),
+      companyId: user.companyId,
+      adminName: admins[0].name,
+      requesterName: user.name,
+      title: report.title,
+      totalAmountCents: report.totalAmountCents,
+      currency: report.currency,
+    });
+  }
 
   revalidatePath("/hoohr/expenses");
   return { message: expenses.messages.requestSubmitted, ok: true };
@@ -361,6 +384,7 @@ export async function decideExpense(
   // the status change is already committed and the sender cannot throw.
   await notifyExpenseDecision({
     ...decided,
+    companyId: user.companyId,
     reviewerName: user.name,
     decision: status as ExpenseDecisionOutcome,
     comment,

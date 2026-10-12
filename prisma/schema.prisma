@@ -77,6 +77,17 @@ model Company {
   currency  String   @default("KRW")
   // Comma-separated ISO weekdays off (0=Sun..6=Sat), e.g. "0,6".
   weekendDays String @default("0,6")
+  // Outbound mail for the approval notifications. Set once on the setup
+  // screen; an empty host disables all mail, exactly like an unset
+  // SMTP_HOST. Env vars, when set, still win, so a deployment can always
+  // override what is stored here. The password is server-side only and is
+  // never returned to any client component.
+  smtpHost   String?
+  smtpPort   Int?
+  smtpUser   String?
+  smtpPass   String?
+  smtpFrom   String?
+  smtpSecure Boolean?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

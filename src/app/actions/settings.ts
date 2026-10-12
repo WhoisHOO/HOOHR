@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
@@ -17,6 +18,7 @@ import {
   type LeavePolicyState,
 } from "@/lib/settings-validation";
 import { getDict, interpolate } from "@/i18n/server";
+import { smtpFieldsSchema } from "@/lib/setup-validation";
 
 function formText(formData: FormData, key: string): string | undefined {
   const value = formData.get(key);
@@ -87,6 +89,70 @@ export async function updateCompanySettings(
 
   revalidateSettingsPages();
   return { message: settings.messages.companySaved, ok: true };
+}
+
+// ============ SET-1b: 이메일 알림 설정 ============
+
+export async function updateMailSettings(
+  _state: CompanySettingsState,
+  formData: FormData,
+): Promise<CompanySettingsState> {
+  const admin = await requireAdmin();
+  const { common, settings } = await getDict();
+  const parsed = z
+    .object(smtpFieldsSchema(common.validation))
+    .safeParse({
+      smtpHost: formText(formData, "smtpHost"),
+      smtpPort: formText(formData, "smtpPort"),
+      smtpUser: formText(formData, "smtpUser"),
+      // Empty password keeps the stored one: the form never renders the
+      // secret back, so "unchanged" and "cleared" would otherwise be
+      // indistinguishable. Clearing is done by clearing the host.
+      smtpPass:
+        typeof formData.get("smtpPass") === "string" &&
+        (formData.get("smtpPass") as string).length > 0
+          ? (formData.get("smtpPass") as string)
+          : undefined,
+      smtpFrom: formText(formData, "smtpFrom"),
+      smtpSecure: formData.get("smtpSecure") || undefined,
+    });
+  if (!parsed.success) {
+    return { fieldErrors: fieldErrors(parsed.error.issues) };
+  }
+
+  const data: {
+    smtpHost: string | null;
+    smtpPort: number | null;
+    smtpUser: string | null;
+    smtpPass?: string | null;
+    smtpFrom: string | null;
+    smtpSecure: boolean;
+  } = {
+    smtpHost: parsed.data.smtpHost?.trim() || null,
+    smtpPort: parsed.data.smtpPort ?? null,
+    smtpUser: parsed.data.smtpUser?.trim() || null,
+    smtpFrom: parsed.data.smtpFrom?.trim() || null,
+    smtpSecure: parsed.data.smtpSecure === "on",
+  };
+  // A null host disables mail; drop the secret with it so no orphaned
+  // password lingers on a disabled config.
+  if (data.smtpHost) {
+    if (parsed.data.smtpPass !== undefined) data.smtpPass = parsed.data.smtpPass;
+  } else {
+    data.smtpPass = null;
+  }
+
+  try {
+    await prisma.company.update({
+      where: { id: admin.companyId },
+      data,
+    });
+  } catch {
+    return { message: settings.messages.mailSaveFailed };
+  }
+
+  revalidateSettingsPages();
+  return { message: settings.messages.mailSaved, ok: true };
 }
 
 // ============ SET-2: 휴가 정책 ============

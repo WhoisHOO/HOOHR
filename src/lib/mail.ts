@@ -82,6 +82,48 @@ export function mailEnabled(): boolean {
   return mailConfig() !== null;
 }
 
+/** The slice of the Company row the mailer reads. Kept structural so tests
+ *  and callers can pass a plain object without importing the Prisma client. */
+export type CompanySmtpRow = {
+  smtpHost: string | null;
+  smtpPort: number | null;
+  smtpUser: string | null;
+  smtpPass: string | null;
+  smtpFrom: string | null;
+  smtpSecure: boolean | null;
+};
+
+/**
+ * Company notification settings, or null when the company has none.
+ *
+ * Host is the only required field, mirroring `mailConfig()`: a relay without
+ * credentials is legitimate, so auth is only attached when both a user and a
+ * password are stored.
+ */
+export function companyMailConfig(company: CompanySmtpRow | null): MailConfig | null {
+  const host = company?.smtpHost?.trim();
+  if (!host) return null;
+  const port = company?.smtpPort && company.smtpPort > 0 ? company.smtpPort : 587;
+  const user = company?.smtpUser?.trim();
+  const pass = company?.smtpPass?.trim();
+  return {
+    host,
+    port,
+    secure: company?.smtpSecure ?? port === 465,
+    auth: user && pass ? { user, pass } : undefined,
+    from: company?.smtpFrom?.trim() || "HOOHR <no-reply@localhost>",
+  };
+}
+
+/**
+ * Resolves the effective config for a company: explicit env vars win when
+ * set (so a deployment can always override the database), otherwise the
+ * settings saved on the setup screen are used.
+ */
+export function effectiveMailConfig(company: CompanySmtpRow | null): MailConfig | null {
+  return mailConfig() ?? companyMailConfig(company);
+}
+
 function transporter(config: MailConfig): Transporter {
   // The config is derived from env, so keying the cache on it means a changed
   // host or port rebuilds the transport instead of silently reusing the old one.
@@ -119,6 +161,19 @@ export async function sendMail(
   onSuccess?: (messageId?: string) => Promise<void> | void,
 ): Promise<MailResult> {
   const config = mailConfig();
+  if (!config) return { sent: false, reason: "not_configured" };
+  return sendMailWithConfig(config, input, onSuccess);
+}
+
+/**
+ * Sends with an explicit config (e.g. the company settings from the setup
+ * screen). Same never-throws contract as `sendMail`.
+ */
+export async function sendMailWithConfig(
+  config: MailConfig | null,
+  input: MailInput,
+  onSuccess?: (messageId?: string) => Promise<void> | void,
+): Promise<MailResult> {
   if (!config) return { sent: false, reason: "not_configured" };
 
   const recipients = (Array.isArray(input.to) ? input.to : [input.to]).filter(

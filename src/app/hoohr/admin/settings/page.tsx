@@ -20,6 +20,12 @@ export default async function SettingsPage() {
         name: true,
         country: true,
         weekendDays: true,
+        smtpHost: true,
+        smtpPort: true,
+        smtpUser: true,
+        smtpPass: true,
+        smtpFrom: true,
+        smtpSecure: true,
       },
     }),
     prisma.leavePolicy.findMany({
@@ -63,6 +69,16 @@ export default async function SettingsPage() {
         companyName={company.name}
         country={company.country}
         weekendDays={company.weekendDays}
+        mail={{
+          smtpHost: company.smtpHost ?? "",
+          smtpPort: company.smtpPort != null ? String(company.smtpPort) : "",
+          smtpUser: company.smtpUser ?? "",
+          smtpFrom: company.smtpFrom ?? "",
+          smtpSecure: company.smtpSecure ?? false,
+          // The secret itself never leaves the server; the form only learns
+          // whether one is stored.
+          hasSmtpPass: (company.smtpPass ?? "").length > 0,
+        }}
         policies={policyViews}
         categories={categoryViews}
       />

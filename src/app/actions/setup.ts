@@ -28,6 +28,12 @@ export async function createFirstAdmin(
     email: formData.get("email"),
     password: formData.get("password"),
     country: formData.get("country"),
+    smtpHost: formData.get("smtpHost") || undefined,
+    smtpPort: formData.get("smtpPort") || undefined,
+    smtpUser: formData.get("smtpUser") || undefined,
+    smtpPass: formData.get("smtpPass") || undefined,
+    smtpFrom: formData.get("smtpFrom") || undefined,
+    smtpSecure: formData.get("smtpSecure") || undefined,
   });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
@@ -36,13 +42,24 @@ export async function createFirstAdmin(
   const { companyName, name, email, password, country } = parsed.data;
   const passwordHash = await bcrypt.hash(password, 10);
 
+  // Step 3 is optional: empty strings normalize to null, and a null host
+  // disables mail exactly like an unset SMTP_HOST.
+  const smtp = {
+    smtpHost: parsed.data.smtpHost?.trim() || null,
+    smtpPort: parsed.data.smtpPort ?? null,
+    smtpUser: parsed.data.smtpUser?.trim() || null,
+    smtpPass: parsed.data.smtpPass || null,
+    smtpFrom: parsed.data.smtpFrom?.trim() || null,
+    smtpSecure: parsed.data.smtpSecure === "on",
+  };
+
   const user = await prisma.$transaction(async (tx) => {
     let company = await tx.company.findFirst();
 
     if (company) {
       await tx.company.update({
         where: { id: company.id },
-        data: { name: companyName, country: country ?? company.country },
+        data: { name: companyName, country: country ?? company.country, ...smtp },
       });
     } else {
       const rawCountry = country ?? process.env.COMPANY_COUNTRY;
@@ -52,6 +69,7 @@ export async function createFirstAdmin(
         country: finalCountry,
       });
       company = created.company;
+      await tx.company.update({ where: { id: company.id }, data: smtp });
     }
 
     const createdUser = await tx.user.create({
