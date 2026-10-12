@@ -1,7 +1,7 @@
 // The very first thing a new user sees: no accounts exist, so the app must
-// open the setup screen instead of a login wall. The setup form must create
-// the first admin through the real browser path, and /setup must become
-// unreachable afterwards.
+// open the setup screen instead of a login wall. The 3-step setup wizard must
+// create the first admin through the real browser path (company -> admin ->
+// mail, mail left empty), and /setup must become unreachable afterwards.
 //
 // Precondition: the database has zero users (run against a fresh install or
 // after truncating "User"/"Employee"). Run with: node _e2e/first-run.mjs
@@ -34,6 +34,11 @@ const FILL = `
     desc.set.call(el, v);
     el.dispatchEvent(new Event("input", { bubbles: true }));
   };
+  const clickBtn = (re) => {
+    const btn = Array.from(document.querySelectorAll('button')).find((b) => re.test(b.textContent || ""));
+    if (!btn) throw new Error("button not found: " + re);
+    btn.click();
+  };
 `;
 
 async function main() {
@@ -60,15 +65,28 @@ async function main() {
     const html = await page.eval(`return document.body.innerText;`);
     check("the setup form is shown", /회사와 관리자 계정|Create your company/.test(html), "");
 
-    // ---------- submit creates the admin ----------
+    // ---------- submit creates the admin (3-step wizard, mail skipped) ----------
     await page.eval(`
       ${FILL}
       const cn = document.querySelector('input[name="companyName"]');
       set(cn, "");
       set(cn, "Test Company");
+      clickBtn(/다음|Next/);
+      return 1;
+    `);
+    await sleep(1200);
+    await page.eval(`
+      ${FILL}
       set(document.querySelector('input[name="name"]'), "First Admin");
       set(document.querySelector('input[name="email"]'), ${JSON.stringify(ADMIN_EMAIL)});
       set(document.querySelector('input[name="password"]'), ${JSON.stringify(ADMIN_PASSWORD)});
+      clickBtn(/다음|Next/);
+      return 1;
+    `);
+    await sleep(1200);
+    const mailStep = await page.eval(`return document.body.innerText;`);
+    check("wizard reaches the mail step", /이메일 알림|Email alerts/.test(mailStep), "");
+    await page.eval(`
       document.querySelector('button[type="submit"]').click();
       return 1;
     `);
@@ -90,7 +108,7 @@ async function main() {
     await waitForReact(page, "form button[type=submit]");
     await page.eval(`
       const btns = Array.from(document.querySelectorAll('button'));
-      const lo = btns.find(b => /로그아웃|Log out|Logout/i.test(b.textContent));
+      const lo = btns.find(b => /로그아웃|Sign out|Log out|Logout/i.test(b.textContent));
       if (lo) lo.click();
       return 1;
     `);
