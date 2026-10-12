@@ -1,1 +1,0 @@
-Start-Process powershell -ArgumentList "-NoProfile -ExecutionPolicy Bypass -Command \"& { npm run start }\" -WorkingDirectory "C:\apps\projects\hr-app" -WindowStyle Minimized

@@ -15,7 +15,12 @@ import {
   type LeaveRequestState,
 } from "@/lib/leave-validation";
 import { getDict, interpolate } from "@/i18n/server";
-import { notifyLeaveDecision, type LeaveDecisionOutcome } from "@/lib/notifications";
+import {
+  adminRecipients,
+  notifyLeaveDecision,
+  notifyLeaveSubmitted,
+  type LeaveDecisionOutcome,
+} from "@/lib/notifications";
 
 /** The slice of a decided request the NOT-1 notice needs, captured in-transaction. */
 type LeaveDecisionMail = {
@@ -87,19 +92,47 @@ export async function requestLeave(
     };
   }
 
-  await prisma.leaveRequest.create({
-    data: {
+  // A DB failure here must surface as a plain message, never an exception
+  // banner: the form has already validated, so anything left is infra.
+  let created = false;
+  try {
+    await prisma.leaveRequest.create({
+      data: {
+        companyId: user.companyId,
+        employeeId: user.employeeId,
+        policyId: policy.id,
+        startDate: start,
+        endDate: end,
+        isHalfDay,
+        halfDayDate: isHalfDay ? start : null,
+        days,
+        reason: parsed.data.reason?.trim() || null,
+      },
+    });
+    created = true;
+  } catch {
+    created = false;
+  }
+  if (!created) {
+    return { message: leave.messages.requestFailed };
+  }
+
+  // NOT-1 (submission): tell every active admin. Best effort — the request is
+  // already stored, so a mail outage must not turn this into an error.
+  const admins = await adminRecipients(user.companyId);
+  if (admins.length > 0) {
+    await notifyLeaveSubmitted({
+      to: admins.map((a) => a.email),
       companyId: user.companyId,
-      employeeId: user.employeeId,
-      policyId: policy.id,
+      adminName: admins[0].name,
+      requesterName: user.name,
+      kind: policy.kind,
       startDate: start,
       endDate: end,
-      isHalfDay,
-      halfDayDate: isHalfDay ? start : null,
       days,
       reason: parsed.data.reason?.trim() || null,
-    },
-  });
+    });
+  }
 
   revalidatePath("/hoohr/leave");
   return { message: leave.messages.requestSubmitted, ok: true };
@@ -207,6 +240,7 @@ export async function decideLeave(
   // already committed, so the worst case is a slower response, not a wrong one.
   await notifyLeaveDecision({
     ...decided,
+    companyId: user.companyId,
     reviewerName: user.name,
     decision: status as LeaveDecisionOutcome,
     comment,

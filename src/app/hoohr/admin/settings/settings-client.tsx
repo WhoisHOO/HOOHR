@@ -9,6 +9,7 @@ import {
   updateCompanySettings,
   updateExpenseCategory,
   updateLeavePolicy,
+  updateMailSettings,
 } from "@/app/actions/settings";
 import type { FieldErrors } from "@/lib/auth-validation";
 import type {
@@ -205,6 +206,136 @@ function CompanySection(props: CompanyFormProps) {
       description={d.settings.sections.company.description}
     >
       <CompanyForm {...props} />
+    </Section>
+  );
+}
+
+// ---- SET-1b: 이메일 알림 ----
+
+export type MailView = {
+  smtpHost: string;
+  smtpPort: string;
+  smtpUser: string;
+  smtpFrom: string;
+  smtpSecure: boolean;
+  hasSmtpPass: boolean;
+};
+
+function MailForm({ initial }: { initial: MailView }) {
+  const { d } = useI18n();
+  const [state, action, pending] = useActionState<CompanySettingsState, FormData>(
+    updateMailSettings,
+    undefined,
+  );
+  const f = d.setup.fields;
+
+  return (
+    <form action={action} className="grid gap-3 sm:grid-cols-2">
+      <div className="flex flex-col gap-1">
+        <label htmlFor="mail-host" className="text-xs font-medium text-zinc-500">
+          {f.smtpHost}
+        </label>
+        <input
+          id="mail-host"
+          name="smtpHost"
+          type="text"
+          defaultValue={initial.smtpHost}
+          placeholder="smtp.gmail.com"
+          autoComplete="off"
+          className={inputClass}
+        />
+        <FieldError state={state} name="smtpHost" />
+      </div>
+      <div className="flex items-end gap-3">
+        <div className="flex w-28 flex-col gap-1">
+          <label htmlFor="mail-port" className="text-xs font-medium text-zinc-500">
+            {f.smtpPort}
+          </label>
+          <input
+            id="mail-port"
+            name="smtpPort"
+            inputMode="numeric"
+            defaultValue={initial.smtpPort}
+            placeholder="587"
+            className={inputClass}
+          />
+          <FieldError state={state} name="smtpPort" />
+        </div>
+        <label className="flex items-center gap-2 pb-2 text-xs text-zinc-600">
+          <input
+            id="mail-secure"
+            name="smtpSecure"
+            type="checkbox"
+            value="on"
+            defaultChecked={initial.smtpSecure}
+            className="h-4 w-4"
+          />
+          {f.smtpSecure}
+        </label>
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="mail-user" className="text-xs font-medium text-zinc-500">
+          {f.smtpUser}
+        </label>
+        <input
+          id="mail-user"
+          name="smtpUser"
+          type="text"
+          defaultValue={initial.smtpUser}
+          autoComplete="off"
+          className={inputClass}
+        />
+        <FieldError state={state} name="smtpUser" />
+      </div>
+      <div className="flex flex-col gap-1">
+        <label htmlFor="mail-pass" className="text-xs font-medium text-zinc-500">
+          {f.smtpPass}
+        </label>
+        <input
+          id="mail-pass"
+          name="smtpPass"
+          type="password"
+          autoComplete="new-password"
+          placeholder={initial.hasSmtpPass ? d.settings.sections.mail.passKept : undefined}
+          className={inputClass}
+        />
+        <FieldError state={state} name="smtpPass" />
+      </div>
+      <div className="flex flex-col gap-1 sm:col-span-2">
+        <label htmlFor="mail-from" className="text-xs font-medium text-zinc-500">
+          {f.smtpFrom}
+        </label>
+        <input
+          id="mail-from"
+          name="smtpFrom"
+          type="email"
+          defaultValue={initial.smtpFrom}
+          autoComplete="off"
+          className={inputClass}
+        />
+        <FieldError state={state} name="smtpFrom" />
+      </div>
+      <div>
+        <button type="submit" disabled={pending} className={primaryButtonClass}>
+          {pending ? d.common.buttons.saving : d.common.actions.save}
+        </button>
+      </div>
+      <div className="sm:col-span-2">
+        <Message state={state} />
+      </div>
+    </form>
+  );
+}
+
+function MailSection({ initial }: { initial: MailView }) {
+  const { d } = useI18n();
+
+  return (
+    <Section
+      title={d.settings.sections.mail.title}
+      description={d.settings.sections.mail.description}
+    >
+      <MailForm initial={initial} />
     </Section>
   );
 }
@@ -448,12 +579,14 @@ export function SettingsClient({
   companyName,
   country,
   weekendDays,
+  mail,
   policies,
   categories,
 }: {
   companyName: string;
   country: string;
   weekendDays: string;
+  mail: MailView;
   policies: PolicyView[];
   categories: CategoryView[];
 }) {
@@ -464,6 +597,7 @@ export function SettingsClient({
         country={country}
         weekendDays={weekendDays}
       />
+      <MailSection initial={mail} />
       <PolicySection policies={policies} />
       <CategorySection categories={categories} />
     </div>

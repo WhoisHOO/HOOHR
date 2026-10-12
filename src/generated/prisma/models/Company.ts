@@ -20,8 +20,18 @@ export type CompanyModel = runtime.Types.Result.DefaultSelection<Prisma.$Company
 
 export type AggregateCompany = {
   _count: CompanyCountAggregateOutputType | null
+  _avg: CompanyAvgAggregateOutputType | null
+  _sum: CompanySumAggregateOutputType | null
   _min: CompanyMinAggregateOutputType | null
   _max: CompanyMaxAggregateOutputType | null
+}
+
+export type CompanyAvgAggregateOutputType = {
+  smtpPort: number | null
+}
+
+export type CompanySumAggregateOutputType = {
+  smtpPort: number | null
 }
 
 export type CompanyMinAggregateOutputType = {
@@ -31,6 +41,12 @@ export type CompanyMinAggregateOutputType = {
   timezone: string | null
   currency: string | null
   weekendDays: string | null
+  smtpHost: string | null
+  smtpPort: number | null
+  smtpUser: string | null
+  smtpPass: string | null
+  smtpFrom: string | null
+  smtpSecure: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -42,6 +58,12 @@ export type CompanyMaxAggregateOutputType = {
   timezone: string | null
   currency: string | null
   weekendDays: string | null
+  smtpHost: string | null
+  smtpPort: number | null
+  smtpUser: string | null
+  smtpPass: string | null
+  smtpFrom: string | null
+  smtpSecure: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -53,11 +75,25 @@ export type CompanyCountAggregateOutputType = {
   timezone: number
   currency: number
   weekendDays: number
+  smtpHost: number
+  smtpPort: number
+  smtpUser: number
+  smtpPass: number
+  smtpFrom: number
+  smtpSecure: number
   createdAt: number
   updatedAt: number
   _all: number
 }
 
+
+export type CompanyAvgAggregateInputType = {
+  smtpPort?: true
+}
+
+export type CompanySumAggregateInputType = {
+  smtpPort?: true
+}
 
 export type CompanyMinAggregateInputType = {
   id?: true
@@ -66,6 +102,12 @@ export type CompanyMinAggregateInputType = {
   timezone?: true
   currency?: true
   weekendDays?: true
+  smtpHost?: true
+  smtpPort?: true
+  smtpUser?: true
+  smtpPass?: true
+  smtpFrom?: true
+  smtpSecure?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -77,6 +119,12 @@ export type CompanyMaxAggregateInputType = {
   timezone?: true
   currency?: true
   weekendDays?: true
+  smtpHost?: true
+  smtpPort?: true
+  smtpUser?: true
+  smtpPass?: true
+  smtpFrom?: true
+  smtpSecure?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -88,6 +136,12 @@ export type CompanyCountAggregateInputType = {
   timezone?: true
   currency?: true
   weekendDays?: true
+  smtpHost?: true
+  smtpPort?: true
+  smtpUser?: true
+  smtpPass?: true
+  smtpFrom?: true
+  smtpSecure?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -131,6 +185,18 @@ export type CompanyAggregateArgs<ExtArgs extends runtime.Types.Extensions.Intern
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    * 
+   * Select which fields to average
+  **/
+  _avg?: CompanyAvgAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
+   * Select which fields to sum
+  **/
+  _sum?: CompanySumAggregateInputType
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   * 
    * Select which fields to find the minimum value
   **/
   _min?: CompanyMinAggregateInputType
@@ -161,6 +227,8 @@ export type CompanyGroupByArgs<ExtArgs extends runtime.Types.Extensions.Internal
   take?: number
   skip?: number
   _count?: CompanyCountAggregateInputType | true
+  _avg?: CompanyAvgAggregateInputType
+  _sum?: CompanySumAggregateInputType
   _min?: CompanyMinAggregateInputType
   _max?: CompanyMaxAggregateInputType
 }
@@ -172,9 +240,17 @@ export type CompanyGroupByOutputType = {
   timezone: string
   currency: string
   weekendDays: string
+  smtpHost: string | null
+  smtpPort: number | null
+  smtpUser: string | null
+  smtpPass: string | null
+  smtpFrom: string | null
+  smtpSecure: boolean | null
   createdAt: Date
   updatedAt: Date
   _count: CompanyCountAggregateOutputType | null
+  _avg: CompanyAvgAggregateOutputType | null
+  _sum: CompanySumAggregateOutputType | null
   _min: CompanyMinAggregateOutputType | null
   _max: CompanyMaxAggregateOutputType | null
 }
@@ -204,6 +280,12 @@ export type CompanyWhereInput = {
   timezone?: Prisma.StringFilter<"Company"> | string
   currency?: Prisma.StringFilter<"Company"> | string
   weekendDays?: Prisma.StringFilter<"Company"> | string
+  smtpHost?: Prisma.StringNullableFilter<"Company"> | string | null
+  smtpPort?: Prisma.IntNullableFilter<"Company"> | number | null
+  smtpUser?: Prisma.StringNullableFilter<"Company"> | string | null
+  smtpPass?: Prisma.StringNullableFilter<"Company"> | string | null
+  smtpFrom?: Prisma.StringNullableFilter<"Company"> | string | null
+  smtpSecure?: Prisma.BoolNullableFilter<"Company"> | boolean | null
   createdAt?: Prisma.DateTimeFilter<"Company"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Company"> | Date | string
   users?: Prisma.UserListRelationFilter
@@ -223,6 +305,12 @@ export type CompanyOrderByWithRelationInput = {
   timezone?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   weekendDays?: Prisma.SortOrder
+  smtpHost?: Prisma.SortOrderInput | Prisma.SortOrder
+  smtpPort?: Prisma.SortOrderInput | Prisma.SortOrder
+  smtpUser?: Prisma.SortOrderInput | Prisma.SortOrder
+  smtpPass?: Prisma.SortOrderInput | Prisma.SortOrder
+  smtpFrom?: Prisma.SortOrderInput | Prisma.SortOrder
+  smtpSecure?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   users?: Prisma.UserOrderByRelationAggregateInput
@@ -245,6 +333,12 @@ export type CompanyWhereUniqueInput = Prisma.AtLeast<{
   timezone?: Prisma.StringFilter<"Company"> | string
   currency?: Prisma.StringFilter<"Company"> | string
   weekendDays?: Prisma.StringFilter<"Company"> | string
+  smtpHost?: Prisma.StringNullableFilter<"Company"> | string | null
+  smtpPort?: Prisma.IntNullableFilter<"Company"> | number | null
+  smtpUser?: Prisma.StringNullableFilter<"Company"> | string | null
+  smtpPass?: Prisma.StringNullableFilter<"Company"> | string | null
+  smtpFrom?: Prisma.StringNullableFilter<"Company"> | string | null
+  smtpSecure?: Prisma.BoolNullableFilter<"Company"> | boolean | null
   createdAt?: Prisma.DateTimeFilter<"Company"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Company"> | Date | string
   users?: Prisma.UserListRelationFilter
@@ -264,11 +358,19 @@ export type CompanyOrderByWithAggregationInput = {
   timezone?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   weekendDays?: Prisma.SortOrder
+  smtpHost?: Prisma.SortOrderInput | Prisma.SortOrder
+  smtpPort?: Prisma.SortOrderInput | Prisma.SortOrder
+  smtpUser?: Prisma.SortOrderInput | Prisma.SortOrder
+  smtpPass?: Prisma.SortOrderInput | Prisma.SortOrder
+  smtpFrom?: Prisma.SortOrderInput | Prisma.SortOrder
+  smtpSecure?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.CompanyCountOrderByAggregateInput
+  _avg?: Prisma.CompanyAvgOrderByAggregateInput
   _max?: Prisma.CompanyMaxOrderByAggregateInput
   _min?: Prisma.CompanyMinOrderByAggregateInput
+  _sum?: Prisma.CompanySumOrderByAggregateInput
 }
 
 export type CompanyScalarWhereWithAggregatesInput = {
@@ -281,6 +383,12 @@ export type CompanyScalarWhereWithAggregatesInput = {
   timezone?: Prisma.StringWithAggregatesFilter<"Company"> | string
   currency?: Prisma.StringWithAggregatesFilter<"Company"> | string
   weekendDays?: Prisma.StringWithAggregatesFilter<"Company"> | string
+  smtpHost?: Prisma.StringNullableWithAggregatesFilter<"Company"> | string | null
+  smtpPort?: Prisma.IntNullableWithAggregatesFilter<"Company"> | number | null
+  smtpUser?: Prisma.StringNullableWithAggregatesFilter<"Company"> | string | null
+  smtpPass?: Prisma.StringNullableWithAggregatesFilter<"Company"> | string | null
+  smtpFrom?: Prisma.StringNullableWithAggregatesFilter<"Company"> | string | null
+  smtpSecure?: Prisma.BoolNullableWithAggregatesFilter<"Company"> | boolean | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Company"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"Company"> | Date | string
 }
@@ -292,6 +400,12 @@ export type CompanyCreateInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -311,6 +425,12 @@ export type CompanyUncheckedCreateInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -330,6 +450,12 @@ export type CompanyUpdateInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -349,6 +475,12 @@ export type CompanyUncheckedUpdateInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -368,6 +500,12 @@ export type CompanyCreateManyInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -379,6 +517,12 @@ export type CompanyUpdateManyMutationInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -390,6 +534,12 @@ export type CompanyUncheckedUpdateManyInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -401,8 +551,18 @@ export type CompanyCountOrderByAggregateInput = {
   timezone?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   weekendDays?: Prisma.SortOrder
+  smtpHost?: Prisma.SortOrder
+  smtpPort?: Prisma.SortOrder
+  smtpUser?: Prisma.SortOrder
+  smtpPass?: Prisma.SortOrder
+  smtpFrom?: Prisma.SortOrder
+  smtpSecure?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type CompanyAvgOrderByAggregateInput = {
+  smtpPort?: Prisma.SortOrder
 }
 
 export type CompanyMaxOrderByAggregateInput = {
@@ -412,6 +572,12 @@ export type CompanyMaxOrderByAggregateInput = {
   timezone?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   weekendDays?: Prisma.SortOrder
+  smtpHost?: Prisma.SortOrder
+  smtpPort?: Prisma.SortOrder
+  smtpUser?: Prisma.SortOrder
+  smtpPass?: Prisma.SortOrder
+  smtpFrom?: Prisma.SortOrder
+  smtpSecure?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -423,8 +589,18 @@ export type CompanyMinOrderByAggregateInput = {
   timezone?: Prisma.SortOrder
   currency?: Prisma.SortOrder
   weekendDays?: Prisma.SortOrder
+  smtpHost?: Prisma.SortOrder
+  smtpPort?: Prisma.SortOrder
+  smtpUser?: Prisma.SortOrder
+  smtpPass?: Prisma.SortOrder
+  smtpFrom?: Prisma.SortOrder
+  smtpSecure?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
+}
+
+export type CompanySumOrderByAggregateInput = {
+  smtpPort?: Prisma.SortOrder
 }
 
 export type CompanyScalarRelationFilter = {
@@ -434,6 +610,22 @@ export type CompanyScalarRelationFilter = {
 
 export type StringFieldUpdateOperationsInput = {
   set?: string
+}
+
+export type NullableStringFieldUpdateOperationsInput = {
+  set?: string | null
+}
+
+export type NullableIntFieldUpdateOperationsInput = {
+  set?: number | null
+  increment?: number
+  decrement?: number
+  multiply?: number
+  divide?: number
+}
+
+export type NullableBoolFieldUpdateOperationsInput = {
+  set?: boolean | null
 }
 
 export type DateTimeFieldUpdateOperationsInput = {
@@ -559,6 +751,12 @@ export type CompanyCreateWithoutEmployeesInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -577,6 +775,12 @@ export type CompanyUncheckedCreateWithoutEmployeesInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -611,6 +815,12 @@ export type CompanyUpdateWithoutEmployeesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -629,6 +839,12 @@ export type CompanyUncheckedUpdateWithoutEmployeesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -647,6 +863,12 @@ export type CompanyCreateWithoutUsersInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   employees?: Prisma.EmployeeCreateNestedManyWithoutCompanyInput
@@ -665,6 +887,12 @@ export type CompanyUncheckedCreateWithoutUsersInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   employees?: Prisma.EmployeeUncheckedCreateNestedManyWithoutCompanyInput
@@ -699,6 +927,12 @@ export type CompanyUpdateWithoutUsersInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   employees?: Prisma.EmployeeUpdateManyWithoutCompanyNestedInput
@@ -717,6 +951,12 @@ export type CompanyUncheckedUpdateWithoutUsersInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   employees?: Prisma.EmployeeUncheckedUpdateManyWithoutCompanyNestedInput
@@ -735,6 +975,12 @@ export type CompanyCreateWithoutLeavePoliciesInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -753,6 +999,12 @@ export type CompanyUncheckedCreateWithoutLeavePoliciesInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -787,6 +1039,12 @@ export type CompanyUpdateWithoutLeavePoliciesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -805,6 +1063,12 @@ export type CompanyUncheckedUpdateWithoutLeavePoliciesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -823,6 +1087,12 @@ export type CompanyCreateWithoutLeaveRequestsInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -841,6 +1111,12 @@ export type CompanyUncheckedCreateWithoutLeaveRequestsInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -875,6 +1151,12 @@ export type CompanyUpdateWithoutLeaveRequestsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -893,6 +1175,12 @@ export type CompanyUncheckedUpdateWithoutLeaveRequestsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -911,6 +1199,12 @@ export type CompanyCreateWithoutExpenseCategoriesInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -929,6 +1223,12 @@ export type CompanyUncheckedCreateWithoutExpenseCategoriesInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -963,6 +1263,12 @@ export type CompanyUpdateWithoutExpenseCategoriesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -981,6 +1287,12 @@ export type CompanyUncheckedUpdateWithoutExpenseCategoriesInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -999,6 +1311,12 @@ export type CompanyCreateWithoutExpenseReportsInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -1017,6 +1335,12 @@ export type CompanyUncheckedCreateWithoutExpenseReportsInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -1051,6 +1375,12 @@ export type CompanyUpdateWithoutExpenseReportsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -1069,6 +1399,12 @@ export type CompanyUncheckedUpdateWithoutExpenseReportsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1087,6 +1423,12 @@ export type CompanyCreateWithoutNotificationsInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -1105,6 +1447,12 @@ export type CompanyUncheckedCreateWithoutNotificationsInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -1139,6 +1487,12 @@ export type CompanyUpdateWithoutNotificationsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -1157,6 +1511,12 @@ export type CompanyUncheckedUpdateWithoutNotificationsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1175,6 +1535,12 @@ export type CompanyCreateWithoutInvitationsInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserCreateNestedManyWithoutCompanyInput
@@ -1193,6 +1559,12 @@ export type CompanyUncheckedCreateWithoutInvitationsInput = {
   timezone?: string
   currency?: string
   weekendDays?: string
+  smtpHost?: string | null
+  smtpPort?: number | null
+  smtpUser?: string | null
+  smtpPass?: string | null
+  smtpFrom?: string | null
+  smtpSecure?: boolean | null
   createdAt?: Date | string
   updatedAt?: Date | string
   users?: Prisma.UserUncheckedCreateNestedManyWithoutCompanyInput
@@ -1227,6 +1599,12 @@ export type CompanyUpdateWithoutInvitationsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUpdateManyWithoutCompanyNestedInput
@@ -1245,6 +1623,12 @@ export type CompanyUncheckedUpdateWithoutInvitationsInput = {
   timezone?: Prisma.StringFieldUpdateOperationsInput | string
   currency?: Prisma.StringFieldUpdateOperationsInput | string
   weekendDays?: Prisma.StringFieldUpdateOperationsInput | string
+  smtpHost?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPort?: Prisma.NullableIntFieldUpdateOperationsInput | number | null
+  smtpUser?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpPass?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  smtpSecure?: Prisma.NullableBoolFieldUpdateOperationsInput | boolean | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   users?: Prisma.UserUncheckedUpdateManyWithoutCompanyNestedInput
@@ -1357,6 +1741,12 @@ export type CompanySelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   timezone?: boolean
   currency?: boolean
   weekendDays?: boolean
+  smtpHost?: boolean
+  smtpPort?: boolean
+  smtpUser?: boolean
+  smtpPass?: boolean
+  smtpFrom?: boolean
+  smtpSecure?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   users?: boolean | Prisma.Company$usersArgs<ExtArgs>
@@ -1377,6 +1767,12 @@ export type CompanySelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   timezone?: boolean
   currency?: boolean
   weekendDays?: boolean
+  smtpHost?: boolean
+  smtpPort?: boolean
+  smtpUser?: boolean
+  smtpPass?: boolean
+  smtpFrom?: boolean
+  smtpSecure?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["company"]>
@@ -1388,6 +1784,12 @@ export type CompanySelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   timezone?: boolean
   currency?: boolean
   weekendDays?: boolean
+  smtpHost?: boolean
+  smtpPort?: boolean
+  smtpUser?: boolean
+  smtpPass?: boolean
+  smtpFrom?: boolean
+  smtpSecure?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["company"]>
@@ -1399,11 +1801,17 @@ export type CompanySelectScalar = {
   timezone?: boolean
   currency?: boolean
   weekendDays?: boolean
+  smtpHost?: boolean
+  smtpPort?: boolean
+  smtpUser?: boolean
+  smtpPass?: boolean
+  smtpFrom?: boolean
+  smtpSecure?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type CompanyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "country" | "timezone" | "currency" | "weekendDays" | "createdAt" | "updatedAt", ExtArgs["result"]["company"]>
+export type CompanyOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "name" | "country" | "timezone" | "currency" | "weekendDays" | "smtpHost" | "smtpPort" | "smtpUser" | "smtpPass" | "smtpFrom" | "smtpSecure" | "createdAt" | "updatedAt", ExtArgs["result"]["company"]>
 export type CompanyInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   users?: boolean | Prisma.Company$usersArgs<ExtArgs>
   employees?: boolean | Prisma.Company$employeesArgs<ExtArgs>
@@ -1437,6 +1845,12 @@ export type $CompanyPayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     timezone: string
     currency: string
     weekendDays: string
+    smtpHost: string | null
+    smtpPort: number | null
+    smtpUser: string | null
+    smtpPass: string | null
+    smtpFrom: string | null
+    smtpSecure: boolean | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["company"]>
@@ -1876,6 +2290,12 @@ export interface CompanyFieldRefs {
   readonly timezone: Prisma.FieldRef<"Company", 'String'>
   readonly currency: Prisma.FieldRef<"Company", 'String'>
   readonly weekendDays: Prisma.FieldRef<"Company", 'String'>
+  readonly smtpHost: Prisma.FieldRef<"Company", 'String'>
+  readonly smtpPort: Prisma.FieldRef<"Company", 'Int'>
+  readonly smtpUser: Prisma.FieldRef<"Company", 'String'>
+  readonly smtpPass: Prisma.FieldRef<"Company", 'String'>
+  readonly smtpFrom: Prisma.FieldRef<"Company", 'String'>
+  readonly smtpSecure: Prisma.FieldRef<"Company", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"Company", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"Company", 'DateTime'>
 }

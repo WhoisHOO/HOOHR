@@ -129,6 +129,7 @@ export async function inviteEmployee(
   // successful invite into an error.
   await notifyInvitation({
     to: email,
+    companyId: admin.companyId,
     name: result.employee.name,
     companyName: await getCompanyName(admin.companyId),
     inviteUrl,
@@ -220,6 +221,7 @@ export async function reinviteEmployee(
   // NOT-1, same contract as inviteEmployee: additive, never throws.
   await notifyInvitation({
     to: result.employee.email,
+    companyId: admin.companyId,
     name: result.employee.name,
     companyName: await getCompanyName(admin.companyId),
     inviteUrl,

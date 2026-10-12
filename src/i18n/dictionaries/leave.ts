@@ -57,6 +57,7 @@ export const leaveKo = {
     halfDayOnWeekend: "{m}월 {d}일은 주말이므로 반차를 신청할 수 없습니다.",
     insufficientBalance: "{policy} 잔여가 부족합니다 (잔여 {available}일 / 신청 {days}일).",
     requestSubmitted: "휴가 신청이 접수되었습니다.",
+    requestFailed: "신청을 저장하지 못했습니다. 잠시 후 다시 시도해주세요.",
     invalidRequest: "요청 정보가 올바르지 않습니다.",
     invalidDecision: "결정 값이 올바르지 않습니다.",
     cannotCancel: "취소할 수 없는 요청입니다 (승인 이후에는 취소 불가).",
@@ -147,6 +148,7 @@ export const leaveEn: LeaveMessages = {
     insufficientBalance:
       "Not enough balance for {policy} (remaining {available} day(s) / requested {days} day(s)).",
     requestSubmitted: "Your leave request has been submitted.",
+    requestFailed: "Could not save your request. Please try again in a moment.",
     invalidRequest: "The request information is not valid.",
     invalidDecision: "The decision value is not valid.",
     cannotCancel:

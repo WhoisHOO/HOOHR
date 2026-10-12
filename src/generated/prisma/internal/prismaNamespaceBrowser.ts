@@ -88,6 +88,12 @@ export const CompanyScalarFieldEnum = {
   timezone: 'timezone',
   currency: 'currency',
   weekendDays: 'weekendDays',
+  smtpHost: 'smtpHost',
+  smtpPort: 'smtpPort',
+  smtpUser: 'smtpUser',
+  smtpPass: 'smtpPass',
+  smtpFrom: 'smtpFrom',
+  smtpSecure: 'smtpSecure',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

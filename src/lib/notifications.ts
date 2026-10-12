@@ -23,7 +23,14 @@ import { dictionaries } from "@/i18n/dictionaries";
 import { interpolate } from "@/i18n/format";
 import { formatLeaveRange } from "./leave";
 import { formatMoney } from "./expense";
-import { sendMail, type MailResult } from "./mail";
+import { prisma } from "./prisma";
+import {
+  effectiveMailConfig,
+  sendMail,
+  sendMailWithConfig,
+  type CompanySmtpRow,
+  type MailResult,
+} from "./mail";
 
 export type LeaveDecisionOutcome = "APPROVED" | "REJECTED";
 export type ExpenseDecisionOutcome = "APPROVED" | "REJECTED" | "PAID";
@@ -73,6 +80,53 @@ function dictFor(locale: Locale) {
 
 function resolved(locale: Locale | undefined): Locale {
   return locale ?? DEFAULT_LOCALE;
+}
+
+// ============ 회사 알림 설정으로 발송 ============
+
+/**
+ * Sends through the company's notification settings saved on the setup
+ * screen, falling back to env when the deployment overrides them. Best
+ * effort like everything else here: never throws, callers ignore the result.
+ */
+export async function sendCompanyMail(
+  companyId: string,
+  input: Parameters<typeof sendMail>[0],
+  onSuccess?: (messageId?: string) => Promise<void> | void,
+): Promise<MailResult> {
+  let row: CompanySmtpRow | null = null;
+  try {
+    row = await prisma.company.findUnique({
+      where: { id: companyId },
+      select: {
+        smtpHost: true,
+        smtpPort: true,
+        smtpUser: true,
+        smtpPass: true,
+        smtpFrom: true,
+        smtpSecure: true,
+      },
+    });
+  } catch {
+    row = null;
+  }
+  return sendMailWithConfig(effectiveMailConfig(row), input, onSuccess);
+}
+
+/** Active admins of a company, as mail recipients for new submissions. */
+export async function adminRecipients(
+  companyId: string,
+): Promise<{ email: string; name: string }[]> {
+  try {
+    const admins = await prisma.user.findMany({
+      where: { companyId, role: "ADMIN", isActive: true },
+      select: { email: true, name: true },
+      orderBy: { createdAt: "asc" },
+    });
+    return admins.filter((a) => a.email.trim().length > 0);
+  } catch {
+    return [];
+  }
 }
 
 // ============ NOT-1: 휴가 승인 / 반려 ============
@@ -140,9 +194,11 @@ export function buildLeaveDecisionMessage(args: {
 }
 
 export async function notifyLeaveDecision(
-  args: Parameters<typeof buildLeaveDecisionMessage>[0],
+  args: Parameters<typeof buildLeaveDecisionMessage>[0] & { companyId?: string },
 ): Promise<MailResult> {
-  return sendMail({ to: args.to, ...buildLeaveDecisionMessage(args) });
+  const { companyId, ...message } = args;
+  if (companyId) return sendCompanyMail(companyId, { to: message.to, ...buildLeaveDecisionMessage(message) });
+  return sendMail({ to: message.to, ...buildLeaveDecisionMessage(message) });
 }
 
 // ============ NOT-1: 지출 승인 / 반려 / 지급 완료 ============
@@ -215,9 +271,11 @@ export function buildExpenseDecisionMessage(args: {
 }
 
 export async function notifyExpenseDecision(
-  args: Parameters<typeof buildExpenseDecisionMessage>[0],
+  args: Parameters<typeof buildExpenseDecisionMessage>[0] & { companyId?: string },
 ): Promise<MailResult> {
-  return sendMail({ to: args.to, ...buildExpenseDecisionMessage(args) });
+  const { companyId, ...message } = args;
+  if (companyId) return sendCompanyMail(companyId, { to: message.to, ...buildExpenseDecisionMessage(message) });
+  return sendMail({ to: message.to, ...buildExpenseDecisionMessage(message) });
 }
 
 // ============ NOT-1: 초대 ============
@@ -270,7 +328,135 @@ export function buildInvitationMessage(args: {
 }
 
 export async function notifyInvitation(
-  args: Parameters<typeof buildInvitationMessage>[0],
+  args: Parameters<typeof buildInvitationMessage>[0] & { companyId?: string },
 ): Promise<MailResult> {
+  const { companyId, ...message } = args;
+  if (companyId) return sendCompanyMail(companyId, { to: message.to, ...buildInvitationMessage(message) });
   return sendMail({ to: args.to, ...buildInvitationMessage(args) });
+}
+
+// ============ NOT-1: 새 휴가 신청 (직원 → 관리자) ============
+
+export function buildLeaveSubmittedMessage(args: {
+  adminName: string;
+  requesterName: string;
+  kind: "PTO" | "SICK" | "UNPAID";
+  startDate: Date;
+  endDate: Date;
+  days: number;
+  reason?: string | null;
+  locale?: Locale;
+}): ComposedMessage {
+  const locale = resolved(args.locale);
+  const { common, notifications: n } = dictFor(locale);
+  const intl = INTL_LOCALES[locale];
+
+  const period = formatLeaveRange(args.startDate, args.endDate, intl);
+  const kind = common.leaveKind[args.kind];
+  const days = interpolate(common.units.days, { n: args.days });
+  const subject = interpolate(n.leaveSubmitted.subject, {
+    app: n.appName,
+    requester: args.requesterName,
+    period,
+  });
+  const reason = args.reason?.trim();
+  const lines = [
+    interpolate(n.leaveSubmitted.body, { requester: args.requesterName, kind, period, days }),
+    ...(reason ? [interpolate(n.leaveSubmitted.reasonLine, { reason })] : []),
+  ];
+
+  const text = [
+    interpolate(n.leaveSubmitted.greeting, { name: args.adminName }),
+    "",
+    ...lines,
+    "",
+    `${n.leaveSubmitted.cta}: ${appUrl("/hoohr/leave")}`,
+    "",
+    n.footer,
+  ].join("\n");
+
+  const html = htmlShell(
+    subject,
+    [
+      paragraph([interpolate(n.leaveSubmitted.greeting, { name: args.adminName })]),
+      paragraph(lines),
+      `<p><a href="${escapeHtml(appUrl("/hoohr/leave"))}">${escapeHtml(
+        n.leaveSubmitted.cta,
+      )}</a></p>`,
+    ].join(""),
+    n.footer,
+  );
+
+  return { subject, text, html };
+}
+
+export async function notifyLeaveSubmitted(
+  args: Parameters<typeof buildLeaveSubmittedMessage>[0] & {
+    to: string | string[];
+    companyId: string;
+  },
+): Promise<MailResult> {
+  const { to, companyId, ...message } = args;
+  return sendCompanyMail(companyId, { to, ...buildLeaveSubmittedMessage(message) });
+}
+
+// ============ NOT-1: 새 지출 제출 (직원 → 관리자) ============
+
+export function buildExpenseSubmittedMessage(args: {
+  adminName: string;
+  requesterName: string;
+  title: string;
+  totalAmountCents: number;
+  currency: string;
+  locale?: Locale;
+}): ComposedMessage {
+  const locale = resolved(args.locale);
+  const { notifications: n } = dictFor(locale);
+  const intl = INTL_LOCALES[locale];
+
+  const amount = formatMoney(args.totalAmountCents, args.currency, intl);
+  const subject = interpolate(n.expenseSubmitted.subject, {
+    app: n.appName,
+    requester: args.requesterName,
+    title: args.title,
+  });
+  const body = interpolate(n.expenseSubmitted.body, {
+    requester: args.requesterName,
+    title: args.title,
+    amount,
+  });
+
+  const text = [
+    interpolate(n.expenseSubmitted.greeting, { name: args.adminName }),
+    "",
+    body,
+    "",
+    `${n.expenseSubmitted.cta}: ${appUrl("/hoohr/expenses")}`,
+    "",
+    n.footer,
+  ].join("\n");
+
+  const html = htmlShell(
+    subject,
+    [
+      paragraph([interpolate(n.expenseSubmitted.greeting, { name: args.adminName })]),
+      paragraph([body]),
+      `<p><a href="${escapeHtml(appUrl("/hoohr/expenses"))}">${escapeHtml(
+        n.expenseSubmitted.cta,
+      )}</a></p>`,
+    ].join(""),
+    n.footer,
+  );
+
+  return { subject, text, html };
+}
+
+export async function notifyExpenseSubmitted(
+  args: Parameters<typeof buildExpenseSubmittedMessage>[0] & {
+    to: string | string[];
+    companyId: string;
+  },
+): Promise<MailResult> {
+  const { to, companyId, ...message } = args;
+  return sendCompanyMail(companyId, { to, ...buildExpenseSubmittedMessage(message) });
 }
