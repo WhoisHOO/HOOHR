@@ -6,7 +6,6 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
 import { formatWeekendDays } from "@/lib/company-defaults";
-import { countryDefaults } from "@/lib/country";
 import {
   companyNoticeSchema,
   companySettingsSchema,
@@ -61,26 +60,16 @@ export async function updateCompanySettings(
   });
   const parsed = schema.safeParse({
     name: formText(formData, "name"),
-    country: formText(formData, "country"),
     weekend: formData.getAll("weekend").map(String),
   });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
   }
 
-  // Currency and timezone are not chosen here - they are what the country
-  // means. Note this also reinterprets stored amounts when the currency moves
-  // (there is no FX conversion): the country is meant to be right once, at
-  // install, and this exists so a mis-pick is recoverable.
-  const { currency, timezone } = countryDefaults(parsed.data.country);
-
   await prisma.company.update({
     where: { id: admin.companyId },
     data: {
       name: parsed.data.name,
-      country: parsed.data.country,
-      currency,
-      timezone,
       weekendDays: formatWeekendDays(new Set(parsed.data.weekend)),
     },
   });

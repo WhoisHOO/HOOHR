@@ -153,8 +153,10 @@ if (Test-Path -LiteralPath $envPath) {
   $freshInstall = $true
   $secret = New-RandomHex 32
 
-  # Q1. The country decides the currency, the timezone and the language.
-  if ((Ask-Choice "어느 국가로 사용하시겠습니까?" "대한민국" "미국") -eq "1") {
+  # Q1. Screen language. Also decides the seed display names
+  # (COMPANY_COUNTRY); currency and timezone are tied to nothing — amounts are
+  # plain numbers and dates use UTC.
+  if ((Ask-Choice "화면 언어를 고르세요." "한국어" "English") -eq "1") {
     $country = "KR"
   } else {
     $country = "US"
@@ -177,7 +179,7 @@ if (Test-Path -LiteralPath $envPath) {
   [System.IO.File]::WriteAllText($envPath, $written, $Utf8Bom)
   $countryOut = $country
   $targetOut  = $target
-  Say ("    새 .env 를 만들었습니다 (국가 " + $country + ", " + $target + " / 시크릿 자동 생성).")
+  Say ("    새 .env 를 만들었습니다 (언어 " + $country + ", " + $target + " / 시크릿 자동 생성).")
 }
 
 $adminEmailOut = Read-EnvValue $envPath "BOOTSTRAP_ADMIN_EMAIL"

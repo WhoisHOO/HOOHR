@@ -30,7 +30,6 @@ export default async function SettingsPage() {
       where: { id: admin.companyId },
       select: {
         name: true,
-        country: true,
         weekendDays: true,
         smtpHost: true,
         smtpPort: true,
@@ -67,7 +66,6 @@ export default async function SettingsPage() {
 
       <SettingsClient
         companyName={company.name}
-        country={company.country}
         weekendDays={company.weekendDays}
         mail={{
           smtpHost: company.smtpHost ?? "",

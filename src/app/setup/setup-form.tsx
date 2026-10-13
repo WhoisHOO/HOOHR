@@ -5,7 +5,7 @@ import { createFirstAdmin } from "@/app/actions/setup";
 import type { SetupState } from "@/lib/setup-validation";
 import { useI18n } from "@/i18n/client";
 
-const COMPANY_FIELDS = ["companyName", "country"];
+const COMPANY_FIELDS = ["companyName", "locale"];
 const ADMIN_FIELDS = ["name", "email", "password"];
 
 export function SetupForm({ defaultCompanyName }: { defaultCompanyName: string }) {
@@ -66,10 +66,10 @@ export function SetupForm({ defaultCompanyName }: { defaultCompanyName: string }
           <Field label={d.setup.fields.companyName} error={state?.fieldErrors?.companyName?.[0]}>
             <input id="companyName" name="companyName" required={step === 0} defaultValue={defaultCompanyName} className={inputCls} />
           </Field>
-          <Field label={d.setup.fields.country} error={state?.fieldErrors?.country?.[0]}>
-            <select id="country" name="country" className={inputCls} required={step === 0}>
-              <option value="KR">{d.setup.countries.KR}</option>
-              <option value="US">{d.setup.countries.US}</option>
+          <Field label={d.setup.fields.language} error={state?.fieldErrors?.locale?.[0]}>
+            <select id="locale" name="locale" className={inputCls} required={step === 0}>
+              <option value="ko">{d.setup.languages.ko}</option>
+              <option value="en">{d.setup.languages.en}</option>
             </select>
           </Field>
         </div>

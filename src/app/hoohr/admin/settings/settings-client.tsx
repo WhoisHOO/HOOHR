@@ -2,7 +2,6 @@
 
 import { useActionState, useState } from "react";
 import { parseWeekendDays, WEEKDAY_KEYS } from "@/lib/company-defaults";
-import { COUNTRIES, COUNTRY_DEFAULTS, COUNTRY_LABELS } from "@/lib/country";
 import {
   checkPublicAccess,
   removeCompanyLogo,
@@ -90,7 +89,6 @@ function Section({
 
 function CompanyForm({
   name,
-  country,
   weekendDays,
 }: CompanyFormProps) {
   const { d } = useI18n();
@@ -125,24 +123,6 @@ function CompanyForm({
           className={inputClass}
         />
         <FieldError state={state} name="name" />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="company-country" className="text-xs font-medium text-zinc-500">
-          {d.settings.labels.country}
-        </label>
-        <select
-          id="company-country"
-          name="country"
-          defaultValue={country}
-          className={inputClass}
-        >
-          {COUNTRIES.map((code) => (
-            <option key={code} value={code}>
-              {COUNTRY_LABELS[code]} ({COUNTRY_DEFAULTS[code].currency})
-            </option>
-          ))}
-        </select>
-        <FieldError state={state} name="country" />
       </div>
       <div className="flex flex-col gap-1 sm:col-span-3">
         <span className="text-xs font-medium text-zinc-500">
@@ -182,7 +162,6 @@ function CompanyForm({
 
 type CompanyFormProps = {
   name: string;
-  country: string;
   weekendDays: string;
 };
 
@@ -643,7 +622,6 @@ function PolicySection({ policies }: { policies: PolicyView[] }) {
 
 export function SettingsClient({
   companyName,
-  country,
   weekendDays,
   mail,
   logoSet,
@@ -652,7 +630,6 @@ export function SettingsClient({
   policies,
 }: {
   companyName: string;
-  country: string;
   weekendDays: string;
   mail: MailView;
   logoSet: boolean;
@@ -664,7 +641,6 @@ export function SettingsClient({
     <div className="space-y-8">
       <CompanySection
         name={companyName}
-        country={country}
         weekendDays={weekendDays}
       />
       <MailSection initial={mail} />
