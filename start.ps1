@@ -185,7 +185,42 @@ $appPortOut    = Read-EnvValue $envPath "APP_PORT"
 if (-not $appPortOut) { $appPortOut = "3000" }
 
 # ---------------------------------------------------------------------------
-Step "3/5" "앱 빌드 및 실행 (최초 실행은 2~5분 걸립니다)"
+Step "3/6" "새 버전 확인 (git 설치본만, 실패해도 시작은 계속됩니다)"
+
+$gitExe = Get-Command git -ErrorAction SilentlyContinue
+if (-not $gitExe) {
+  Say "  git이 없어서 버전 확인을 건너뜁니다 (ZIP 설치)."
+} elseif (-not (Test-Path ".git")) {
+  Say "  수동 설치(ZIP)입니다. 새 버전은 HOOHR GitHub에서 zip을 받아 덮어쓰세요."
+} else {
+  $fetch = Invoke-Native { git fetch origin --quiet }
+  $up = Invoke-Native { git rev-parse --abbrev-ref --symbolic-full-name "@{u}" }
+  if ($fetch.ExitCode -ne 0 -or $up.ExitCode -ne 0) {
+    Warn "  버전 확인 실패 (네트워크?). 현재 버전으로 시작합니다."
+  } else {
+    $behindOut = Invoke-Native { git rev-list --count "HEAD..@{u}" }
+    $behind = ($behindOut.Output | Select-Object -First 1)
+    if ($behindOut.ExitCode -eq 0 -and $behind -match "^\d+$" -and [int]$behind -gt 0) {
+      Say ("  새 버전이 있습니다 (" + $behind + "개 커밋).")
+      $ans = Read-Host "  업데이트할까요? (Y/n)"
+      if ($ans -ne "n" -and $ans -ne "N") {
+        $pull = Invoke-Native { git pull --ff-only }
+        if ($pull.ExitCode -eq 0) {
+          Say "  업데이트 완료. 새 코드로 빌드합니다."
+        } else {
+          Warn "  업데이트 실패(로컬 변경 충돌 가능). 현재 버전으로 시작합니다."
+        }
+      } else {
+        Say "  현재 버전으로 시작합니다."
+      }
+    } else {
+      Say "  최신 버전입니다."
+    }
+  }
+}
+
+# ---------------------------------------------------------------------------
+Step "4/6" "앱 빌드 및 실행 (최초 실행은 2~5분 걸립니다)"
 
 $build = Invoke-Native { docker compose up -d --build }
 $build.Output | ForEach-Object { Record ("  " + $_) }
@@ -196,7 +231,7 @@ if ($build.ExitCode -ne 0) {
 }
 
 # ---------------------------------------------------------------------------
-Step "4/5" "앱이 준비될 때까지 대기"
+Step "5/6" "앱이 준비될 때까지 대기"
 
 $url       = "http://localhost:" + $appPortOut
 $healthUrl = $url + "/api/health"
@@ -239,7 +274,7 @@ Say ("    준비 완료 ({0}초)" -f $waited)
 $tunnelUrl = $null
 
 if ($targetOut -eq "server") {
-  Step "5/5" "공개 주소 열기 (서버 모드)"
+  Step "6/6" "공개 주소 열기 (서버 모드)"
 
   $tunnelScript = Join-Path $root "start-tunnel.ps1"
   if (-not (Test-Path -LiteralPath $tunnelScript)) {
@@ -287,7 +322,7 @@ if ($targetOut -eq "server") {
     Warn ("  공개 주소가 아직 응답하지 않습니다. 위 주소를 브라우저에서 새로고침해 보세요.")
   }
 } else {
-  Step "5/5" "브라우저 열기"
+  Step "6/6" "브라우저 열기"
 }
 
 $openUrl = if ($tunnelUrl) { $tunnelUrl } else { $url }
