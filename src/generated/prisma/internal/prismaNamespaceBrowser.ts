@@ -96,6 +96,7 @@ export const CompanyScalarFieldEnum = {
   smtpSecure: 'smtpSecure',
   logoPath: 'logoPath',
   logoMime: 'logoMime',
+  notice: 'notice',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

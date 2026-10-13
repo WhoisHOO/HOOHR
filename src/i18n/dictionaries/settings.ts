@@ -39,6 +39,12 @@ export const settingsKo = {
       description:
         "사이드바 상단에 회사명과 함께 표시됩니다. JPG·PNG·WEBP, 1MB 이하.",
     },
+    notice: {
+      title: "공지사항",
+      description:
+        "대시보드 맨 위에 표시됩니다. 비워 두면 표시되지 않습니다.",
+      placeholder: "예: 다음 주 월요일은 창립기념일로 쉽니다.",
+    },
   },
   labels: {
     companyName: "회사명",
@@ -120,6 +126,7 @@ export const settingsKo = {
     weekendRequired: "주말 요일을 한 개 이상 선택하세요",
     weekendAllOff: "적어도 하루는 근무일로 남겨야 합니다",
     weekendInvalid: "주말 요일 값이 올바르지 않습니다",
+    noticeTooLong: "공지사항은 500자 이내입니다",
   },
   messages: {
     companySaved: "회사 설정이 저장되었습니다.",
@@ -128,6 +135,7 @@ export const settingsKo = {
     logoSaved: "회사 로고가 저장되었습니다.",
     logoRemoved: "회사 로고를 지웠습니다.",
     logoRequired: "로고 이미지 파일을 선택해주세요.",
+    noticeSaved: "공지사항이 저장되었습니다.",
     policyNotFound: "휴가 정책을 찾을 수 없습니다.",
     policyNameTaken: "같은 이름의 휴가 정책이 이미 있습니다.",
     policySaved: "휴가 정책이 저장되었습니다. ({name})",
@@ -187,6 +195,12 @@ export const settingsEn: SettingsMessages = {
       title: "Company logo",
       description:
         "Shown with the company name at the top of the sidebar. JPG, PNG or WEBP, up to 1MB.",
+    },
+    notice: {
+      title: "Notice",
+      description:
+        "Shown at the top of the dashboard. Leave it empty to hide it.",
+      placeholder: "e.g. Next Monday is Foundation Day — the day off.",
     },
   },
   labels: {
@@ -267,6 +281,7 @@ export const settingsEn: SettingsMessages = {
     weekendRequired: "Please choose at least one day off",
     weekendAllOff: "At least one day must remain a working day",
     weekendInvalid: "Those days off are not valid",
+    noticeTooLong: "The notice must be 500 characters or fewer",
   },
   messages: {
     companySaved: "Company settings saved.",
@@ -275,6 +290,7 @@ export const settingsEn: SettingsMessages = {
     logoSaved: "Company logo saved.",
     logoRemoved: "Company logo removed.",
     logoRequired: "Choose a logo image file.",
+    noticeSaved: "Notice saved.",
     policyNotFound: "That leave policy could not be found.",
     policyNameTaken: "A leave policy with the same name already exists.",
     policySaved: "Leave policy saved ({name}).",

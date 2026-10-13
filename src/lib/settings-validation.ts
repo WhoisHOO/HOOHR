@@ -69,6 +69,18 @@ export function companySettingsSchema(v: SettingsValidationMessages) {
   });
 }
 
+// ---- SET-1d: 공지사항 (단일 메모, 덮어쓰기) ----
+
+export function companyNoticeSchema(v: SettingsValidationMessages) {
+  return z.object({
+    notice: z
+      .string()
+      .trim()
+      .max(500, { error: v.validation.noticeTooLong })
+      .optional(),
+  });
+}
+
 // ---- SET-2: 휴가 정책 ----
 
 export function leavePolicyUpdateSchema(v: SettingsValidationMessages) {

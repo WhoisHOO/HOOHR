@@ -1028,5 +1028,13 @@ Four commits on `feature/first-run-setup`, plus a merge of `feature/public-tunne
 - **Also fixed visible leftovers**: leave subtitle/hint no longer mention unpaid/half-day.
 - **Verification**: tsc 0, lint 0, mail 58/58, container rebuilt + healthy, health/login 200, export routes bounce (307) when logged out — no 500s. Authed CSV content follows the reviewed code paths (e2e needs a browser + fresh DB, not run here).
 
+### Session 28 (2026-10-13, build1): notice board + team directory
+
+- **Branching**: work continues on `build1` (branched from main@948dd3e, the customer-shared version). Rule going forward: batch work on buildN → merge to main → tag buildN → delete branch.
+- **Notice (single memo, no history)**: `Company.notice` (migration `20261013150707_company_notice`); admin edits it in Company settings → Notice (textarea, 500 chars, empty hides); shown at the top of the dashboard for every role (`whitespace-pre-wrap`, React-escaped). Overwrite only, no log.
+- **Team directory** (`/hoohr/team`, all roles): flat roster grouped 관리자 → 직원 (no tree — BambooHR/flex trees need manager-report data we removed in Session 22; researched both, directory pattern matches "거창 없이 리스트"). Name + email + status badge. Nav item added for both roles.
+- **Also in build1**: Session 27 fixes committed first (`2722041`): uninstall.bat/ps1 pair, start.ps1 auto-update check (git pull on start, never blocks), seed `@/`-alias fix (real first-run bug: container seed crashed, company never seeded).
+- **Verification**: tsc 0, lint 0, container rebuilt + healthy, health ok, /hoohr/team bounces (307) logged out. First-run DB state preserved (0 users) for the walkthrough.
+
 <!-- ====== Template for next sessions (copy & use) ======
 

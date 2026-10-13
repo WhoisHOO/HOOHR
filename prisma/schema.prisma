@@ -94,6 +94,9 @@ model Company {
   // sidebar footer instead.
   logoPath String?
   logoMime String?
+  // Single admin-written notice shown at the top of the dashboard. No history:
+  // saving overwrites. Null/empty = hidden.
+  notice   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

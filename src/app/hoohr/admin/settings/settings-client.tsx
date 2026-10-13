@@ -6,6 +6,7 @@ import { COUNTRIES, COUNTRY_DEFAULTS, COUNTRY_LABELS } from "@/lib/country";
 import {
   removeCompanyLogo,
   updateCompanyLogo,
+  updateCompanyNotice,
   updateCompanySettings,
   updateLeavePolicy,
   updateMailSettings,
@@ -327,6 +328,41 @@ function MailSection({ initial }: { initial: MailView }) {
   );
 }
 
+// ---- SET-1d: 공지사항 ----
+
+function NoticeSection({ initial }: { initial: string }) {
+  const { d } = useI18n();
+  const [state, action, pending] = useActionState<CompanySettingsState, FormData>(
+    updateCompanyNotice,
+    undefined,
+  );
+
+  return (
+    <Section
+      title={d.settings.sections.notice.title}
+      description={d.settings.sections.notice.description}
+    >
+      <form action={action} className="flex flex-col gap-3">
+        <textarea
+          name="notice"
+          rows={3}
+          maxLength={500}
+          defaultValue={initial}
+          placeholder={d.settings.sections.notice.placeholder}
+          className={inputClass}
+        />
+        <FieldError state={state} name="notice" />
+        <div>
+          <button type="submit" disabled={pending} className={primaryButtonClass}>
+            {pending ? d.common.buttons.saving : d.common.actions.save}
+          </button>
+        </div>
+        <Message state={state} />
+      </form>
+    </Section>
+  );
+}
+
 // ---- SET-1c: 회사 로고 ----
 
 function LogoSection({ logoSet }: { logoSet: boolean }) {
@@ -486,6 +522,7 @@ export function SettingsClient({
   weekendDays,
   mail,
   logoSet,
+  notice,
   policies,
 }: {
   companyName: string;
@@ -493,6 +530,7 @@ export function SettingsClient({
   weekendDays: string;
   mail: MailView;
   logoSet: boolean;
+  notice: string;
   policies: PolicyView[];
 }) {
   return (
@@ -504,6 +542,7 @@ export function SettingsClient({
       />
       <MailSection initial={mail} />
       <LogoSection logoSet={logoSet} />
+      <NoticeSection initial={notice} />
       <PolicySection policies={policies} />
     </div>
   );
