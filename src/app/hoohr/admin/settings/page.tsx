@@ -9,6 +9,18 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: settings.page.title };
 }
 
+/** Classifies APP_URL for the admin: unset/localhost, quick tunnel, or stable. */
+function externalView(): { url: string | null; kind: "none" | "quick" | "stable" } {
+  const raw = (process.env.APP_URL || "").trim().replace(/\/+$/, "");
+  if (!raw || /localhost|127\.0\.0\.1/.test(raw)) {
+    return { url: null, kind: "none" };
+  }
+  if (/\.trycloudflare\.com$/.test(raw)) {
+    return { url: raw, kind: "quick" };
+  }
+  return { url: raw, kind: "stable" };
+}
+
 export default async function SettingsPage() {
   const admin = await requireAdmin();
   const { common, settings } = await getDict();
@@ -69,6 +81,7 @@ export default async function SettingsPage() {
         }}
         logoSet={(company.logoPath ?? "").length > 0}
         notice={company.notice ?? ""}
+        external={externalView()}
         policies={policyViews}
       />
     </div>

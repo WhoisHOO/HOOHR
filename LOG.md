@@ -1036,5 +1036,11 @@ Four commits on `feature/first-run-setup`, plus a merge of `feature/public-tunne
 - **Also in build1**: Session 27 fixes committed first (`2722041`): uninstall.bat/ps1 pair, start.ps1 auto-update check (git pull on start, never blocks), seed `@/`-alias fix (real first-run bug: container seed crashed, company never seeded).
 - **Verification**: tsc 0, lint 0, container rebuilt + healthy, health ok, /hoohr/team bounces (307) logged out. First-run DB state preserved (0 users) for the walkthrough.
 
+### Session 29 (2026-10-13, build1): external-access notice + one-click move
+
+- **External access section** (Company settings, admin): shows the current public address (APP_URL) classified none/quick/stable, warns that quick-tunnel addresses die on restart, plus a "연결 확인" live probe (server-side 10s fetch of APP_URL/api/health). (`checkPublicAccess`, `ExternalSection`)
+- **One-click move** (Company settings → 이사): GET `/hoohr/admin/transfer` downloads everything (12 tables with IDs + all uploads as base64) as one JSON; POST restores with confirm=yes gate, version-match refusal, single-transaction load (TRUNCATE CASCADE + ordered createMany), files replaced only after commit. Secrets excluded (fresh install mints its own AUTH_SECRET; everyone re-logs-in). No new deps (zlib-free: base64 in JSON). Mac Mini = valid always-on target (Docker Desktop for Mac).
+- **Verification**: tsc 0, lint 0, rebuilt + healthy, transfer/settings gates 307 logged out.
+
 <!-- ====== Template for next sessions (copy & use) ======
 
