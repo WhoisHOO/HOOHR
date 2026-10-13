@@ -29,8 +29,9 @@
 ```
 
 One company per deployment (multi-tenant by `companyId`, but a single install
-serves one company). The country chosen at install decides the UI language, the
-currency, the timezone and the weekend, and there is no switcher afterwards.
+serves one company). Language is picked in setup and switchable in the
+sidebar; currency is never shown (plain numbers) and dates use UTC. The
+weekend days stay configurable for workday counting.
 
 ### First run, end to end
 
@@ -38,7 +39,7 @@ currency, the timezone and the weekend, and there is no switcher afterwards.
 |---|---|---|
 | `start.bat` | Docker builds, migrations apply, the seed creates the company + default departments/policies/categories | No admin is ever created by the installer; secrets other than `AUTH_SECRET` are never generated. Re-running keeps the existing `.env` |
 | First visit to any page | No account exists → redirected to `/setup`. `/login` and `/` behave the same | The setup screen is the only reachable page for a fresh install, other than `/api/health` and `/invite/*` |
-| Create the first account | One wizard, one transaction: 1) company name (editable) + country, 2) admin `User` (ADMIN) + `Employee`, 3) email alerts (SMTP, optional — empty runs mail-free). Then a session cookie. Redirect to `/hoohr` | The action refuses to run once any account exists, and `/setup` redirects to `/login` after that. Weak passwords are refused by the same rules as invites (8+ chars, letter + digit). A bad host/port is a field error, not a failed setup |
+| Create the first account | One wizard, one transaction: 1) company name + screen language, 2) admin `User` (ADMIN) + `Employee`, 3) email alerts (SMTP, optional — empty runs mail-free). Then a session cookie. Redirect to `/hoohr` | The action refuses to run once any account exists, and `/setup` redirects to `/login` after that. Weak passwords are refused by the same rules as invites (8+ chars, letter + digit). A bad host/port is a field error, not a failed setup |
 | First dashboard | A "getting started" panel with a single action: invite the team | It disappears automatically once more than one employee exists |
 | Admin invites employees | Email with a 7-day link when SMTP is configured; the link is also shown for copying when mail is not set up | Employees set their own password; an accepted invite can never be re-issued (re-invite refuses them) |
 | New hire logs in | Dashboard renders with "no balance tracked" leave cards; they can file leave immediately (a warning, not a block, if it exceeds a tracked balance) | The first approval auto-creates their balance row, so nothing can roll back with a missing balance |
@@ -109,7 +110,7 @@ getting approved costs 5.
 
 | Click | Guaranteed | Refused / not guaranteed |
 |---|---|---|
-| **Save company (name, country, weekend)** | Name, country, weekend, and the currency + timezone **derived from the country** | **Changing the country reinterprets already-stored amounts — there is no FX conversion.** It is meant to be right once, at install; the field exists so a mis-pick is recoverable. A weekend of all seven days is refused, because it would make every leave request fail with "no working days" |
+| **Save company (name, weekend)** | Name and weekend days (workday counting) | Weekend of all seven days is refused, because it would make every leave request fail with "no working days" |
 | **Save a leave policy** | The policy's own fields | It does **not** grant balances to anyone; use "apply to current year" or the CSV import for that |
 | **Add / delete a holiday** | A `Holiday` row for that company, which working-day counts then exclude | Holidays are **not** seeded at install — a calendar is the company's own data, and guessing one from a country is the region-preset behaviour this product deliberately does not do |
 | **Manage expense categories** | Categories can be renamed, deactivated and deleted; a category is needed before a receipt can be filed | — |

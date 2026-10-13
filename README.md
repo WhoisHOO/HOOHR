@@ -6,10 +6,10 @@
 
 Built for a team of ~20 people, not for an enterprise HR suite. Open source under [Apache-2.0](./LICENSE).
 
-> The install asks which country the company is in, and that single answer picks the
-> currency, the timezone and the UI language (**Korean** for 대한민국, **English** for
-> the United States). There is no language switcher at runtime. All documentation is in
-> English.
+> The install asks for the screen language. Language, currency and timezone are
+> independent: Korean UI can run dollar amounts and vice versa. Amounts are
+> plain numbers, dates use UTC, and the language is switchable any time in the
+> sidebar. All documentation is in English.
 
 ---
 
@@ -17,10 +17,10 @@ Built for a team of ~20 people, not for an enterprise HR suite. Open source unde
 
 | Module | Features |
 |---|---|
-| **Leave** (휴가) | PTO / sick / unpaid requests, full or half-day, request → admin approval (reject requires a reason), self-cancel before approval, monthly company schedule |
+| **Leave** (휴가) | PTO / sick requests, full-day periods, request → admin approval (reject requires a reason), self-cancel before approval, monthly company schedule, CSV export by date range |
 | **Expenses** (경비) | Draft reports with multiple line items, per-item receipt upload, submit → approve → pay workflow, protected receipt downloads, **CSV export** for accounting |
 | **Employee admin** | Employee profiles, activate/deactivate, re-invite pending employees |
-| **Settings** | Company name + country, leave policy management (name, paid/approval flags), expense categories |
+| **Settings** | Company name, weekend days, leave policy management (name, paid/approval flags), email alerts, company logo, notice, public-access status, one-click move |
 
 ### Roles
 
@@ -73,7 +73,7 @@ The only prerequisite. <https://www.docker.com/products/docker-desktop/>
 That is the whole procedure. The window walks through it:
 
 1. Starts Docker Desktop if it is not already running, and waits for the engine.
-2. Asks two questions — **which country** this is used in, and whether it is a
+2. Asks two questions — **screen language** and whether it is a
    **personal computer or a server** — then creates a `.env` with a random
    session secret. Every question is two options, so there is nothing to read
    up on.
@@ -99,7 +99,7 @@ always safe: your data and settings are left alone.
 ```
 
 Then the browser opens **your setup screen**: one wizard, three steps —
-company + country, the first admin account, then email alerts (optional;
+company + screen language, the first admin account, then email alerts (optional;
 leave it empty to start without mail). That screen appears only once - after
 the first account exists it is gone, and from then on you land on the login
 page.
@@ -188,7 +188,7 @@ docker compose up -d --build  # migrates and seeds via docker/entrypoint.sh
 |---|---|---|---|
 | `DATABASE_URL` | yes | — | PostgreSQL connection string |
 | `AUTH_SECRET` | yes | — | Session cookie signing key. **The app throws at startup if unset** |
-| `COMPANY_COUNTRY` | no | `KR` | `KR` or `US`. Decides the currency, the timezone **and** the on-screen language — there is no separate language setting |
+| `COMPANY_COUNTRY` | no | `KR` | `KR` or `US`. Seed display names only. Language, currency and timezone are independent of it |
 | `RUNTIME_TARGET` | no | `personal` | `personal` keeps the app on this machine; `server` also opens a public HTTPS address via a Cloudflare Tunnel |
 | `APP_URL` | no | `http://localhost:3000` | Public base URL; used to build invite links. The tunnel writes it for you |
 | `TUNNEL_MODE` | no | — | `quick` (free, random hostname) or `named` (stable hostname, needs a Cloudflare account). `start.bat` picks `quick` when this is unset |

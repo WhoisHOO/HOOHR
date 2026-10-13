@@ -1042,5 +1042,13 @@ Four commits on `feature/first-run-setup`, plus a merge of `feature/public-tunne
 - **One-click move** (Company settings → 이사): GET `/hoohr/admin/transfer` downloads everything (12 tables with IDs + all uploads as base64) as one JSON; POST restores with confirm=yes gate, version-match refusal, single-transaction load (TRUNCATE CASCADE + ordered createMany), files replaced only after commit. Secrets excluded (fresh install mints its own AUTH_SECRET; everyone re-logs-in). No new deps (zlib-free: base64 in JSON). Mac Mini = valid always-on target (Docker Desktop for Mac).
 - **Verification**: tsc 0, lint 0, rebuilt + healthy, transfer/settings gates 307 logged out.
 
+### Session 30 (2026-10-13, build1): language/currency/timezone decoupled
+
+- **Product direction (user)**: country must not dictate anything — Korean UI with dollars is legitimate. Language is a free choice; currency is never shown; timezone is not configured.
+- **Setup**: step 1 is now company name + screen language (한국어/English); the choice is written to the `locale` cookie at completion. `Company.country` stays as an inert legacy column.
+- **Settings**: country selector removed (name + weekend only). `getCompanyTimezone` returns UTC always; all date boundaries are UTC midnights. Expense CSV drops the currency column. Cookie-first locale already existed (sidebar switcher); company country remains only the no-cookie default.
+- **Installer + docs**: Q1 asks language (still maps to COMPANY_COUNTRY for seed display names); README/WORKFLOW no longer claim country decides currency/timezone/language.
+- **Verification**: tsc 0, lint 0, mail 58/58, rebuilt + healthy, `/setup` renders `locale` select and no `country` field. first-run.mjs unaffected (never touched country).
+
 <!-- ====== Template for next sessions (copy & use) ======
 

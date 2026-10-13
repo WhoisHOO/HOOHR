@@ -39,13 +39,9 @@ export async function getCompanyLocale(companyId?: string): Promise<Locale> {
   return countryDefaults(company?.country).locale;
 }
 
-/** 회사 설정 timezone 조회 (기본 UTC). */
-export async function getCompanyTimezone(companyId: string): Promise<string> {
-  const company = await prisma.company.findUnique({
-    where: { id: companyId },
-    select: { timezone: true },
-  });
-  return company?.timezone ?? "UTC";
+/** 날짜 경계용 시간대. 고정하지 않는다 — 모든 날짜 계산은 UTC 자정 기준이다. */
+export async function getCompanyTimezone(_companyId: string): Promise<string> {
+  return "UTC";
 }
 
 /**

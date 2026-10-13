@@ -61,7 +61,6 @@ export async function GET(request: Request) {
           title: true,
           status: true,
           employee: { select: { name: true } },
-          currency: true,
         },
       },
       receipts: { select: { filename: true } },
@@ -74,7 +73,7 @@ export async function GET(request: Request) {
   const statusLabel = (s: string) =>
     common.expenseStatus[s as keyof typeof common.expenseStatus] ?? s;
   rows.push([
-    columns.date, columns.category, columns.employee, columns.title, columns.status, columns.amount, columns.currency, columns.description, columns.receipts,
+    columns.date, columns.category, columns.employee, columns.title, columns.status, columns.amount, columns.description, columns.receipts,
   ]);
   for (const it of items) {
     const base = [
@@ -84,7 +83,6 @@ export async function GET(request: Request) {
       it.report.title,
       statusLabel(it.report.status),
       (it.amountCents / 100).toFixed(2),
-      it.report.currency,
       it.description ?? "",
       it.receipts.map((r) => r.filename).join(" | "),
     ];
