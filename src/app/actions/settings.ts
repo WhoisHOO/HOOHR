@@ -218,6 +218,32 @@ export async function removeCompanyLogo(): Promise<CompanySettingsState> {
   return { message: settings.messages.logoRemoved, ok: true };
 }
 
+// ============ SET-1e: 외부 접속 확인 ============
+
+export async function checkPublicAccess(): Promise<CompanySettingsState> {
+  await requireAdmin();
+  const { settings } = await getDict();
+  const raw = (process.env.APP_URL || "").trim().replace(/\/+$/, "");
+  if (!raw || /localhost|127\.0\.0\.1/.test(raw)) {
+    return { message: settings.sections.external.none };
+  }
+
+  // Server-side probe of the public address, same check start-tunnel runs.
+  // Short timeout so a dead tunnel degrades to a message, not a stuck form.
+  try {
+    const res = await fetch(`${raw}/api/health`, {
+      signal: AbortSignal.timeout(10_000),
+      redirect: "manual",
+    });
+    if (res.status === 200) {
+      return { message: settings.sections.external.reachable, ok: true };
+    }
+    return { message: settings.sections.external.unreachable };
+  } catch {
+    return { message: settings.sections.external.unreachable };
+  }
+}
+
 // ============ SET-1d: 공지사항 ============
 
 export async function updateCompanyNotice(

@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { parseWeekendDays, WEEKDAY_KEYS } from "@/lib/company-defaults";
 import { COUNTRIES, COUNTRY_DEFAULTS, COUNTRY_LABELS } from "@/lib/country";
 import {
+  checkPublicAccess,
   removeCompanyLogo,
   updateCompanyLogo,
   updateCompanyNotice,
@@ -328,6 +329,130 @@ function MailSection({ initial }: { initial: MailView }) {
   );
 }
 
+// ---- SET-1e: 외부 접속 ----
+
+export type ExternalView = {
+  url: string | null;
+  kind: "none" | "quick" | "stable";
+};
+
+function ExternalSection({ view }: { view: ExternalView }) {
+  const { d } = useI18n();
+  const [state, action, pending] = useActionState<CompanySettingsState, FormData>(
+    async () => checkPublicAccess(),
+    undefined,
+  );
+  const note =
+    view.kind === "quick"
+      ? d.settings.sections.external.quick
+      : view.kind === "stable"
+        ? d.settings.sections.external.stable
+        : d.settings.sections.external.none;
+
+  return (
+    <Section
+      title={d.settings.sections.external.title}
+      description={d.settings.sections.external.description}
+    >
+      {view.url ? (
+        <p className="truncate text-sm font-medium text-zinc-900">
+          <a
+            href={view.url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-blue-700 underline hover:text-blue-900"
+          >
+            {view.url}
+          </a>
+        </p>
+      ) : null}
+      <p className="mt-1 text-xs text-zinc-500">{note}</p>
+      <form action={action} className="mt-3">
+        <button type="submit" disabled={pending} className={secondaryButtonClass}>
+          {pending ? d.settings.sections.external.check + "…" : d.settings.sections.external.check}
+        </button>
+        <div className="mt-2">
+          <Message state={state} />
+        </div>
+      </form>
+    </Section>
+  );
+}
+
+// ---- SET-1f: 이사 (백업/복원) ----
+
+function TransferSection() {
+  const { d } = useI18n();
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function onRestore(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    if (!(form.get("backup") instanceof File)) return;
+    setBusy(true);
+    setResult(null);
+    try {
+      const res = await fetch("/hoohr/admin/transfer", {
+        method: "POST",
+        body: form,
+      });
+      const json = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        message?: string;
+      } | null;
+      setResult({
+        ok: res.ok && json?.ok === true,
+        message: json?.message ?? "",
+      });
+    } catch {
+      setResult({ ok: false, message: "" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Section
+      title={d.settings.sections.transfer.title}
+      description={d.settings.sections.transfer.description}
+    >
+      <a
+        href="/hoohr/admin/transfer"
+        className="inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+      >
+        {d.settings.sections.transfer.download}
+      </a>
+      <form onSubmit={onRestore} className="mt-4 flex flex-col gap-3 border-t border-zinc-100 pt-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-zinc-500">
+            {d.settings.sections.transfer.file}
+          </label>
+          <input name="backup" type="file" required accept="application/json,.json" className="text-sm text-zinc-700" />
+        </div>
+        <label className="flex items-center gap-2 text-xs text-zinc-600">
+          <input name="confirm" type="checkbox" value="yes" required className="h-4 w-4" />
+          {d.settings.sections.transfer.confirm}
+        </label>
+        <div>
+          <button type="submit" disabled={busy} className={primaryButtonClass}>
+            {busy ? d.settings.sections.transfer.restoring : d.settings.sections.transfer.restore}
+          </button>
+        </div>
+        {result && (
+          <p
+            className={`rounded-md px-3 py-2 text-sm ${
+              result.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+            }`}
+          >
+            {result.message}
+          </p>
+        )}
+      </form>
+    </Section>
+  );
+}
+
 // ---- SET-1d: 공지사항 ----
 
 function NoticeSection({ initial }: { initial: string }) {
@@ -523,6 +648,7 @@ export function SettingsClient({
   mail,
   logoSet,
   notice,
+  external,
   policies,
 }: {
   companyName: string;
@@ -531,6 +657,7 @@ export function SettingsClient({
   mail: MailView;
   logoSet: boolean;
   notice: string;
+  external: ExternalView;
   policies: PolicyView[];
 }) {
   return (
@@ -543,6 +670,8 @@ export function SettingsClient({
       <MailSection initial={mail} />
       <LogoSection logoSet={logoSet} />
       <NoticeSection initial={notice} />
+      <ExternalSection view={external} />
+      <TransferSection />
       <PolicySection policies={policies} />
     </div>
   );
