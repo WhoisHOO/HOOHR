@@ -27,6 +27,7 @@ export default async function SettingsPage() {
         smtpFrom: true,
         smtpSecure: true,
         logoPath: true,
+        notice: true,
       },
     }),
     prisma.leavePolicy.findMany({
@@ -67,6 +68,7 @@ export default async function SettingsPage() {
           hasSmtpPass: (company.smtpPass ?? "").length > 0,
         }}
         logoSet={(company.logoPath ?? "").length > 0}
+        notice={company.notice ?? ""}
         policies={policyViews}
       />
     </div>

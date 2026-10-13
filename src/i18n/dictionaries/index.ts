@@ -9,6 +9,7 @@ import { adminKo, adminEn } from "./admin";
 import { settingsKo, settingsEn } from "./settings";
 import { notificationsKo, notificationsEn } from "./notifications";
 import { setupKo, setupEn } from "./setup";
+import { teamKo, teamEn } from "./team";
 
 const dictKo = {
   common: commonKo,
@@ -21,6 +22,7 @@ const dictKo = {
   settings: settingsKo,
   notifications: notificationsKo,
   setup: setupKo,
+  team: teamKo,
 };
 
 // Typing the English composition against the Korean shape makes the compiler
@@ -36,6 +38,7 @@ const dictEn: typeof dictKo = {
   settings: settingsEn,
   notifications: notificationsEn,
   setup: setupEn,
+  team: teamEn,
 };
 
 export type Dict = typeof dictKo;

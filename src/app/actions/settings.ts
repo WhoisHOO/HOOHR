@@ -8,6 +8,7 @@ import { fieldErrors } from "@/lib/form-utils";
 import { formatWeekendDays } from "@/lib/company-defaults";
 import { countryDefaults } from "@/lib/country";
 import {
+  companyNoticeSchema,
   companySettingsSchema,
   leavePolicyUpdateSchema,
   type CompanySettingsState,
@@ -215,6 +216,39 @@ export async function removeCompanyLogo(): Promise<CompanySettingsState> {
 
   revalidateSettingsPages();
   return { message: settings.messages.logoRemoved, ok: true };
+}
+
+// ============ SET-1d: 공지사항 ============
+
+export async function updateCompanyNotice(
+  _state: CompanySettingsState,
+  formData: FormData,
+): Promise<CompanySettingsState> {
+  const admin = await requireAdmin();
+  const { common, settings } = await getDict();
+  const parsed = companyNoticeSchema({
+    ...settings,
+    required: common.validation.required,
+  }).safeParse({
+    notice: formText(formData, "notice"),
+  });
+  if (!parsed.success) {
+    return { fieldErrors: fieldErrors(parsed.error.issues) };
+  }
+
+  // Empty clears the notice: the dashboard hides a null/empty notice.
+  const notice = parsed.data.notice?.trim() || null;
+  try {
+    await prisma.company.update({
+      where: { id: admin.companyId },
+      data: { notice },
+    });
+  } catch {
+    return { message: settings.messages.mailSaveFailed };
+  }
+
+  revalidateSettingsPages();
+  return { message: settings.messages.noticeSaved, ok: true };
 }
 
 // ============ SET-2: 휴가 정책 ============
