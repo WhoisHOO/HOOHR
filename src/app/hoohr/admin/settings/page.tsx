@@ -9,6 +9,18 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: settings.page.title };
 }
 
+/** Classifies APP_URL for the admin: unset/localhost, quick tunnel, or stable. */
+function externalView(): { url: string | null; kind: "none" | "quick" | "stable" } {
+  const raw = (process.env.APP_URL || "").trim().replace(/\/+$/, "");
+  if (!raw || /localhost|127\.0\.0\.1/.test(raw)) {
+    return { url: null, kind: "none" };
+  }
+  if (/\.trycloudflare\.com$/.test(raw)) {
+    return { url: raw, kind: "quick" };
+  }
+  return { url: raw, kind: "stable" };
+}
+
 export default async function SettingsPage() {
   const admin = await requireAdmin();
   const { common, settings } = await getDict();
@@ -18,7 +30,6 @@ export default async function SettingsPage() {
       where: { id: admin.companyId },
       select: {
         name: true,
-        country: true,
         weekendDays: true,
         smtpHost: true,
         smtpPort: true,
@@ -27,6 +38,7 @@ export default async function SettingsPage() {
         smtpFrom: true,
         smtpSecure: true,
         logoPath: true,
+        notice: true,
       },
     }),
     prisma.leavePolicy.findMany({
@@ -54,7 +66,6 @@ export default async function SettingsPage() {
 
       <SettingsClient
         companyName={company.name}
-        country={company.country}
         weekendDays={company.weekendDays}
         mail={{
           smtpHost: company.smtpHost ?? "",
@@ -67,6 +78,8 @@ export default async function SettingsPage() {
           hasSmtpPass: (company.smtpPass ?? "").length > 0,
         }}
         logoSet={(company.logoPath ?? "").length > 0}
+        notice={company.notice ?? ""}
+        external={externalView()}
         policies={policyViews}
       />
     </div>

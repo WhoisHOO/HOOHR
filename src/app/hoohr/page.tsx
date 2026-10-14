@@ -44,25 +44,33 @@ export default async function DashboardPage() {
   ]);
 
   // Admin sees everyone else's waiting requests. Employees never see this.
-  const [inboxLeave, inboxExpense, employeeCount] = isAdmin
-    ? await Promise.all([
-        prisma.leaveRequest.count({
-          where: {
-            companyId: user.companyId,
-            status: "PENDING",
-            employeeId: { not: user.employeeId ?? "" },
-          },
-        }),
-        prisma.expenseReport.count({
-          where: {
-            companyId: user.companyId,
-            status: "SUBMITTED",
-            employeeId: { not: user.employeeId ?? "" },
-          },
-        }),
-        prisma.employee.count({ where: { companyId: user.companyId } }),
-      ])
-    : [0, 0, 0];
+  const [company, inbox] = await Promise.all([
+    prisma.company.findUnique({
+      where: { id: user.companyId },
+      select: { notice: true },
+    }),
+    isAdmin
+      ? Promise.all([
+          prisma.leaveRequest.count({
+            where: {
+              companyId: user.companyId,
+              status: "PENDING",
+              employeeId: { not: user.employeeId ?? "" },
+            },
+          }),
+          prisma.expenseReport.count({
+            where: {
+              companyId: user.companyId,
+              status: "SUBMITTED",
+              employeeId: { not: user.employeeId ?? "" },
+            },
+          }),
+          prisma.employee.count({ where: { companyId: user.companyId } }),
+        ])
+      : Promise.resolve([0, 0, 0] as const),
+  ]);
+  const [inboxLeave, inboxExpense, employeeCount] = inbox;
+  const notice = company?.notice?.trim() || null;
 
   const isFreshInstall = isAdmin && employeeCount <= 1;
 
@@ -70,6 +78,11 @@ export default async function DashboardPage() {
   if (!isAdmin) {
     return (
       <div className="mx-auto max-w-4xl">
+        {notice && (
+          <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-5">
+            <p className="whitespace-pre-wrap text-sm text-amber-900">{notice}</p>
+          </div>
+        )}
         <h1 className="text-2xl font-semibold text-zinc-900">
           {interpolate(dashboard.greeting, { name: user.name })}
         </h1>
@@ -118,6 +131,11 @@ export default async function DashboardPage() {
   // ---- 관리자: 남은 일은 승인뿐이다. ----
   return (
     <div className="mx-auto max-w-4xl">
+      {notice && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 p-5">
+          <p className="whitespace-pre-wrap text-sm text-amber-900">{notice}</p>
+        </div>
+      )}
       {isFreshInstall && (
         <div className="mb-8 rounded-xl border border-blue-200 bg-blue-50 p-5">
           <h2 className="text-sm font-semibold text-blue-900">

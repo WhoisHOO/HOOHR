@@ -10,13 +10,15 @@ const ADMIN_NAV_ITEMS = [
   { href: "/hoohr", label: "dashboard" },
   { href: "/hoohr/leave", label: "leave" },
   { href: "/hoohr/expenses", label: "expenses" },
+  { href: "/hoohr/team", label: "team" },
 ] as const;
 
-// 직원의 메뉴는 딱 두 가지: 휴가 신청, 영수증 제출. 그 외(대시보드·관리
-// 메뉴)는 보여주지 않는다 — 첫 사용자가 "뭐부터 하지"를 물을 일이 없게.
+// 직원의 메뉴는 신청 두 가지 + 명부. 그 외(대시보드·관리 메뉴)는 보여주지
+// 않는다 — 첫 사용자가 "뭐부터 하지"를 물을 일이 없게.
 const EMPLOYEE_NAV_ITEMS = [
   { href: "/hoohr/leave", label: "leaveRequest" },
   { href: "/hoohr/expenses", label: "expenseSubmit" },
+  { href: "/hoohr/team", label: "team" },
 ] as const;
 
 export default async function AppLayout({ children }: LayoutProps<"/hoohr">) {

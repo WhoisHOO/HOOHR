@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { interpolate } from "@/i18n/format";
-import { isCountry } from "@/lib/country";
 import type { FieldErrors } from "@/lib/auth-validation";
 import type { SettingsValidationMessages } from "@/i18n/dictionaries/settings";
 
@@ -48,12 +47,6 @@ const booleanSchema = (v: SettingsValidationMessages) =>
 export function companySettingsSchema(v: SettingsValidationMessages) {
   return z.object({
     name: nameSchema(v, v.labels.companyName),
-    // The country is the one thing the admin chooses; currency and timezone
-    // are derived from it, so they are no longer validated as free fields.
-    country: z
-      .string()
-      .trim()
-      .refine((c) => isCountry(c), { error: v.validation.countryInvalid }),
     // 주말 요일. 하나도 없으면 근무일 계산이 전부 0 이 되고, 7일 전부 쉬면
     // 모든 휴가 신청이 실패하므로 양쪽 경계를 막는다.
     weekend: z
@@ -66,6 +59,18 @@ export function companySettingsSchema(v: SettingsValidationMessages) {
       .refine((days) => new Set(days).size < 7, {
         error: v.validation.weekendAllOff,
       }),
+  });
+}
+
+// ---- SET-1d: 공지사항 (단일 메모, 덮어쓰기) ----
+
+export function companyNoticeSchema(v: SettingsValidationMessages) {
+  return z.object({
+    notice: z
+      .string()
+      .trim()
+      .max(500, { error: v.validation.noticeTooLong })
+      .optional(),
   });
 }
 
