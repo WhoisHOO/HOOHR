@@ -1067,5 +1067,12 @@ Four commits on `feature/first-run-setup`, plus a merge of `feature/public-tunne
 - **Remaining throws require DB outage** (everything 500s anyway) or impossible double-submit races (buttons disable on pending).
 - **Verification**: tsc 0, lint 0, rebuilt + healthy, health ok, team gate 307 logged out.
 
+### v1.1 (2026-10-14, main): build1 merged + tagged
+
+- Merged `build1` into `main` (`--no-ff`) after the full suite went green: browser E2E 69/69 (locale 13, forms 16, expenses 40), `_test-mail` 58/58, `_test-storage` 11/11, `_test-expense` 8 steps, tsc/lint clean. `first-run.mjs` reviewed compatible (needs an empty DB, not run here).
+- Tag `v1.1` + GitHub Release with Korean customer notes. `package.json` 1.1.0 (sidebar footer shows v1.1.0 after rebuild).
+- Pre-merge fixes that fell out of testing: expense form `$`/USD hardcodes removed, CSV-as-staff 403 covered by moving the check into the admin session, live-total assertion polls, e2e rewritten for the locale switcher (country derivation gone), README accuracy pass.
+- Rule going forward: batch on buildN → green suite → merge → tag buildN.
+
 <!-- ====== Template for next sessions (copy & use) ======
 
