@@ -5,12 +5,19 @@ import { parseWeekendDays, WEEKDAY_KEYS } from "@/lib/company-defaults";
 import {
   checkPublicAccess,
   removeCompanyLogo,
+  sendTestMail,
   updateCompanyLogo,
   updateCompanyNotice,
   updateCompanySettings,
   updateLeavePolicy,
   updateMailSettings,
 } from "@/app/actions/settings";
+import {
+  MAIL_PRESETS,
+  isMailProvider,
+  presetForHost,
+  type MailProvider,
+} from "@/lib/mail-presets";
 import type { FieldErrors } from "@/lib/auth-validation";
 import type {
   CompanySettingsState,
@@ -195,10 +202,41 @@ function MailForm({ initial }: { initial: MailView }) {
     updateMailSettings,
     undefined,
   );
+  const [testState, testAction, testPending] = useActionState<CompanySettingsState, FormData>(
+    async () => sendTestMail(),
+    undefined,
+  );
+  const [provider, setProvider] = useState<MailProvider>(() =>
+    presetForHost(initial.smtpHost),
+  );
   const f = d.setup.fields;
+  const preset = provider === "custom" ? null : MAIL_PRESETS[provider];
+  // Remount the server/port/secure inputs on provider change so the preset
+  // values land in the form without controlled inputs.
+  const presetKey = provider;
 
   return (
+    <>
     <form action={action} className="grid gap-3 sm:grid-cols-2">
+      <div className="flex flex-col gap-1 sm:col-span-2">
+        <label htmlFor="mail-provider" className="text-xs font-medium text-zinc-500">
+          {d.setup.provider}
+        </label>
+        <select
+          id="mail-provider"
+          value={provider}
+          onChange={(e) => {
+            if (isMailProvider(e.target.value)) setProvider(e.target.value);
+          }}
+          className={inputClass}
+        >
+          {(Object.keys(d.setup.providers) as MailProvider[]).map((p) => (
+            <option key={p} value={p}>
+              {d.setup.providers[p]}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="mail-host" className="text-xs font-medium text-zinc-500">
           {f.smtpHost}
@@ -207,10 +245,12 @@ function MailForm({ initial }: { initial: MailView }) {
           id="mail-host"
           name="smtpHost"
           type="text"
-          defaultValue={initial.smtpHost}
+          key={`host-${presetKey}`}
+          defaultValue={preset ? preset.host : initial.smtpHost}
+          readOnly={preset !== null}
           placeholder="smtp.gmail.com"
           autoComplete="off"
-          className={inputClass}
+          className={`${inputClass} ${preset ? "bg-zinc-100 text-zinc-500" : ""}`}
         />
         <FieldError state={state} name="smtpHost" />
       </div>
@@ -223,9 +263,11 @@ function MailForm({ initial }: { initial: MailView }) {
             id="mail-port"
             name="smtpPort"
             inputMode="numeric"
-            defaultValue={initial.smtpPort}
+            key={`port-${presetKey}`}
+            defaultValue={preset ? preset.port : initial.smtpPort}
+            readOnly={preset !== null}
             placeholder="587"
-            className={inputClass}
+            className={`${inputClass} ${preset ? "bg-zinc-100 text-zinc-500" : ""}`}
           />
           <FieldError state={state} name="smtpPort" />
         </div>
@@ -235,7 +277,9 @@ function MailForm({ initial }: { initial: MailView }) {
             name="smtpSecure"
             type="checkbox"
             value="on"
-            defaultChecked={initial.smtpSecure}
+            key={`sec-${presetKey}`}
+            defaultChecked={preset ? preset.secure : initial.smtpSecure}
+            disabled={preset !== null}
             className="h-4 w-4"
           />
           {f.smtpSecure}
@@ -251,6 +295,7 @@ function MailForm({ initial }: { initial: MailView }) {
           type="text"
           defaultValue={initial.smtpUser}
           autoComplete="off"
+          placeholder={d.setup.accountHint}
           className={inputClass}
         />
         <FieldError state={state} name="smtpUser" />
@@ -267,6 +312,7 @@ function MailForm({ initial }: { initial: MailView }) {
           placeholder={initial.hasSmtpPass ? d.settings.sections.mail.passKept : undefined}
           className={inputClass}
         />
+        <p className="text-xs text-zinc-500">{d.setup.passHints[provider]}</p>
         <FieldError state={state} name="smtpPass" />
       </div>
       <div className="flex flex-col gap-1 sm:col-span-2">
@@ -279,11 +325,12 @@ function MailForm({ initial }: { initial: MailView }) {
           type="email"
           defaultValue={initial.smtpFrom}
           autoComplete="off"
+          placeholder={d.setup.fromHint}
           className={inputClass}
         />
         <FieldError state={state} name="smtpFrom" />
       </div>
-      <div>
+      <div className="flex flex-wrap items-center gap-2">
         <button type="submit" disabled={pending} className={primaryButtonClass}>
           {pending ? d.common.buttons.saving : d.common.actions.save}
         </button>
@@ -291,7 +338,17 @@ function MailForm({ initial }: { initial: MailView }) {
       <div className="sm:col-span-2">
         <Message state={state} />
       </div>
+      {preset?.secure && <input type="hidden" name="smtpSecure" value="on" />}
     </form>
+    <form action={testAction} className="mt-3 border-t border-zinc-100 pt-3">
+      <button type="submit" disabled={testPending} className={secondaryButtonClass}>
+        {testPending ? d.settings.sections.mail.sending : d.settings.sections.mail.testSend}
+      </button>
+      <div className="mt-2">
+        <Message state={testState} />
+      </div>
+    </form>
+    </>
   );
 }
 

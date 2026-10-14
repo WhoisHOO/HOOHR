@@ -33,6 +33,10 @@ export const settingsKo = {
       description:
         "휴가·영수증 신청이 들어오면 관리자에게 이메일이 갑니다. 비워 두면 알림 없이 사용합니다.",
       passKept: "저장된 비밀번호가 있습니다. 비워 두면 유지됩니다.",
+      testSend: "테스트 메일 보내기",
+      sending: "보내는 중...",
+      testSubject: "HOOHR 테스트 메일",
+      testBody: "이 메일이 오면 알림 설정이 끝난 겁니다.",
     },
     logo: {
       title: "회사 로고",
@@ -158,6 +162,8 @@ export const settingsKo = {
     logoRemoved: "회사 로고를 지웠습니다.",
     logoRequired: "로고 이미지 파일을 선택해주세요.",
     noticeSaved: "공지사항이 저장되었습니다.",
+    testMailSent: "테스트 메일을 보냈습니다. 받은편지함을 확인하세요.",
+    testMailFailed: "보내지 못했습니다. 계정 정보를 확인하고 다시 시도하세요.",
     transferFailed: "복원하지 못했습니다. 잠시 후 다시 시도해주세요.",
     transferFileRequired: "백업 파일을 선택해주세요.",
     transferTooLarge: "파일이 너무 큽니다 (256MB 이하).",
@@ -219,6 +225,10 @@ export const settingsEn: SettingsMessages = {
       description:
         "When a leave or receipt request arrives, the admins get an email. Leave it empty to run without alerts.",
       passKept: "A password is stored. Leave it empty to keep it.",
+      testSend: "Send a test mail",
+      sending: "Sending...",
+      testSubject: "HOOHR test mail",
+      testBody: "If this arrives, alerts are set up.",
     },
     logo: {
       title: "Company logo",
@@ -342,6 +352,8 @@ export const settingsEn: SettingsMessages = {
     logoRemoved: "Company logo removed.",
     logoRequired: "Choose a logo image file.",
     noticeSaved: "Notice saved.",
+    testMailSent: "Test mail sent. Check your inbox.",
+    testMailFailed: "Could not send. Check the account details and try again.",
     transferFailed: "Could not restore. Please try again in a moment.",
     transferFileRequired: "Choose a backup file.",
     transferTooLarge: "File too large (256MB or less).",
