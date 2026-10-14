@@ -15,6 +15,7 @@ import {
 } from "@/lib/settings-validation";
 import { getDict, interpolate } from "@/i18n/server";
 import { smtpFieldsSchema } from "@/lib/setup-validation";
+import { sendCompanyMail } from "@/lib/notifications";
 import { removeLogo, saveLogo } from "@/lib/storage";
 
 function formText(formData: FormData, key: string): string | undefined {
@@ -140,6 +141,24 @@ export async function updateMailSettings(
 
   revalidateSettingsPages();
   return { message: settings.messages.mailSaved, ok: true };
+}
+
+// ============ SET-1b-2: 테스트 메일 ============
+
+export async function sendTestMail(): Promise<CompanySettingsState> {
+  const admin = await requireAdmin();
+  const { settings } = await getDict();
+
+  const result = await sendCompanyMail(admin.companyId, {
+    to: admin.email,
+    subject: settings.sections.mail.testSubject,
+    text: settings.sections.mail.testBody,
+    html: `<p>${settings.sections.mail.testBody}</p>`,
+  });
+  if (result.sent) {
+    return { message: settings.messages.testMailSent, ok: true };
+  }
+  return { message: settings.messages.testMailFailed };
 }
 
 // ============ SET-1c: 회사 로고 ============

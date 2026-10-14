@@ -3,6 +3,11 @@
 import { useActionState, useMemo, useRef, useState } from "react";
 import { createFirstAdmin } from "@/app/actions/setup";
 import type { SetupState } from "@/lib/setup-validation";
+import {
+  MAIL_PRESETS,
+  isMailProvider,
+  type MailProvider,
+} from "@/lib/mail-presets";
 import { useI18n } from "@/i18n/client";
 
 const COMPANY_FIELDS = ["companyName", "locale"];
@@ -27,6 +32,8 @@ export function SetupForm({ defaultCompanyName }: { defaultCompanyName: string }
   }, [state]);
   const [stepOverride, setStepOverride] = useState<number | null>(null);
   const step = errorStep ?? stepOverride ?? 0;
+  const [provider, setProvider] = useState<MailProvider>("gmail");
+  const preset = provider === "custom" ? null : MAIL_PRESETS[provider];
 
   const go = (next: number) => {
     if (next > step) {
@@ -93,28 +100,46 @@ export function SetupForm({ defaultCompanyName }: { defaultCompanyName: string }
       <div hidden={step !== 2}>
         <div className="flex flex-col gap-4">
           <p className="text-xs text-zinc-500">{d.setup.mailHint}</p>
+          <Field label={d.setup.provider}>
+            <select
+              id="provider"
+              value={provider}
+              onChange={(e) => {
+                if (isMailProvider(e.target.value)) setProvider(e.target.value);
+              }}
+              className={inputCls}
+            >
+              {(Object.keys(d.setup.providers) as MailProvider[]).map((p) => (
+                <option key={p} value={p}>
+                  {d.setup.providers[p]}
+                </option>
+              ))}
+            </select>
+          </Field>
           <Field label={d.setup.fields.smtpHost} error={state?.fieldErrors?.smtpHost?.[0]}>
-            <input id="smtpHost" name="smtpHost" className={inputCls} autoComplete="off" placeholder="smtp.gmail.com" />
+            <input id="smtpHost" name="smtpHost" key={`h-${provider}`} defaultValue={preset ? preset.host : ""} readOnly={preset !== null} className={`${inputCls} ${preset ? "bg-zinc-100 text-zinc-500" : ""}`} autoComplete="off" placeholder="smtp.gmail.com" />
           </Field>
           <div className="flex items-center gap-3">
             <div className="w-28">
               <Field label={d.setup.fields.smtpPort} error={state?.fieldErrors?.smtpPort?.[0]}>
-                <input id="smtpPort" name="smtpPort" inputMode="numeric" className={inputCls} placeholder="587" />
+                <input id="smtpPort" name="smtpPort" key={`p-${provider}`} defaultValue={preset ? preset.port : ""} readOnly={preset !== null} inputMode="numeric" className={`${inputCls} ${preset ? "bg-zinc-100 text-zinc-500" : ""}`} placeholder="587" />
               </Field>
             </div>
             <label className="mt-5 flex items-center gap-2 text-xs text-zinc-600">
-              <input id="smtpSecure" name="smtpSecure" type="checkbox" value="on" className="h-4 w-4" />
+              <input id="smtpSecure" name="smtpSecure" type="checkbox" value="on" key={`s-${provider}`} defaultChecked={preset ? preset.secure : false} disabled={preset !== null} className="h-4 w-4" />
               {d.setup.fields.smtpSecure}
             </label>
           </div>
+          {preset?.secure && <input type="hidden" name="smtpSecure" value="on" />}
           <Field label={d.setup.fields.smtpUser} error={state?.fieldErrors?.smtpUser?.[0]}>
-            <input id="smtpUser" name="smtpUser" className={inputCls} autoComplete="off" />
+            <input id="smtpUser" name="smtpUser" className={inputCls} autoComplete="off" placeholder={d.setup.accountHint} />
           </Field>
           <Field label={d.setup.fields.smtpPass} error={state?.fieldErrors?.smtpPass?.[0]}>
             <input id="smtpPass" name="smtpPass" type="password" className={inputCls} autoComplete="new-password" />
           </Field>
+          <p className="-mt-2 text-xs text-zinc-500">{d.setup.passHints[provider]}</p>
           <Field label={d.setup.fields.smtpFrom} error={state?.fieldErrors?.smtpFrom?.[0]}>
-            <input id="smtpFrom" name="smtpFrom" type="email" className={inputCls} autoComplete="off" />
+            <input id="smtpFrom" name="smtpFrom" type="email" className={inputCls} autoComplete="off" placeholder={d.setup.fromHint} />
           </Field>
         </div>
       </div>

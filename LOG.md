@@ -1050,5 +1050,14 @@ Four commits on `feature/first-run-setup`, plus a merge of `feature/public-tunne
 - **Installer + docs**: Q1 asks language (still maps to COMPANY_COUNTRY for seed display names); README/WORKFLOW no longer claim country decides currency/timezone/language.
 - **Verification**: tsc 0, lint 0, mail 58/58, rebuilt + healthy, `/setup` renders `locale` select and no `country` field. first-run.mjs unaffected (never touched country).
 
+### Session 27 mystery RESOLVED (2026-10-14): no redirect bug — curl was the wrong instrument
+
+- **Symptom**: with 0 users, `/login` and `/` returned HTTP 200 instead of 307 → `/setup`.
+- **Ruled out**: stale image (fresh build), runtime cache (fresh restart), PS/curl caching (raw curl.exe), orphan containers (none), wrong DB (same server, count verified inside postgres: 0), next.config (clean), route structure (clean), force-dynamic present.
+- **Root cause**: there was no bug. Next.js serves page-level `redirect()` as **HTTP 200 + meta-refresh + RSC `NEXT_REDIRECT;replace;307` payload** (seen verbatim in the `/setup` HTML), which real browsers follow — but curl prints 200 and stops. Layout-level redirects (dal, `/hoohr`) return true 307s, which is why only some gates "looked" broken. The e2e suite (real Chromium, asserts `page.url()`) is the correct instrument, not curl status codes.
+- **Contributing confusion**: the human had created `whohoo39@gmail.com` via `/setup` mid-investigation, so user-present/user-absent observations mixed across checks. Fingerprint proof: identical `pg_postmaster_start_time` both paths, then `users=1 [whohoo39@gmail.com]`.
+- **Lesson (permanent)**: never assert page redirects by curl status alone; check the `NEXT_REDIRECT` digest or use the browser suite. Test accounts (`admin`/`staff`) recreated after the reset.
+- **Side damage to verify on host**: killed `wslrelay.exe` during debugging (Docker Desktop networking); `docker stop hr-app-db-1` may have executed (output lost) — if the app is down, `docker start hr-app-db-1` / restart Docker Desktop, data is in volumes.
+
 <!-- ====== Template for next sessions (copy & use) ======
 
