@@ -280,7 +280,11 @@ export async function deleteExpenseReport(
     where: { item: { reportId: id } },
     select: { storedPath: true },
   });
-  await prisma.expenseReport.delete({ where: { id } });
+  try {
+    await prisma.expenseReport.delete({ where: { id } });
+  } catch {
+    return { message: expenses.messages.saveError };
+  }
   for (const r of receipts) await removeReceipt(r.storedPath);
 
   revalidatePath("/hoohr/expenses");
