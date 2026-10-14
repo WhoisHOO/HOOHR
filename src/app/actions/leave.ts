@@ -267,10 +267,14 @@ export async function cancelLeave(
     return { message: leave.messages.cannotCancel };
   }
 
-  await prisma.leaveRequest.update({
-    where: { id },
-    data: { status: "CANCELED" },
-  });
+  try {
+    await prisma.leaveRequest.update({
+      where: { id },
+      data: { status: "CANCELED" },
+    });
+  } catch {
+    return { message: leave.messages.requestFailed };
+  }
 
   revalidatePath("/hoohr/leave");
   return { message: leave.messages.cancelDone, ok: true };

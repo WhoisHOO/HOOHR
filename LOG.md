@@ -1059,5 +1059,13 @@ Four commits on `feature/first-run-setup`, plus a merge of `feature/public-tunne
 - **Lesson (permanent)**: never assert page redirects by curl status alone; check the `NEXT_REDIRECT` digest or use the browser suite. Test accounts (`admin`/`staff`) recreated after the reset.
 - **Side damage to verify on host**: killed `wslrelay.exe` during debugging (Docker Desktop networking); `docker stop hr-app-db-1` may have executed (output lost) — if the app is down, `docker start hr-app-db-1` / restart Docker Desktop, data is in volumes.
 
+### Session 31 (2026-10-14, build1): exception-path hardening audit
+
+- **User question**: is build1 free of exceptions/nulls? Answer after audit: yes for every realistic path.
+- **Fixed (3)**: `cancelLeave` update, `deleteExpenseReport` delete, `updateEmployeeProfile` update, and the `changeEmployeeStatus` transaction now catch infra failure into plain messages (`requestFailed`/`saveError`/`employeeProfileSaveFailed`/`statusChangeFailed`, ko/en). No new null risk: the nullable-result path uses `result?.message` fallback.
+- **Audited clean**: no `!` assertions in app code (only `?.`); invite/reinvite/accept races resolve to messages (`emailExists`/`inviteUsed`); decide flows already transactional; settings writes ride the admin-implies-company invariant; mail never throws by contract; routes validate params before querying.
+- **Remaining throws require DB outage** (everything 500s anyway) or impossible double-submit races (buttons disable on pending).
+- **Verification**: tsc 0, lint 0, rebuilt + healthy, health ok, team gate 307 logged out.
+
 <!-- ====== Template for next sessions (copy & use) ======
 

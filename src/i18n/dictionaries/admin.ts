@@ -61,6 +61,7 @@ export const adminKo = {
     departmentDeleted: "부서가 삭제되었습니다.",
     employeeNotFound: "직원을 찾을 수 없습니다.",
     employeeProfileSaved: "직원 프로필이 저장되었습니다.",
+    employeeProfileSaveFailed: "저장하지 못했습니다. 잠시 후 다시 시도해주세요.",
     cannotDeactivateSelf: "본인의 직원 계정은 비활성화할 수 없습니다.",
     cannotActivateInvited:
       "초대 대기 직원은 활성화할 수 없습니다. 초대를 다시 보내주세요.",
@@ -153,6 +154,7 @@ export const adminEn: AdminMessages = {
     departmentDeleted: "Department deleted.",
     employeeNotFound: "Employee not found.",
     employeeProfileSaved: "Employee profile saved.",
+    employeeProfileSaveFailed: "Could not save. Please try again in a moment.",
     cannotDeactivateSelf: "You cannot deactivate your own employee account.",
     cannotActivateInvited:
       "A pending (invited) employee cannot be activated. Please resend the invite.",
