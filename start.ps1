@@ -347,7 +347,7 @@ if ($tunnelUrl) {
     Say  "  [중요] 이 주소는 start.bat 을 다시 켤 때마다 바뀝니다." -ForegroundColor Yellow
   }
 }
-Say  ("  국가          : " + $countryOut)
+Say  ("  언어          : " + $(if ($countryOut -eq "US") { "English" } else { "한국어" }))
 Say $line -ForegroundColor Green
 if ($freshInstall) {
   Say "  첫 실행 화면에서 관리자 계정을 만들어 주세요." -ForegroundColor DarkGray

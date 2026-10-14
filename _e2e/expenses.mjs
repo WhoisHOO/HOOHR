@@ -13,7 +13,8 @@
 //
 // Two accounts are needed and only one is seeded, for reasons that are policy
 // rather than accident -- see _e2e/expense-fixture.ts. The report is owned by a
-// MANAGER and reviewed by the seeded admin.
+// plain employee (the "manager" names below are historical) and reviewed by
+// the seeded admin.
 //
 // Asserts only against English copy, for the same two reasons as forms.mjs: it
 // keeps Korean literals out of a file that has been corrupted by an encoding
@@ -27,12 +28,12 @@
 // and also runs first so an interrupted run cannot poison the next one.
 
 import { launch, connect, sleep, waitForReact } from "./cdp.mjs";
-import { E2E_PASSWORD, E2E_EMAIL, setCountry, isEnglish, signOut as signOutAny } from "./country.mjs";
+import { E2E_PASSWORD, E2E_EMAIL, setLocale, isEnglish, signOut as signOutAny } from "./country.mjs";
 
 // Base-scoped wrappers, so the call sites below stay as readable as before.
 const signOut = (page) => signOutAny(page, BASE);
 // Not named use*: eslint's rules-of-hooks flags any use-prefixed call at top level.
-const changeCountry = (page, code) => setCountry(page, BASE, code);
+const switchLocale = (page, code) => setLocale(page, BASE, code);
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -125,9 +126,9 @@ async function signIn(page, email, password) {
   return (await page.url()).startsWith(`${BASE}/hoohr`);
 }
 
-// The UI renders in the company's country - there is no language switcher any
-// more. These assertions are all written against the English labels, so the
-// suite pins the company to US for its duration and restores KR at the end.
+// The UI language is a per-browser cookie flipped with the sidebar switcher.
+// These assertions are all written against the English labels, so the suite
+// switches to English for its duration and back at the end.
 // The mechanics live in ./country.mjs.
 
 
@@ -159,13 +160,11 @@ async function createReport(page, title, rows) {
   const rowCount = await page.eval(`
     ${FILL}
     const dates = document.querySelectorAll('input[name="item_date"]');
-    const cats = document.querySelectorAll('select[name="item_categoryId"]');
     const amts = document.querySelectorAll('input[name="item_amount"]');
     const descs = document.querySelectorAll('input[name="item_description"]');
     const rows = ${JSON.stringify(rows)};
     if (dates.length !== rows.length) return dates.length;
     rows.forEach((r, i) => {
-      set(cats[i], cats[i].options[0].value);
       set(amts[i], r.amount);
       set(descs[i], r.description);
     });
@@ -176,11 +175,16 @@ async function createReport(page, title, rows) {
   }
 
   // The live total is client-side only, so this is a real assertion about the
-  // form, not a read-back of what the action stored.
-  const total = await page.eval(`
-    const m = document.body.innerText.match(/Total:\\s*\\$([0-9,]+\\.[0-9]{2})/);
-    return m ? m[1] : "";
-  `);
+  // form, not a read-back of what the action stored. Plain number, no sign.
+  // Polled: React flushes the typed state a frame after the synthetic events.
+  let total = "";
+  for (let i = 0; i < 5 && !total; i++) {
+    if (i > 0) await sleep(800);
+    total = await page.eval(`
+      const m = document.body.innerText.match(/Total:\\s*([0-9,]+\\.[0-9]{2})/);
+      return m ? m[1] : "";
+    `);
+  }
 
   const clicked = await page.eval(`
     const form = document.querySelector('input[name="title"]').closest("form");
@@ -220,30 +224,27 @@ try {
   const page = await cdp.newPage();
 
   // =====================================================================
-  // Pin the language. The UI renders in the company's country, so to assert
-  // against the English labels below the company is set to US first.
+  // Pin the language via the sidebar switcher (cookie, per browser).
   // =====================================================================
-  check("admin signed in to set the country", await signIn(page, ADMIN_EMAIL, ADMIN_PASSWORD), await page.url());
-  check("company country set to US", await changeCountry(page, "US"), "");
+  check("admin signed in to switch language", await signIn(page, ADMIN_EMAIL, ADMIN_PASSWORD), await page.url());
+  check("UI switched to English", await switchLocale(page, "en"), "");
   check("the UI is now English", await isEnglish(page), "");
   check("admin signed out again", await signOut(page), await page.url());
 
   // =====================================================================
-  // As the MANAGER (the report owner)
+  // As the report owner (a plain employee account)
   // =====================================================================
   check("manager signed in", await signIn(page, MANAGER_EMAIL, MANAGER_PASSWORD), await page.url());
   check("the manager sees the same language", await isEnglish(page), "");
 
   await page.goto(`${BASE}/hoohr/expenses`);
   await waitForReact(page, 'input[name="title"]');
-  const cat = await page.eval(`
-    const sel = document.querySelector('select[name="item_categoryId"]');
-    if (!sel || !sel.options.length) return null;
-    return { count: sel.options.length, label: sel.options[0].text.trim() };
+  const noCat = await page.eval(`
+    return !document.querySelector('select[name="item_categoryId"]');
   `);
-  check("expense category dropdown is populated", !!cat && cat.count > 0, JSON.stringify(cat));
+  check("no category control is offered", noCat === true, "");
 
-  // A manager is not an admin, so the pay queue must not be rendered at all.
+  // A non-admin is not offered the payment queue at all.
   const noPayQueue = await page.eval(`
     return !/Awaiting payment/.test(document.body.innerText);
   `);
@@ -455,6 +456,22 @@ try {
   check("payment confirmed", paid === 1, String(paid));
   await sleep(3500);
 
+  // The CSV export is admin-only (403 for anyone else) and locale-aware, so
+  // the English UI has to produce English column headers. Checked here, while
+  // still signed in as the admin.
+  const csv = await page.eval(`
+    return (async () => {
+      const d = new Date();
+      const m = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+      const r = await fetch("/hoohr/expenses/export?month=" + m);
+      const t = await r.text();
+      return { status: r.status, header: t.split("\\n")[0].replace(/^\\uFEFF/, "").trim() };
+    })();
+  `);
+  check("CSV export responds", csv.status === 200, `status=${csv.status}`);
+  check("CSV headers follow the English locale",
+    csv.header === "Date,Category,Employee,Title,Status,Amount,Description,Receipts", csv.header);
+
   // The decisions land on the owner's view, so verify them there.
   await signOut(page);
   await signIn(page, MANAGER_EMAIL, MANAGER_PASSWORD);
@@ -470,26 +487,11 @@ try {
   const paidRow = await page.eval(`return ${FIND_IN_SECTION(HEADINGS.mine, PAID_TITLE)};`);
   check("the paid report reads Paid", !!paidRow && /\bPaid\b/.test(paidRow), String(paidRow).slice(0, 90));
 
-  // The CSV export is a locale-aware GET route, so the English UI has to
-  // produce English column headers.
-  const csv = await page.eval(`
-    return (async () => {
-      const d = new Date();
-      const m = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
-      const r = await fetch("/hoohr/expenses/export?month=" + m);
-      const t = await r.text();
-      return { status: r.status, header: t.split("\\n")[0].replace(/^\\uFEFF/, "").trim() };
-    })();
-  `);
-  check("CSV export responds", csv.status === 200, `status=${csv.status}`);
-  check("CSV headers follow the English locale",
-    csv.header === "Date,Category,Employee,Title,Status,Amount,Currency,Description,Receipts", csv.header);
-
-  // Leave the install the way it was found: this suite is allowed to change the
-  // country, but only for its own duration.
+  // Leave the browser the way it was found: this suite switches language,
+  // but only for its own duration.
   await signOut(page);
   await signIn(page, ADMIN_EMAIL, ADMIN_PASSWORD);
-  check("country restored to KR", await changeCountry(page, "KR"), "");
+  check("language switched back to Korean", await switchLocale(page, "ko"), "");
   check("the UI is Korean again", !(await isEnglish(page)), "");
 
   await cdp.close();
