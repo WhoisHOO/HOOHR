@@ -244,7 +244,7 @@ export function NewExpenseForm() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-zinc-600">
           {d.common.fields.total}:{" "}
-          <span className="font-semibold text-zinc-900">${totalLabel}</span>
+          <span className="font-semibold text-zinc-900">{totalLabel}</span>
         </p>
         <button
           type="submit"

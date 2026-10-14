@@ -1,29 +1,27 @@
-// End-to-end check that the *country* is the only language control.
+// End-to-end check that the UI language is a per-browser choice.
 //
-// The product decision this file exists to pin down: there is no runtime
-// language switcher. The admin picks 대한민국 or 미국 once at install, and the
-// currency, timezone and on-screen language all follow from it. So the
+// The product decision this file exists to pin down: the screen language is
+// picked with the sidebar's 한국어/English switcher and stored in a `locale`
+// cookie. It is independent of country, currency and timezone. So the
 // guarantees to prove are:
 //
-//   1. there is no language control anywhere in the UI
-//   2. there is no locale cookie - nothing per-browser to go stale
+//   1. a language switcher exists in the app sidebar
+//   2. switching flips the UI and sets the locale cookie
 //   3. the language is stable across reloads and across pages
-//   4. changing the country in Settings really does re-derive the language
-//   5. the country labels are endonyms, so they stay readable *after* the UI
-//      has flipped (a Korean user who just switched to 미국 can still switch back)
+//   4. switching back restores the original language
 //
 // Driven through a real browser, because a Next.js server action cannot be
 // POSTed by hand from curl.
 //
 // Requires the app on E2E_BASE (default http://localhost:3000).
-//   docker compose up -d --build   # or: npm run dev
-//   npm run test:e2e:locale
+//   docker compose up -d --build
+//   npm run test:e2e
 //
 // The credential defaults to the public seed admin. Override for a real
 // account with E2E_EMAIL / E2E_PASSWORD.
 
-import { launch, connect, sleep } from "./cdp.mjs";
-import { E2E_PASSWORD, E2E_EMAIL, setCountry, currentLanguage } from "./country.mjs";
+import { launch, connect, sleep, waitForReact } from "./cdp.mjs";
+import { E2E_PASSWORD, E2E_EMAIL, setLocale, currentLanguage } from "./country.mjs";
 
 const BASE = process.env.E2E_BASE || "http://localhost:3000";
 const EMAIL = E2E_EMAIL;
@@ -46,7 +44,7 @@ function check(label, ok, detail = "") {
 // Endonyms. Written as escapes on purpose: this file is read by node as UTF-8,
 // but a stray editor or a copy through a legacy codepage would otherwise turn
 // them into mojibake and the assertions would silently stop matching anything.
-const KO = "\uB55C\uAD6D\uC5B4"; // 한국어
+const KO = "\uD55C\uAD6D\uC5B4"; // 한국어
 const EN = "English";
 const SIGN_OUT_KO = "\uB85C\uADF8\uC544\uC6C3"; // 로그아웃
 const SIGN_OUT_EN = "Sign out";
@@ -70,16 +68,11 @@ async function login(cdp) {
   return page;
 }
 
-/** Looks for a control that would change the language on its own. */
-async function findLanguageControl(page) {
+/** The sidebar language switcher buttons. */
+async function switcherLabels(page) {
   return page.eval(`
-    const wanted = [${JSON.stringify(KO)}, ${JSON.stringify(EN)}];
-    const nodes = [...document.querySelectorAll("button, a, [role=button], select")];
-    const hit = nodes.find((n) => {
-      const t = (n.textContent || "").trim();
-      return wanted.some((w) => t === w || t.startsWith(w + " ("));
-    });
-    return hit ? hit.textContent.trim() : null;
+    const btns = [...document.querySelectorAll('aside button[name="locale"]')];
+    return btns.map((b) => b.textContent.trim());
   `);
 }
 
@@ -102,71 +95,47 @@ try {
   const afterLogin = await page.url();
   check("login redirects into the app", afterLogin.startsWith(`${BASE}/hoohr`), afterLogin.replace(BASE, ""));
 
+  // ---------- 2. the switcher exists ----------
+  const labels = await switcherLabels(page);
+  check(
+    "sidebar offers Korean and English",
+    Array.isArray(labels) && labels.includes(KO) && labels.includes(EN),
+    JSON.stringify(labels),
+  );
+
   const lang0 = await currentLanguage(page);
-  check("<html lang> is set from the country", lang0 === "ko" || lang0 === "en", `lang=${lang0}`);
+  check("<html lang> is set", lang0 === "ko" || lang0 === "en", `lang=${lang0}`);
   const expectKo = lang0 === "ko";
   const signOutText = expectKo ? SIGN_OUT_KO : SIGN_OUT_EN;
   check("sidebar renders in that language", (await page.text()).includes(signOutText), signOutText);
 
-  // ---------- 2. no switcher, no cookie ----------
-  const control = await findLanguageControl(page);
-  check("no language control exists in the app", control === null, String(control));
-
-  const cookies = await page.cookies();
-  const localeCookie = cookies.find((c) => c.name === "locale");
-  check("no locale cookie exists", !localeCookie, localeCookie ? localeCookie.value : "");
-
-  await page.goto(`${BASE}/login`);
-  check("no language control on the login screen", (await findLanguageControl(page)) === null);
-
-  // ---------- 3. the language is stable ----------
-  await page.goto(`${BASE}/hoohr`);
-  const dashText = await page.text();
-  check("dashboard keeps the language after a hard reload", dashText.includes(signOutText));
-
-  await page.goto(`${BASE}/hoohr/leave`);
-  check("leave page keeps the language", (await page.text()).includes(signOutText));
-
-  await page.goto(`${BASE}/hoohr/expenses`);
-  check("expenses page keeps the language", (await page.text()).includes(signOutText));
-
-  // ---------- 4. changing the country re-derives the language ----------
-  const other = expectKo ? "US" : "KR";
-  const expectOther = other === "US" ? "en" : "ko";
-  // setCountry saves and confirms the language moved, so this one check covers
-  // both the write and the re-derivation.
-  check(`country changed to ${other} and the UI followed`, await setCountry(page, BASE, other));
+  // ---------- 3. switching flips the UI and sets the cookie ----------
+  const other = expectKo ? "en" : "ko";
+  check(`language switched to ${other}`, await setLocale(page, BASE, other));
 
   const lang1 = await currentLanguage(page);
-  check("<html lang> followed the country", lang1 === expectOther, `lang=${lang1} (was ${lang0})`);
+  check("<html lang> followed the switch", lang1 === other, `lang=${lang1} (was ${lang0})`);
 
   await page.goto(`${BASE}/hoohr`);
   const flippedText = await page.text();
-  const flippedSignOut = expectOther === "ko" ? SIGN_OUT_KO : SIGN_OUT_EN;
+  const flippedSignOut = other === "ko" ? SIGN_OUT_KO : SIGN_OUT_EN;
   check("dashboard re-rendered in the new language", flippedText.includes(flippedSignOut), flippedSignOut);
-  check("no language control appeared after the switch", (await findLanguageControl(page)) === null);
 
-  // ---------- 5. the country labels survive the language flip ----------
-  // This is why the options are endonyms: a Korean admin who just moved the
-  // company to 미국 must still be able to find 대한민국 and switch back.
-  await page.goto(`${BASE}/hoohr/admin/settings`);
-  const options = await page.eval(`
-    const sel = document.querySelector('#company-country');
-    if (!sel) return [];
-    return [...sel.options].map((o) => o.value);
-  `);
-  check(
-    "both countries are still offered, by endonym",
-    options.includes("KR") && options.includes("US"),
-    JSON.stringify(options),
-  );
+  // ---------- 4. the language is stable ----------
+  await page.goto(`${BASE}/hoohr/leave`);
+  await waitForReact(page, "aside");
+  check("leave page keeps the language", (await page.text()).includes(flippedSignOut));
 
-  // ---------- 6. and back again ----------
-  const original = lang0 === "ko" ? "KR" : "US";
-  check(`country switched back to ${original}`, await setCountry(page, BASE, original));
+  await page.goto(`${BASE}/hoohr/expenses`);
+  await waitForReact(page, "aside");
+  check("expenses page keeps the language", (await page.text()).includes(flippedSignOut));
+
+  // ---------- 5. and back again ----------
+  const original = expectKo ? "ko" : "en";
+  check(`language switched back to ${original}`, await setLocale(page, BASE, original));
   check("<html lang> returned", (await currentLanguage(page)) === lang0, `lang=${await currentLanguage(page)}`);
 
-  // ---------- 7. sign out still works ----------
+  // ---------- 6. sign out still works ----------
   await page.goto(`${BASE}/hoohr`);
   const outClicked = await page.eval(`
     const nodes = [...document.querySelectorAll("button, a, [role=button]")];

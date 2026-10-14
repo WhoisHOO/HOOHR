@@ -9,9 +9,8 @@
 // The assertions below run against English copy. That is deliberate: it keeps
 // Korean string literals out of this file, where a stray encoding round-trip can
 // silently corrupt them (a PowerShell Get-Content/WriteAllText pass already did
-// that once), and it cross-checks that the forms work under the non-default
-// country too. The suite sets the company to the US up front and restores it
-// before it exits.
+// that once), and it cross-checks the non-default locale. The suite switches to
+// English up front and back before it exits.
 //
 // Requires the dev server:
 //   npm run dev               # in one terminal
@@ -21,7 +20,7 @@
 // to sweep anything an interrupted previous run left behind.
 
 import { launch, connect, sleep, waitForReact } from "./cdp.mjs";
-import { E2E_PASSWORD, E2E_EMAIL, setCountry, isEnglish } from "./country.mjs";
+import { E2E_PASSWORD, E2E_EMAIL, setLocale, isEnglish } from "./country.mjs";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -100,10 +99,10 @@ try {
   await sleep(2500);
   check("logged in", (await page.url()).startsWith(`${BASE}/hoohr`), (await page.url()).replace(BASE, ""));
 
-  // ---------- put the UI in English, then assert only English copy ----------
-  // The language is the company's country, so this sets the country rather than
-  // clicking a switcher. Mechanics in ./country.mjs.
-  check("company country set to US", await setCountry(page, BASE, "US"), "");
+  // ---------- switch the UI to English, then assert only English copy ----------
+  // The language is a per-browser cookie flipped with the sidebar switcher.
+  // Mechanics in ./country.mjs.
+  check("UI switched to English", await setLocale(page, BASE, "en"), "");
   check("the UI is now English", await isEnglish(page), "");
 
   // =====================================================================
@@ -200,9 +199,9 @@ try {
   const afterCancel = await page.text();
   check("the request now reads Canceled", /Canceled/.test(afterCancel), "");
 
-  // Leave the install the way it was found: this suite may change the country,
+  // Leave the browser the way it was found: this suite switches language,
   // but only for its own duration.
-  check("country restored to KR", await setCountry(page, BASE, "KR"), "");
+  check("language switched back to Korean", await setLocale(page, BASE, "ko"), "");
   check("the UI is Korean again", !(await isEnglish(page)), "");
 
   await cdp.close();
