@@ -6,8 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/dal";
 import { fieldErrors } from "@/lib/form-utils";
 import { formatWeekendDays } from "@/lib/company-defaults";
-import { countryDefaults } from "@/lib/country";
 import {
+  companyNoticeSchema,
   companySettingsSchema,
   leavePolicyUpdateSchema,
   type CompanySettingsState,
@@ -15,6 +15,7 @@ import {
 } from "@/lib/settings-validation";
 import { getDict, interpolate } from "@/i18n/server";
 import { smtpFieldsSchema } from "@/lib/setup-validation";
+import { sendCompanyMail } from "@/lib/notifications";
 import { removeLogo, saveLogo } from "@/lib/storage";
 
 function formText(formData: FormData, key: string): string | undefined {
@@ -60,26 +61,16 @@ export async function updateCompanySettings(
   });
   const parsed = schema.safeParse({
     name: formText(formData, "name"),
-    country: formText(formData, "country"),
     weekend: formData.getAll("weekend").map(String),
   });
   if (!parsed.success) {
     return { fieldErrors: fieldErrors(parsed.error.issues) };
   }
 
-  // Currency and timezone are not chosen here - they are what the country
-  // means. Note this also reinterprets stored amounts when the currency moves
-  // (there is no FX conversion): the country is meant to be right once, at
-  // install, and this exists so a mis-pick is recoverable.
-  const { currency, timezone } = countryDefaults(parsed.data.country);
-
   await prisma.company.update({
     where: { id: admin.companyId },
     data: {
       name: parsed.data.name,
-      country: parsed.data.country,
-      currency,
-      timezone,
       weekendDays: formatWeekendDays(new Set(parsed.data.weekend)),
     },
   });
@@ -152,6 +143,24 @@ export async function updateMailSettings(
   return { message: settings.messages.mailSaved, ok: true };
 }
 
+// ============ SET-1b-2: 테스트 메일 ============
+
+export async function sendTestMail(): Promise<CompanySettingsState> {
+  const admin = await requireAdmin();
+  const { settings } = await getDict();
+
+  const result = await sendCompanyMail(admin.companyId, {
+    to: admin.email,
+    subject: settings.sections.mail.testSubject,
+    text: settings.sections.mail.testBody,
+    html: `<p>${settings.sections.mail.testBody}</p>`,
+  });
+  if (result.sent) {
+    return { message: settings.messages.testMailSent, ok: true };
+  }
+  return { message: settings.messages.testMailFailed };
+}
+
 // ============ SET-1c: 회사 로고 ============
 
 export async function updateCompanyLogo(
@@ -215,6 +224,65 @@ export async function removeCompanyLogo(): Promise<CompanySettingsState> {
 
   revalidateSettingsPages();
   return { message: settings.messages.logoRemoved, ok: true };
+}
+
+// ============ SET-1e: 외부 접속 확인 ============
+
+export async function checkPublicAccess(): Promise<CompanySettingsState> {
+  await requireAdmin();
+  const { settings } = await getDict();
+  const raw = (process.env.APP_URL || "").trim().replace(/\/+$/, "");
+  if (!raw || /localhost|127\.0\.0\.1/.test(raw)) {
+    return { message: settings.sections.external.none };
+  }
+
+  // Server-side probe of the public address, same check start-tunnel runs.
+  // Short timeout so a dead tunnel degrades to a message, not a stuck form.
+  try {
+    const res = await fetch(`${raw}/api/health`, {
+      signal: AbortSignal.timeout(10_000),
+      redirect: "manual",
+    });
+    if (res.status === 200) {
+      return { message: settings.sections.external.reachable, ok: true };
+    }
+    return { message: settings.sections.external.unreachable };
+  } catch {
+    return { message: settings.sections.external.unreachable };
+  }
+}
+
+// ============ SET-1d: 공지사항 ============
+
+export async function updateCompanyNotice(
+  _state: CompanySettingsState,
+  formData: FormData,
+): Promise<CompanySettingsState> {
+  const admin = await requireAdmin();
+  const { common, settings } = await getDict();
+  const parsed = companyNoticeSchema({
+    ...settings,
+    required: common.validation.required,
+  }).safeParse({
+    notice: formText(formData, "notice"),
+  });
+  if (!parsed.success) {
+    return { fieldErrors: fieldErrors(parsed.error.issues) };
+  }
+
+  // Empty clears the notice: the dashboard hides a null/empty notice.
+  const notice = parsed.data.notice?.trim() || null;
+  try {
+    await prisma.company.update({
+      where: { id: admin.companyId },
+      data: { notice },
+    });
+  } catch {
+    return { message: settings.messages.mailSaveFailed };
+  }
+
+  revalidateSettingsPages();
+  return { message: settings.messages.noticeSaved, ok: true };
 }
 
 // ============ SET-2: 휴가 정책 ============

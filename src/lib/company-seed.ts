@@ -1,8 +1,8 @@
 import {
   COUNTRY_DEFAULTS,
   type CountryCode,
-} from "@/lib/country";
-import { LeaveTypeKind, type Prisma } from "@/generated/prisma/client";
+} from "./country";
+import { LeaveTypeKind, type Prisma } from "../generated/prisma/client";
 
 /**
  * Seed text per locale. Country is the single install-time answer, so the

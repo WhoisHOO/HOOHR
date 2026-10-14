@@ -62,7 +62,9 @@ export function setupFormSchema(v: typeof commonKo.validation) {
       .min(8, { error: interpolate(v.passwordMin, { min: 8 }) })
       .regex(/[a-zA-Z]/, { error: v.passwordNeedsLetter })
       .regex(/[0-9]/, { error: v.passwordNeedsDigit }),
-    country: z.enum(["KR", "US"], { error: "국가를 선택해주세요" }).optional(),
+    // Step 1: the screen language. Independent of country, currency and
+    // timezone — Korean UI can run a dollar shop and vice versa.
+    locale: z.enum(["ko", "en"], { error: "언어를 선택해주세요" }),
     // Step 3 (optional): where approval notifications go. Empty host disables
     // mail, exactly like an unset SMTP_HOST — the setup completes regardless.
     ...smtpFieldsSchema(v),

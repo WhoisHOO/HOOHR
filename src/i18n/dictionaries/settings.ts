@@ -33,11 +33,43 @@ export const settingsKo = {
       description:
         "휴가·영수증 신청이 들어오면 관리자에게 이메일이 갑니다. 비워 두면 알림 없이 사용합니다.",
       passKept: "저장된 비밀번호가 있습니다. 비워 두면 유지됩니다.",
+      testSend: "테스트 메일 보내기",
+      sending: "보내는 중...",
+      testSubject: "HOOHR 테스트 메일",
+      testBody: "이 메일이 오면 알림 설정이 끝난 겁니다.",
     },
     logo: {
       title: "회사 로고",
       description:
         "사이드바 상단에 회사명과 함께 표시됩니다. JPG·PNG·WEBP, 1MB 이하.",
+    },
+    notice: {
+      title: "공지사항",
+      description:
+        "대시보드 맨 위에 표시됩니다. 비워 두면 표시되지 않습니다.",
+      placeholder: "예: 다음 주 월요일은 창립기념일로 쉽니다.",
+    },
+    external: {
+      title: "외부 접속",
+      description:
+        "직원이 회사 밖에서 들어오는 주소입니다. 초대·알림 링크도 이 주소로 만들어집니다.",
+      none: "공개 주소가 없습니다. 지금은 이 PC에서만 접속됩니다 (start-tunnel.bat으로 공개).",
+      quick: "임시 주소입니다. 터널을 다시 켜면 바뀌고, 바뀐 뒤에는 직원에게 새 주소를 알려야 합니다.",
+      stable: "고정 주소입니다. 다시 켜도 바뀌지 않습니다.",
+      check: "연결 확인",
+      reachable: "외부에서 도달 가능합니다.",
+      unreachable:
+        "외부에서 도달할 수 없습니다. 터널이 켜져 있는지 확인하세요.",
+    },
+    transfer: {
+      title: "이사 (다른 PC로 옮기기)",
+      description:
+        "데이터 전체를 파일 하나로 내려받아 새 PC에 올리면 그대로 이어집니다. 로그인 비밀번호는 새로 만든 설치의 것으로 다시 로그인하세요.",
+      download: "백업 내려받기",
+      file: "백업 파일",
+      confirm: "기존 데이터를 전부 지우고 덮어쓴다는 것을 이해했습니다",
+      restore: "복원하기",
+      restoring: "복원 중...",
     },
   },
   labels: {
@@ -120,6 +152,7 @@ export const settingsKo = {
     weekendRequired: "주말 요일을 한 개 이상 선택하세요",
     weekendAllOff: "적어도 하루는 근무일로 남겨야 합니다",
     weekendInvalid: "주말 요일 값이 올바르지 않습니다",
+    noticeTooLong: "공지사항은 500자 이내입니다",
   },
   messages: {
     companySaved: "회사 설정이 저장되었습니다.",
@@ -128,6 +161,16 @@ export const settingsKo = {
     logoSaved: "회사 로고가 저장되었습니다.",
     logoRemoved: "회사 로고를 지웠습니다.",
     logoRequired: "로고 이미지 파일을 선택해주세요.",
+    noticeSaved: "공지사항이 저장되었습니다.",
+    testMailSent: "테스트 메일을 보냈습니다. 받은편지함을 확인하세요.",
+    testMailFailed: "보내지 못했습니다. 계정 정보를 확인하고 다시 시도하세요.",
+    transferFailed: "복원하지 못했습니다. 잠시 후 다시 시도해주세요.",
+    transferFileRequired: "백업 파일을 선택해주세요.",
+    transferTooLarge: "파일이 너무 큽니다 (256MB 이하).",
+    transferBadFile: "백업 파일이 아닙니다.",
+    transferVersionMismatch: "버전이 다른 백업입니다. 같은 버전에서 만든 파일을 올리세요.",
+    transferConfirmRequired: "덮어쓰기 확인에 체크해주세요.",
+    transferRestored: "복원되었습니다.",
     policyNotFound: "휴가 정책을 찾을 수 없습니다.",
     policyNameTaken: "같은 이름의 휴가 정책이 이미 있습니다.",
     policySaved: "휴가 정책이 저장되었습니다. ({name})",
@@ -182,11 +225,43 @@ export const settingsEn: SettingsMessages = {
       description:
         "When a leave or receipt request arrives, the admins get an email. Leave it empty to run without alerts.",
       passKept: "A password is stored. Leave it empty to keep it.",
+      testSend: "Send a test mail",
+      sending: "Sending...",
+      testSubject: "HOOHR test mail",
+      testBody: "If this arrives, alerts are set up.",
     },
     logo: {
       title: "Company logo",
       description:
         "Shown with the company name at the top of the sidebar. JPG, PNG or WEBP, up to 1MB.",
+    },
+    notice: {
+      title: "Notice",
+      description:
+        "Shown at the top of the dashboard. Leave it empty to hide it.",
+      placeholder: "e.g. Next Monday is Foundation Day — the day off.",
+    },
+    external: {
+      title: "Public access",
+      description:
+        "The address staff use from outside the office. Invite and alert links use it too.",
+      none: "No public address. Only this PC can connect (run start-tunnel.bat to share).",
+      quick: "Temporary address. It changes when the tunnel restarts — tell the staff the new one.",
+      stable: "Stable address. It does not change on restart.",
+      check: "Check connection",
+      reachable: "Reachable from the outside.",
+      unreachable:
+        "Not reachable from the outside. Check that the tunnel is running.",
+    },
+    transfer: {
+      title: "Move (to another PC)",
+      description:
+        "Download everything as one file, upload it on the new PC, and continue. Everyone logs in again with the new install.",
+      download: "Download backup",
+      file: "Backup file",
+      confirm: "I understand this erases all existing data here",
+      restore: "Restore",
+      restoring: "Restoring...",
     },
   },
   labels: {
@@ -267,6 +342,7 @@ export const settingsEn: SettingsMessages = {
     weekendRequired: "Please choose at least one day off",
     weekendAllOff: "At least one day must remain a working day",
     weekendInvalid: "Those days off are not valid",
+    noticeTooLong: "The notice must be 500 characters or fewer",
   },
   messages: {
     companySaved: "Company settings saved.",
@@ -275,6 +351,16 @@ export const settingsEn: SettingsMessages = {
     logoSaved: "Company logo saved.",
     logoRemoved: "Company logo removed.",
     logoRequired: "Choose a logo image file.",
+    noticeSaved: "Notice saved.",
+    testMailSent: "Test mail sent. Check your inbox.",
+    testMailFailed: "Could not send. Check the account details and try again.",
+    transferFailed: "Could not restore. Please try again in a moment.",
+    transferFileRequired: "Choose a backup file.",
+    transferTooLarge: "File too large (256MB or less).",
+    transferBadFile: "Not a backup file.",
+    transferVersionMismatch: "Backup from a different version. Upload one made here.",
+    transferConfirmRequired: "Check the overwrite confirmation.",
+    transferRestored: "Restored.",
     policyNotFound: "That leave policy could not be found.",
     policyNameTaken: "A leave policy with the same name already exists.",
     policySaved: "Leave policy saved ({name}).",

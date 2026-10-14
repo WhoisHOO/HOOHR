@@ -6,10 +6,10 @@
 
 Built for a team of ~20 people, not for an enterprise HR suite. Open source under [Apache-2.0](./LICENSE).
 
-> The install asks which country the company is in, and that single answer picks the
-> currency, the timezone and the UI language (**Korean** for 대한민국, **English** for
-> the United States). There is no language switcher at runtime. All documentation is in
-> English.
+> The install asks for the screen language. Language, currency and timezone are
+> independent: Korean UI can run dollar amounts and vice versa. Amounts are
+> plain numbers, dates use UTC, and the language is switchable any time in the
+> sidebar. All documentation is in English.
 
 ---
 
@@ -17,10 +17,10 @@ Built for a team of ~20 people, not for an enterprise HR suite. Open source unde
 
 | Module | Features |
 |---|---|
-| **Leave** (휴가) | PTO / sick / unpaid requests, full or half-day, request → admin approval (reject requires a reason), self-cancel before approval, monthly company schedule |
+| **Leave** (휴가) | PTO / sick requests, full-day periods, request → admin approval (reject requires a reason), self-cancel before approval, monthly company schedule, CSV export by date range |
 | **Expenses** (경비) | Draft reports with multiple line items, per-item receipt upload, submit → approve → pay workflow, protected receipt downloads, **CSV export** for accounting |
 | **Employee admin** | Employee profiles, activate/deactivate, re-invite pending employees |
-| **Settings** | Company name + country, leave policy management (name, paid/approval flags), expense categories |
+| **Settings** | Company name, weekend days, leave policy management (name, paid/approval flags), email alerts, company logo, notice, public-access status, one-click move |
 
 ### Roles
 
@@ -35,7 +35,6 @@ Approvals are assigned to the ADMIN role. Self-approval and cross-company approv
 
 ```
 leave:    requested -> PENDING  -> APPROVED / REJECTED   (CANCELED by owner)
-          balance is deducted only on APPROVED, and never for UNPAID
 
 expense:  DRAFT -> SUBMITTED -> APPROVED -> PAID
                       |                     ^
@@ -73,12 +72,12 @@ The only prerequisite. <https://www.docker.com/products/docker-desktop/>
 That is the whole procedure. The window walks through it:
 
 1. Starts Docker Desktop if it is not already running, and waits for the engine.
-2. Asks two questions — **which country** this is used in, and whether it is a
+2. Asks two questions — **screen language** and whether it is a
    **personal computer or a server** — then creates a `.env` with a random
    session secret. Every question is two options, so there is nothing to read
    up on.
 3. Builds the image, applies the database migrations, and seeds the company
-   defaults (leave policies, expense categories).
+   defaults (leave policies).
 4. Waits until the app answers a real readiness check - not merely until the
    port is listening, so it never opens a browser onto a page that will 500.
 5. If you answered **server**, opens a public HTTPS address and checks the app
@@ -94,12 +93,12 @@ always safe: your data and settings are left alone.
   HOOHR 설치가 완료되었습니다.
 ==========================================================
   주소          : http://localhost:3000
-  국가          : KR
+  언어          : 한국어
 ==========================================================
 ```
 
 Then the browser opens **your setup screen**: one wizard, three steps —
-company + country, the first admin account, then email alerts (optional;
+company + screen language, the first admin account, then email alerts (optional;
 leave it empty to start without mail). That screen appears only once - after
 the first account exists it is gone, and from then on you land on the login
 page.
@@ -148,7 +147,7 @@ docker rm -f hoohr_tunnel
 
 | Path | |
 |---|---|
-| `.env` | Generated on first run. Your secret and admin password. Do not share it. |
+| `.env` | Generated on first run. Your secrets. Do not share it. |
 | `logs/hoohr.log` | Log history; each session overwrites the previous one into `hoohr.prev.log` |
 | `logs/tunnel.log` | History of public-address attempts, including the hostname each time |
 | Receipt images | In the `uploads` Docker volume, not in the repo |
@@ -188,7 +187,7 @@ docker compose up -d --build  # migrates and seeds via docker/entrypoint.sh
 |---|---|---|---|
 | `DATABASE_URL` | yes | — | PostgreSQL connection string |
 | `AUTH_SECRET` | yes | — | Session cookie signing key. **The app throws at startup if unset** |
-| `COMPANY_COUNTRY` | no | `KR` | `KR` or `US`. Decides the currency, the timezone **and** the on-screen language — there is no separate language setting |
+| `COMPANY_COUNTRY` | no | `KR` | `KR` or `US`. Seed display names only. Language, currency and timezone are independent of it |
 | `RUNTIME_TARGET` | no | `personal` | `personal` keeps the app on this machine; `server` also opens a public HTTPS address via a Cloudflare Tunnel |
 | `APP_URL` | no | `http://localhost:3000` | Public base URL; used to build invite links. The tunnel writes it for you |
 | `TUNNEL_MODE` | no | — | `quick` (free, random hostname) or `named` (stable hostname, needs a Cloudflare account). `start.bat` picks `quick` when this is unset |
@@ -211,19 +210,22 @@ docker compose up -d --build  # migrates and seeds via docker/entrypoint.sh
 ├── prisma/               schema, migrations, seed
 ├── src/
 │   ├── app/
-│   │   ├── actions/      server actions (auth, leave, expense, employees, settings)
+│   │   ├── actions/      server actions (auth, leave, expense, employees, settings, locale)
 │   │   ├── hoohr/        authenticated app shell + all pages
 │   │   ├── invite/       invite acceptance
 │   │   ├── login/
-│   │   └── generated/    Prisma client (committed)
+│   │   └── setup/        first-run wizard
+│   ├── generated/        Prisma client (committed)
 │   ├── lib/              prisma, session, DAL, validation schemas, pure domain helpers
-│   └── proxy.ts          route protection
+│   └── proxy.ts          /app -> /hoohr redirect
 ├── scripts/              cron entry point for the approval digest
 ├── deploy/               EKS / external-access notes
 ├── docs/                 REQUIREMENTS.md, UX_RESEARCH.md, WORKFLOW.md
 ├── docker-compose.yml
 ├── Dockerfile
-├── start.ps1             one-click start: asks the two setup questions
+├── start.bat             one-click start (calls start.ps1)
+├── start.ps1             one-click start: asks setup questions, checks for updates, waits on health, opens the browser
+├── uninstall.bat         one-click stop + full data wipe (calls uninstall.ps1)
 ├── start-tunnel.ps1      public HTTPS address (called by start.ps1 in server mode)
 ├── start-tunnel.bat      ...or run it on its own later
 └── logs/                 start.log, tunnel.log
@@ -234,12 +236,12 @@ Authenticated routes live under **`/hoohr`**. The pre-rename `/app` prefix still
 ### Notable design points
 
 - **DAL layer** (`src/lib/dal.ts`) — every page and action resolves the current user through one cached helper, so authorization cannot be forgotten at a call site.
-- **Pure domain helpers** — day counting, timezone boundaries, money formatting, and approval rules are plain functions in `src/lib/`, unit-testable without a database. The leave form's live preview and the server action deliberately share the same holiday set so they cannot disagree.
-- **Status-guarded writes** — approvals use a status-conditioned `updateMany` inside a transaction, so a lost race cannot double-deduct a leave balance.
-- **Times are stored in UTC** and rendered in the company timezone configured in settings.
-- **i18n without a dependency** (`src/i18n/`) — the language is not a setting. It is derived from the company's country, so `<html lang>`, dates, numbers and CSV headers all follow `COMPANY_COUNTRY`, and there is no per-browser override that can go stale. Copy lives in `src/i18n/dictionaries/`; the English dictionary is typed as `typeof` the Korean one, so a missing or extra key is a compile error rather than a runtime `undefined`. User-entered data (names, departments, leave policies, expense categories) is deliberately never translated.
+- **Pure domain helpers** — day counting, UTC day boundaries, plain-number amounts, and approval rules are plain functions in `src/lib/`, unit-testable without a database. The leave form's live preview and the server action deliberately share the same weekend set so they cannot disagree.
+- **Status-guarded writes** — approvals use a status-conditioned `updateMany` inside a transaction, so a lost race cannot double-approve or double-pay. Every user-triggered write resolves to a plain message, never an exception banner.
+- **Times are stored and bounded in UTC**; amounts carry no currency and render as plain numbers.
+- **i18n without a dependency** (`src/i18n/`) — the screen language is a `locale` cookie flipped with the sidebar switcher, defaulting to the company country. `<html lang>`, dates and numbers follow it. Copy lives in `src/i18n/dictionaries/`; the English dictionary is typed as `typeof` the Korean one, so a missing or extra key is a compile error rather than a runtime `undefined`. User-entered data (names, leave policies, memos) is deliberately never translated.
 - **Email notifications are best-effort by design** (`src/lib/mail.ts`) — three properties are load-bearing. It is a **no-op when `SMTP_HOST` is unset**, so a fresh clone runs with no mail configured. It **never throws**: an approval is already committed by the time mail goes out, so an SMTP outage must not turn a successful decision into an error, and must not invite a retry that would double-approve. And it **cannot hang a request**: a blackholed SMTP port would otherwise pin a server action for the default 120s, so the timeouts are 10s/10s/20s.
-- **The approval digest reuses the inbox query** (`src/lib/approval-digest.ts`) — `collectDigestPlans` calls the same `approvalInboxEmployeeWhere` predicate the leave and expense pages use, so the email cannot list something the inbox hides or miss something it shows. Each (recipient, request) pair is claimed by inserting a `Notification` row whose `(userId, link)` is unique, which makes a duplicate digest impossible under concurrent runs; a failed send releases its claim so the next run retries. The scope is deliberately *per recipient* — an admin's inbox overlaps a manager's, so both are legitimately notified about the same request.
+- **The approval digest mirrors the inbox filters** (`src/lib/approval-digest.ts`) — pending leave and submitted expenses, excluding the reviewer's own, so the email cannot list something the inbox hides or miss something it shows. Each (recipient, request) pair is claimed by inserting a `Notification` row whose `(userId, link)` is unique, which makes a duplicate digest impossible under concurrent runs; a failed send releases its claim so the next run retries. The scope is deliberately *per recipient* — every request routes to the same ADMIN pool, so all admins are legitimately notified about the same request.
 
 ---
 
@@ -251,7 +253,7 @@ Authenticated routes live under **`/hoohr`**. The pre-rename `/app` prefix still
 | `npm run build` / `npm start` | Production build / serve |
 | `npm run lint` | ESLint |
 | `npx tsc --noEmit` | Type check |
-| `npm run test:e2e` | Browser E2E: country → language (needs `npm run dev`) |
+| `npm run test:e2e` | Browser E2E: sidebar language switch (needs `npm run dev`) |
 | `npm run test:e2e:forms` | Browser E2E: leave request/cancel forms |
 | `npm run test:e2e:expenses` | Browser E2E: expense create → submit → decide → pay |
 | `npm run db:migrate` | Create/apply a development migration |
@@ -282,7 +284,9 @@ What is sent:
 
 | Trigger | Recipient | Mail |
 |---|---|---|
+| Leave requested | every active admin | Requester, kind, period, memo |
 | Leave approved or rejected | the requester | Outcome, period, reviewer comment |
+| Expense submitted | every active admin | Requester, title, amount |
 | Expense approved, rejected, or paid | the requester | Outcome, amount, reviewer comment |
 | Employee invited or re-invited | the invitee | The accept-invite link and its expiry |
 | `npm run digest` | each reviewer with a non-empty inbox | One batched summary of everything pending |
@@ -303,10 +307,10 @@ npx tsx _test-mail.ts       # 58 checks - SMTP config, escaping, every template 
 ### Browser E2E
 
 Some flows cannot be reached over `curl` because a Next.js **server action** is not
-callable with a plain `POST`. The country change is the notable case: the language
-is derived from the country, so the only way to prove the derivation is to change
-the country through the real form and watch the UI follow — no HTTP-only check can
-do that. Forms were the other: a hand-rolled action POST returns
+callable with a plain `POST`, and because page-level redirects render as
+`200` + follow-in-browser navigation rather than a `307` status. So no HTTP-only
+check can drive the forms or prove a redirect — only a real browser can. Forms
+were the other case: a hand-rolled action POST returns
 `500 Connection closed.`, which is a framework restriction rather than an app bug,
 so no real form interaction had been tested since Session 5.
 
@@ -328,21 +332,18 @@ probe that reported healthy because `fetch` had followed a 307 to `/login`).
 
 | Command | Covers |
 |---|---|
-| `npm run test:e2e` | Login + country→language derivation (18 checks) |
+| `npm run test:e2e` | Login + sidebar language switch, cookie persistence across pages (13 checks) |
 | `npm run test:e2e:forms` | Leave request/cancel round trip (16 checks) |
 | `npm run test:e2e:expenses` | Expense create/submit/approve/reject/pay/delete (40 checks) |
-| `npm run test:e2e:all` | All three |
+| `npm run test:e2e:first-run` | The very first setup screen flow (needs an empty database) |
+| `npm run test:e2e:all` | The first three |
 
-The country suite logs in with a real typed-in form, changes the company country
-in Settings, and asserts that the UI and `<html lang>` follow, that no language
-control exists anywhere, and that there is no locale cookie. It also checks the
-endonym labels survive the flip, so a Korean admin who just moved the company to
-the US can still find 대한민국 and switch back. The forms suite exercises the
-leave request/cancel round trip. The expenses suite walks the full expense
-lifecycle across two accounts, which is the only way to reach it: self-review is
-forbidden and a second admin cannot be invited. The two suites that assert
-English copy set the country to the US and restore it before they exit. See
-[`_e2e/README.md`](./_e2e/README.md).
+The language suite logs in with a real typed-in form, flips the sidebar
+switcher, and asserts the UI, `<html lang>` and the `locale` cookie follow —
+then flips back, so the browser is left the way it was found. The forms suite
+exercises the leave request/cancel round trip. The expenses suite walks the full
+expense lifecycle across two accounts, which is the only way to reach it:
+self-review is forbidden. See [`_e2e/README.md`](./_e2e/README.md).
 
 ---
 

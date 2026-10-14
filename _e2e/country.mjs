@@ -1,24 +1,23 @@
-// Shared helper: the UI language is the company's country, and there is no
-// switcher to click. Suites that assert against English copy therefore have to
-// put the company in the US, and put it back when they are done.
+// Shared helper: the UI language is a per-browser cookie, flipped with the
+// sidebar's 한국어/English switcher. Suites that assert against English copy
+// therefore switch to English up front and switch back when they are done.
 //
 // Kept in one place because the mechanics are easy to get subtly wrong:
 //
-//   * the Settings page renders ~33 <form> elements and the very first one in
-//     the DOM is the sidebar's sign-out, so a bare `form button[type=submit]`
-//     quietly logs you out instead of saving;
-//   * a <select> assigned through `.value =` does not reach React, it has to go
-//     through the prototype's value setter and a change event;
-//   * the sign-out control has to be found by position, not by its label,
-//     because the label is in the language being switched away from.
-
-import { readFileSync } from "node:fs";
-import { waitForReact, sleep } from "./cdp.mjs";
+//   * the sidebar footer holds TWO forms (locale switcher, then logout), so a
+//     bare `aside form button[type=submit]` clicks whichever comes first;
+//     sign-out must pick the button WITHOUT a name attribute;
+//   * the locale buttons carry name="locale", so they are found by value;
+//   * after the switch the whole app re-renders server-side, so wait before
+//     asserting.
 
 // The install generates its own admin password into .env, so a hardcoded default
 // only ever worked on a database that had never been recreated. Read .env here
 // so `npm run test:e2e` works without the caller exporting anything, and so all
 // three suites agree on which account they are driving.
+import { readFileSync } from "node:fs";
+import { waitForReact, sleep } from "./cdp.mjs";
+
 function envValue(key) {
   if (process.env[key]) return process.env[key];
   try {
@@ -44,35 +43,29 @@ export async function isEnglish(page) {
   return (await currentLanguage(page)) === "en";
 }
 
-/** Admin only. Sets the company country and saves. Returns true on success. */
-export async function setCountry(page, base, code) {
-  await page.goto(`${base}/hoohr/admin/settings`);
-  await waitForReact(page, "#company-country");
-  const changed = await page.eval(`
-    const sel = document.querySelector('#company-country');
-    if (!sel) return "NO_SELECT";
-    const d = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(sel), "value");
-    d.set.call(sel, ${JSON.stringify(code)});
-    sel.dispatchEvent(new Event("change", { bubbles: true }));
-    return sel.form.querySelector('button[type="submit"]') ? sel.value : "NO_SUBMIT";
+/** Clicks the sidebar locale switcher. Returns true once the UI followed. */
+export async function setLocale(page, base, code) {
+  await page.goto(`${base}/hoohr`);
+  await waitForReact(page, "aside");
+  const clicked = await page.eval(`
+    const btn = document.querySelector('aside button[name="locale"][value=${JSON.stringify(code)}]');
+    if (!btn) return "NO_BUTTON";
+    btn.click();
+    return "CLICKED";
   `);
-  if (changed !== code) return false;
-
-  await page.eval(`
-    document.querySelector('#company-country').form
-      .querySelector('button[type="submit"]').click();
-    return 1;
-  `);
-  await sleep(3000);
-  return (await currentLanguage(page)) === (code === "US" ? "en" : "ko");
+  if (clicked !== "CLICKED") return false;
+  await sleep(2500);
+  if ((await currentLanguage(page)) !== code) return false;
+  const cookie = (await page.cookies()).find((c) => c.name === "locale");
+  return cookie?.value === code;
 }
 
-/** Signs out through the sidebar form, whatever the UI language is. */
+/** Signs out through the sidebar logout form, whatever the UI language is. */
 export async function signOut(page, base) {
   const clicked = await page.eval(`
-    const form = document.querySelector("aside form");
-    if (!form) return null;
-    form.querySelector('button[type="submit"]').click();
+    const btn = document.querySelector('aside button[type="submit"]:not([name])');
+    if (!btn) return null;
+    btn.click();
     return 1;
   `);
   await sleep(2500);

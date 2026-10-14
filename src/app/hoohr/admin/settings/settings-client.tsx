@@ -2,14 +2,22 @@
 
 import { useActionState, useState } from "react";
 import { parseWeekendDays, WEEKDAY_KEYS } from "@/lib/company-defaults";
-import { COUNTRIES, COUNTRY_DEFAULTS, COUNTRY_LABELS } from "@/lib/country";
 import {
+  checkPublicAccess,
   removeCompanyLogo,
+  sendTestMail,
   updateCompanyLogo,
+  updateCompanyNotice,
   updateCompanySettings,
   updateLeavePolicy,
   updateMailSettings,
 } from "@/app/actions/settings";
+import {
+  MAIL_PRESETS,
+  isMailProvider,
+  presetForHost,
+  type MailProvider,
+} from "@/lib/mail-presets";
 import type { FieldErrors } from "@/lib/auth-validation";
 import type {
   CompanySettingsState,
@@ -88,7 +96,6 @@ function Section({
 
 function CompanyForm({
   name,
-  country,
   weekendDays,
 }: CompanyFormProps) {
   const { d } = useI18n();
@@ -123,24 +130,6 @@ function CompanyForm({
           className={inputClass}
         />
         <FieldError state={state} name="name" />
-      </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="company-country" className="text-xs font-medium text-zinc-500">
-          {d.settings.labels.country}
-        </label>
-        <select
-          id="company-country"
-          name="country"
-          defaultValue={country}
-          className={inputClass}
-        >
-          {COUNTRIES.map((code) => (
-            <option key={code} value={code}>
-              {COUNTRY_LABELS[code]} ({COUNTRY_DEFAULTS[code].currency})
-            </option>
-          ))}
-        </select>
-        <FieldError state={state} name="country" />
       </div>
       <div className="flex flex-col gap-1 sm:col-span-3">
         <span className="text-xs font-medium text-zinc-500">
@@ -180,7 +169,6 @@ function CompanyForm({
 
 type CompanyFormProps = {
   name: string;
-  country: string;
   weekendDays: string;
 };
 
@@ -214,10 +202,41 @@ function MailForm({ initial }: { initial: MailView }) {
     updateMailSettings,
     undefined,
   );
+  const [testState, testAction, testPending] = useActionState<CompanySettingsState, FormData>(
+    async () => sendTestMail(),
+    undefined,
+  );
+  const [provider, setProvider] = useState<MailProvider>(() =>
+    presetForHost(initial.smtpHost),
+  );
   const f = d.setup.fields;
+  const preset = provider === "custom" ? null : MAIL_PRESETS[provider];
+  // Remount the server/port/secure inputs on provider change so the preset
+  // values land in the form without controlled inputs.
+  const presetKey = provider;
 
   return (
+    <>
     <form action={action} className="grid gap-3 sm:grid-cols-2">
+      <div className="flex flex-col gap-1 sm:col-span-2">
+        <label htmlFor="mail-provider" className="text-xs font-medium text-zinc-500">
+          {d.setup.provider}
+        </label>
+        <select
+          id="mail-provider"
+          value={provider}
+          onChange={(e) => {
+            if (isMailProvider(e.target.value)) setProvider(e.target.value);
+          }}
+          className={inputClass}
+        >
+          {(Object.keys(d.setup.providers) as MailProvider[]).map((p) => (
+            <option key={p} value={p}>
+              {d.setup.providers[p]}
+            </option>
+          ))}
+        </select>
+      </div>
       <div className="flex flex-col gap-1">
         <label htmlFor="mail-host" className="text-xs font-medium text-zinc-500">
           {f.smtpHost}
@@ -226,10 +245,12 @@ function MailForm({ initial }: { initial: MailView }) {
           id="mail-host"
           name="smtpHost"
           type="text"
-          defaultValue={initial.smtpHost}
+          key={`host-${presetKey}`}
+          defaultValue={preset ? preset.host : initial.smtpHost}
+          readOnly={preset !== null}
           placeholder="smtp.gmail.com"
           autoComplete="off"
-          className={inputClass}
+          className={`${inputClass} ${preset ? "bg-zinc-100 text-zinc-500" : ""}`}
         />
         <FieldError state={state} name="smtpHost" />
       </div>
@@ -242,9 +263,11 @@ function MailForm({ initial }: { initial: MailView }) {
             id="mail-port"
             name="smtpPort"
             inputMode="numeric"
-            defaultValue={initial.smtpPort}
+            key={`port-${presetKey}`}
+            defaultValue={preset ? preset.port : initial.smtpPort}
+            readOnly={preset !== null}
             placeholder="587"
-            className={inputClass}
+            className={`${inputClass} ${preset ? "bg-zinc-100 text-zinc-500" : ""}`}
           />
           <FieldError state={state} name="smtpPort" />
         </div>
@@ -254,7 +277,9 @@ function MailForm({ initial }: { initial: MailView }) {
             name="smtpSecure"
             type="checkbox"
             value="on"
-            defaultChecked={initial.smtpSecure}
+            key={`sec-${presetKey}`}
+            defaultChecked={preset ? preset.secure : initial.smtpSecure}
+            disabled={preset !== null}
             className="h-4 w-4"
           />
           {f.smtpSecure}
@@ -270,6 +295,7 @@ function MailForm({ initial }: { initial: MailView }) {
           type="text"
           defaultValue={initial.smtpUser}
           autoComplete="off"
+          placeholder={d.setup.accountHint}
           className={inputClass}
         />
         <FieldError state={state} name="smtpUser" />
@@ -286,6 +312,7 @@ function MailForm({ initial }: { initial: MailView }) {
           placeholder={initial.hasSmtpPass ? d.settings.sections.mail.passKept : undefined}
           className={inputClass}
         />
+        <p className="text-xs text-zinc-500">{d.setup.passHints[provider]}</p>
         <FieldError state={state} name="smtpPass" />
       </div>
       <div className="flex flex-col gap-1 sm:col-span-2">
@@ -298,11 +325,12 @@ function MailForm({ initial }: { initial: MailView }) {
           type="email"
           defaultValue={initial.smtpFrom}
           autoComplete="off"
+          placeholder={d.setup.fromHint}
           className={inputClass}
         />
         <FieldError state={state} name="smtpFrom" />
       </div>
-      <div>
+      <div className="flex flex-wrap items-center gap-2">
         <button type="submit" disabled={pending} className={primaryButtonClass}>
           {pending ? d.common.buttons.saving : d.common.actions.save}
         </button>
@@ -310,7 +338,17 @@ function MailForm({ initial }: { initial: MailView }) {
       <div className="sm:col-span-2">
         <Message state={state} />
       </div>
+      {preset?.secure && <input type="hidden" name="smtpSecure" value="on" />}
     </form>
+    <form action={testAction} className="mt-3 border-t border-zinc-100 pt-3">
+      <button type="submit" disabled={testPending} className={secondaryButtonClass}>
+        {testPending ? d.settings.sections.mail.sending : d.settings.sections.mail.testSend}
+      </button>
+      <div className="mt-2">
+        <Message state={testState} />
+      </div>
+    </form>
+    </>
   );
 }
 
@@ -323,6 +361,165 @@ function MailSection({ initial }: { initial: MailView }) {
       description={d.settings.sections.mail.description}
     >
       <MailForm initial={initial} />
+    </Section>
+  );
+}
+
+// ---- SET-1e: 외부 접속 ----
+
+export type ExternalView = {
+  url: string | null;
+  kind: "none" | "quick" | "stable";
+};
+
+function ExternalSection({ view }: { view: ExternalView }) {
+  const { d } = useI18n();
+  const [state, action, pending] = useActionState<CompanySettingsState, FormData>(
+    async () => checkPublicAccess(),
+    undefined,
+  );
+  const note =
+    view.kind === "quick"
+      ? d.settings.sections.external.quick
+      : view.kind === "stable"
+        ? d.settings.sections.external.stable
+        : d.settings.sections.external.none;
+
+  return (
+    <Section
+      title={d.settings.sections.external.title}
+      description={d.settings.sections.external.description}
+    >
+      {view.url ? (
+        <p className="truncate text-sm font-medium text-zinc-900">
+          <a
+            href={view.url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-blue-700 underline hover:text-blue-900"
+          >
+            {view.url}
+          </a>
+        </p>
+      ) : null}
+      <p className="mt-1 text-xs text-zinc-500">{note}</p>
+      <form action={action} className="mt-3">
+        <button type="submit" disabled={pending} className={secondaryButtonClass}>
+          {pending ? d.settings.sections.external.check + "…" : d.settings.sections.external.check}
+        </button>
+        <div className="mt-2">
+          <Message state={state} />
+        </div>
+      </form>
+    </Section>
+  );
+}
+
+// ---- SET-1f: 이사 (백업/복원) ----
+
+function TransferSection() {
+  const { d } = useI18n();
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function onRestore(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = new FormData(e.currentTarget);
+    if (!(form.get("backup") instanceof File)) return;
+    setBusy(true);
+    setResult(null);
+    try {
+      const res = await fetch("/hoohr/admin/transfer", {
+        method: "POST",
+        body: form,
+      });
+      const json = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        message?: string;
+      } | null;
+      setResult({
+        ok: res.ok && json?.ok === true,
+        message: json?.message ?? "",
+      });
+    } catch {
+      setResult({ ok: false, message: "" });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Section
+      title={d.settings.sections.transfer.title}
+      description={d.settings.sections.transfer.description}
+    >
+      <a
+        href="/hoohr/admin/transfer"
+        className="inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+      >
+        {d.settings.sections.transfer.download}
+      </a>
+      <form onSubmit={onRestore} className="mt-4 flex flex-col gap-3 border-t border-zinc-100 pt-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-zinc-500">
+            {d.settings.sections.transfer.file}
+          </label>
+          <input name="backup" type="file" required accept="application/json,.json" className="text-sm text-zinc-700" />
+        </div>
+        <label className="flex items-center gap-2 text-xs text-zinc-600">
+          <input name="confirm" type="checkbox" value="yes" required className="h-4 w-4" />
+          {d.settings.sections.transfer.confirm}
+        </label>
+        <div>
+          <button type="submit" disabled={busy} className={primaryButtonClass}>
+            {busy ? d.settings.sections.transfer.restoring : d.settings.sections.transfer.restore}
+          </button>
+        </div>
+        {result && (
+          <p
+            className={`rounded-md px-3 py-2 text-sm ${
+              result.ok ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+            }`}
+          >
+            {result.message}
+          </p>
+        )}
+      </form>
+    </Section>
+  );
+}
+
+// ---- SET-1d: 공지사항 ----
+
+function NoticeSection({ initial }: { initial: string }) {
+  const { d } = useI18n();
+  const [state, action, pending] = useActionState<CompanySettingsState, FormData>(
+    updateCompanyNotice,
+    undefined,
+  );
+
+  return (
+    <Section
+      title={d.settings.sections.notice.title}
+      description={d.settings.sections.notice.description}
+    >
+      <form action={action} className="flex flex-col gap-3">
+        <textarea
+          name="notice"
+          rows={3}
+          maxLength={500}
+          defaultValue={initial}
+          placeholder={d.settings.sections.notice.placeholder}
+          className={inputClass}
+        />
+        <FieldError state={state} name="notice" />
+        <div>
+          <button type="submit" disabled={pending} className={primaryButtonClass}>
+            {pending ? d.common.buttons.saving : d.common.actions.save}
+          </button>
+        </div>
+        <Message state={state} />
+      </form>
     </Section>
   );
 }
@@ -482,28 +679,32 @@ function PolicySection({ policies }: { policies: PolicyView[] }) {
 
 export function SettingsClient({
   companyName,
-  country,
   weekendDays,
   mail,
   logoSet,
+  notice,
+  external,
   policies,
 }: {
   companyName: string;
-  country: string;
   weekendDays: string;
   mail: MailView;
   logoSet: boolean;
+  notice: string;
+  external: ExternalView;
   policies: PolicyView[];
 }) {
   return (
     <div className="space-y-8">
       <CompanySection
         name={companyName}
-        country={country}
         weekendDays={weekendDays}
       />
       <MailSection initial={mail} />
       <LogoSection logoSet={logoSet} />
+      <NoticeSection initial={notice} />
+      <ExternalSection view={external} />
+      <TransferSection />
       <PolicySection policies={policies} />
     </div>
   );

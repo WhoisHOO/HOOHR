@@ -2,6 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { Role, EmployeeStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getDict } from "@/i18n/server";
@@ -27,7 +28,7 @@ export async function createFirstAdmin(
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
-    country: formData.get("country"),
+    locale: formData.get("locale"),
     smtpHost: formData.get("smtpHost") || undefined,
     smtpPort: formData.get("smtpPort") || undefined,
     smtpUser: formData.get("smtpUser") || undefined,
@@ -39,7 +40,7 @@ export async function createFirstAdmin(
     return { fieldErrors: fieldErrors(parsed.error.issues) };
   }
 
-  const { companyName, name, email, password, country } = parsed.data;
+  const { companyName, name, email, password, locale } = parsed.data;
   const passwordHash = await bcrypt.hash(password, 10);
 
   // Step 3 is optional: empty strings normalize to null, and a null host
@@ -56,13 +57,16 @@ export async function createFirstAdmin(
   const user = await prisma.$transaction(async (tx) => {
     let company = await tx.company.findFirst();
 
+    // Country/currency/timezone are inert legacy columns: the admin picks the
+    // screen language directly, and amounts carry no currency. Keep the seed
+    // default so older rows stay consistent.
     if (company) {
       await tx.company.update({
         where: { id: company.id },
-        data: { name: companyName, country: country ?? company.country, ...smtp },
+        data: { name: companyName, ...smtp },
       });
     } else {
-      const rawCountry = country ?? process.env.COMPANY_COUNTRY;
+      const rawCountry = process.env.COMPANY_COUNTRY;
       const finalCountry = isCountry(rawCountry) ? rawCountry : DEFAULT_COUNTRY;
       const created = await createCompanyWithDefaults(tx, {
         name: companyName,
@@ -103,6 +107,13 @@ export async function createFirstAdmin(
     userId: user.id,
     companyId: user.companyId,
     role: user.role,
+  });
+
+  // The chosen screen language takes effect immediately.
+  (await cookies()).set("locale", locale, {
+    path: "/",
+    maxAge: 365 * 24 * 60 * 60,
+    sameSite: "lax",
   });
 
   redirect("/hoohr");

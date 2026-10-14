@@ -58,12 +58,16 @@ export async function updateEmployeeProfile(
   }
 
   const hireDate = parsed.data.hireDate ? parseIsoDate(parsed.data.hireDate) : null;
-  await prisma.employee.update({
-    where: { id: employee.id },
-    data: {
-      hireDate,
-    },
-  });
+  try {
+    await prisma.employee.update({
+      where: { id: employee.id },
+      data: {
+        hireDate,
+      },
+    });
+  } catch {
+    return { message: adminDict.messages.employeeProfileSaveFailed, ok: false };
+  }
 
   revalidateEmployeePages();
   return { message: adminDict.messages.employeeProfileSaved, ok: true };
@@ -82,7 +86,9 @@ async function changeEmployeeStatus(
     };
   }
 
-  const result = await prisma.$transaction(async (tx) => {
+  let result: { kind: "ok" | "not_found" | "message"; message: string } | null = null;
+  try {
+    result = await prisma.$transaction(async (tx) => {
     const employee = await tx.employee.findFirst({
       where: { id: employeeId, companyId: admin.companyId },
       select: {
@@ -136,11 +142,14 @@ async function changeEmployeeStatus(
       });
     }
     return { kind: "ok" as const, message: "" };
-  });
+    });
+  } catch {
+    result = null;
+  }
 
-  if (result.kind !== "ok") {
+  if (!result || result.kind !== "ok") {
     return {
-      message: result.message || adminDict.messages.statusChangeFailed,
+      message: result?.message || adminDict.messages.statusChangeFailed,
       ok: false,
     };
   }

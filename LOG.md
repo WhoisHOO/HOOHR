@@ -1028,5 +1028,44 @@ Four commits on `feature/first-run-setup`, plus a merge of `feature/public-tunne
 - **Also fixed visible leftovers**: leave subtitle/hint no longer mention unpaid/half-day.
 - **Verification**: tsc 0, lint 0, mail 58/58, container rebuilt + healthy, health/login 200, export routes bounce (307) when logged out — no 500s. Authed CSV content follows the reviewed code paths (e2e needs a browser + fresh DB, not run here).
 
+### Session 28 (2026-10-13, build1): notice board + team directory
+
+- **Branching**: work continues on `build1` (branched from main@948dd3e, the customer-shared version). Rule going forward: batch work on buildN → merge to main → tag buildN → delete branch.
+- **Notice (single memo, no history)**: `Company.notice` (migration `20261013150707_company_notice`); admin edits it in Company settings → Notice (textarea, 500 chars, empty hides); shown at the top of the dashboard for every role (`whitespace-pre-wrap`, React-escaped). Overwrite only, no log.
+- **Team directory** (`/hoohr/team`, all roles): flat roster grouped 관리자 → 직원 (no tree — BambooHR/flex trees need manager-report data we removed in Session 22; researched both, directory pattern matches "거창 없이 리스트"). Name + email + status badge. Nav item added for both roles.
+- **Also in build1**: Session 27 fixes committed first (`2722041`): uninstall.bat/ps1 pair, start.ps1 auto-update check (git pull on start, never blocks), seed `@/`-alias fix (real first-run bug: container seed crashed, company never seeded).
+- **Verification**: tsc 0, lint 0, container rebuilt + healthy, health ok, /hoohr/team bounces (307) logged out. First-run DB state preserved (0 users) for the walkthrough.
+
+### Session 29 (2026-10-13, build1): external-access notice + one-click move
+
+- **External access section** (Company settings, admin): shows the current public address (APP_URL) classified none/quick/stable, warns that quick-tunnel addresses die on restart, plus a "연결 확인" live probe (server-side 10s fetch of APP_URL/api/health). (`checkPublicAccess`, `ExternalSection`)
+- **One-click move** (Company settings → 이사): GET `/hoohr/admin/transfer` downloads everything (12 tables with IDs + all uploads as base64) as one JSON; POST restores with confirm=yes gate, version-match refusal, single-transaction load (TRUNCATE CASCADE + ordered createMany), files replaced only after commit. Secrets excluded (fresh install mints its own AUTH_SECRET; everyone re-logs-in). No new deps (zlib-free: base64 in JSON). Mac Mini = valid always-on target (Docker Desktop for Mac).
+- **Verification**: tsc 0, lint 0, rebuilt + healthy, transfer/settings gates 307 logged out.
+
+### Session 30 (2026-10-13, build1): language/currency/timezone decoupled
+
+- **Product direction (user)**: country must not dictate anything — Korean UI with dollars is legitimate. Language is a free choice; currency is never shown; timezone is not configured.
+- **Setup**: step 1 is now company name + screen language (한국어/English); the choice is written to the `locale` cookie at completion. `Company.country` stays as an inert legacy column.
+- **Settings**: country selector removed (name + weekend only). `getCompanyTimezone` returns UTC always; all date boundaries are UTC midnights. Expense CSV drops the currency column. Cookie-first locale already existed (sidebar switcher); company country remains only the no-cookie default.
+- **Installer + docs**: Q1 asks language (still maps to COMPANY_COUNTRY for seed display names); README/WORKFLOW no longer claim country decides currency/timezone/language.
+- **Verification**: tsc 0, lint 0, mail 58/58, rebuilt + healthy, `/setup` renders `locale` select and no `country` field. first-run.mjs unaffected (never touched country).
+
+### Session 27 mystery RESOLVED (2026-10-14): no redirect bug — curl was the wrong instrument
+
+- **Symptom**: with 0 users, `/login` and `/` returned HTTP 200 instead of 307 → `/setup`.
+- **Ruled out**: stale image (fresh build), runtime cache (fresh restart), PS/curl caching (raw curl.exe), orphan containers (none), wrong DB (same server, count verified inside postgres: 0), next.config (clean), route structure (clean), force-dynamic present.
+- **Root cause**: there was no bug. Next.js serves page-level `redirect()` as **HTTP 200 + meta-refresh + RSC `NEXT_REDIRECT;replace;307` payload** (seen verbatim in the `/setup` HTML), which real browsers follow — but curl prints 200 and stops. Layout-level redirects (dal, `/hoohr`) return true 307s, which is why only some gates "looked" broken. The e2e suite (real Chromium, asserts `page.url()`) is the correct instrument, not curl status codes.
+- **Contributing confusion**: the human had created `whohoo39@gmail.com` via `/setup` mid-investigation, so user-present/user-absent observations mixed across checks. Fingerprint proof: identical `pg_postmaster_start_time` both paths, then `users=1 [whohoo39@gmail.com]`.
+- **Lesson (permanent)**: never assert page redirects by curl status alone; check the `NEXT_REDIRECT` digest or use the browser suite. Test accounts (`admin`/`staff`) recreated after the reset.
+- **Side damage to verify on host**: killed `wslrelay.exe` during debugging (Docker Desktop networking); `docker stop hr-app-db-1` may have executed (output lost) — if the app is down, `docker start hr-app-db-1` / restart Docker Desktop, data is in volumes.
+
+### Session 31 (2026-10-14, build1): exception-path hardening audit
+
+- **User question**: is build1 free of exceptions/nulls? Answer after audit: yes for every realistic path.
+- **Fixed (3)**: `cancelLeave` update, `deleteExpenseReport` delete, `updateEmployeeProfile` update, and the `changeEmployeeStatus` transaction now catch infra failure into plain messages (`requestFailed`/`saveError`/`employeeProfileSaveFailed`/`statusChangeFailed`, ko/en). No new null risk: the nullable-result path uses `result?.message` fallback.
+- **Audited clean**: no `!` assertions in app code (only `?.`); invite/reinvite/accept races resolve to messages (`emailExists`/`inviteUsed`); decide flows already transactional; settings writes ride the admin-implies-company invariant; mail never throws by contract; routes validate params before querying.
+- **Remaining throws require DB outage** (everything 500s anyway) or impossible double-submit races (buttons disable on pending).
+- **Verification**: tsc 0, lint 0, rebuilt + healthy, health ok, team gate 307 logged out.
+
 <!-- ====== Template for next sessions (copy & use) ======
 

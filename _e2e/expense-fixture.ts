@@ -6,10 +6,11 @@
 //   * team.ts forbids self-review. canReviewEmployee() returns false when
 //     target.employeeId === reviewer.employeeId, and approvalInboxEmployeeWhere()
 //     excludes the reviewer's own employee from the inbox.
-//   * inviteEmployee() only accepts ["EMPLOYEE", "MANAGER"], so the UI cannot
+//   * inviteEmployee() only accepts ["EMPLOYEE"], so the UI cannot
 //     create a second admin, and paying requires canActAsAdmin().
 //
-// So the report is owned by a MANAGER and reviewed by the seeded admin. That
+// So the report is owned by a plain EMPLOYEE (the "manager" name below is
+// historical) and reviewed by the seeded admin. That
 // combination needs no mutation of the admin's own employee record, and it
 // still reaches every transition: DRAFT -> SUBMITTED -> REJECTED and
 // DRAFT -> SUBMITTED -> APPROVED -> PAID.
